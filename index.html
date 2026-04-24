@@ -345,56 +345,70 @@ header h1 { font-size: 1.1rem; letter-spacing: .03em; }
 // Setlist: { id, name, date, songIds[] }
 // Band: { id, name, songs[], setlists[] }
 
-const SEED = {bands:[{id:'tou',name:'Two of Us',setlists:[{
-  id:'sl1', name:'Il Nove 29/3/2026', date:'2026-03-29',
-  songIds:['s01','s02','s03','s04','s05','s06','s07','s08','s09','s10',
-           's11','s12','s13','s14','s15','s16','s17','s18','s19','s20',
-           's21','s22','s23','s24','s25','s26','s27','s28','s29','s30',
-           's31','s32','s33','s34','s35','s36','s37','s38','s39','s40','s41']
-}],songs:[
-  {id:'s01',title:'Out on the weekend',        artist:'Neil Young',         key:'A',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp A',  tags:[]},
-  {id:'s02',title:'Look out for my love',      artist:'Neil Young',         key:'Eb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s03',title:'The needle and the damage done',artist:'Neil Young',     key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s04',title:'While my guitar gently weeps',  artist:'The Beatles',   key:'G#m', capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s05',title:'Blackbird',                 artist:'The Beatles',        key:'F',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s06',title:'First time ever I saw your face',artist:'Roberta Flack', key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s07',title:'Society',                   artist:'Eddie Vedder',       key:'Bbm', capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s08',title:'Johnny 99',                 artist:'Bruce Springsteen',  key:'A',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp A',  tags:[]},
-  {id:'s09',title:'Highway Patrolman',         artist:'Bruce Springsteen',  key:'D',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s10',title:"I'm on fire",               artist:'Bruce Springsteen',  key:'E',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp E',  tags:[]},
-  {id:'s11',title:'Tears in Heaven',           artist:'Eric Clapton',       key:'G',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s12',title:'America',                   artist:'Simon & Garfunkel',  key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s13',title:'59th Street Bridge Song',   artist:'Simon & Garfunkel',  key:'Eb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s14',title:'Scarborough Fair',          artist:'Simon & Garfunkel',  key:'Dm',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s15',title:'The sound of silence',      artist:'Simon & Garfunkel',  key:'Dm',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s16',title:"Don't think twice it's alright",artist:'Bob Dylan',      key:'E',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp E',  tags:[]},
-  {id:'s17',title:'Masters of War',            artist:'Bob Dylan',          key:'C#m', capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s18',title:'Blowing in the Wind',       artist:'Bob Dylan',          key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp C',  tags:[]},
-  {id:'s19',title:'Festival',                  artist:'Francesco De Gregori',key:'F#', capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s20',title:'Alice',                     artist:'Francesco De Gregori',key:'F',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s21',title:'Leggero',                   artist:'Ligabue',            key:'Bb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s22',title:'Love in vain',              artist:'Robert Johnson',     key:'F#',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s23',title:'32-20 Blues',               artist:'Robert Johnson',     key:'G',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s24',title:'The weight',                artist:'The Band',           key:'F#',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s25',title:'I shall be released',       artist:'Bob Dylan',          key:'G',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp G',  tags:[]},
-  {id:'s26',title:'Forever young',             artist:'Bob Dylan',          key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s27',title:'Nebraska',                  artist:'Bruce Springsteen',  key:'D',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp D',  tags:[]},
-  {id:'s28',title:'My My Hey Hey',             artist:'Neil Young',         key:'Gm',  capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp Bb (different key from song)', tags:[]},
-  {id:'s29',title:'Pocahontas',                artist:'Neil Young',         key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s30',title:'Powderfinger',              artist:'Neil Young',         key:'D',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s31',title:'Jersey Girl',               artist:'Tom Waits',          key:'Ab',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s32',title:'Mrs Robinson',              artist:'Simon & Garfunkel',  key:'G',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s33',title:'The Boxer',                 artist:'Simon & Garfunkel',  key:'Ab',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:'key listed as "Aa" in PDF — verify', tags:[]},
-  {id:'s34',title:'The man who sold the world',artist:'David Bowie',        key:'G#',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s35',title:'Space Oddity',              artist:'David Bowie',        key:'Bb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s36',title:'We can work it out',        artist:'The Beatles',        key:'C',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s37',title:'Two of us',                 artist:'The Beatles',        key:'F',   capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s38',title:'One',                       artist:'U2',                 key:'Gm',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s39',title:'Wish you were here',        artist:'Pink Floyd',         key:'F#',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s40',title:'Hallelujah',                artist:'Leonard Cohen',      key:'Bb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s41',title:"Knockin' on heaven's door", artist:'Bob Dylan',          key:'G',   capo:null,capoSimone:null,twoGuitars:true, harp:true, link:null,notes:'harp G',  tags:[]},
-  {id:'s42',title:'Una vita da mediano',       artist:'Ligabue',            key:'Eb',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
-  {id:'s43',title:'Working class hero',        artist:'John Lennon',        key:'Am',  capo:null,capoSimone:null,twoGuitars:true, harp:false,link:null,notes:null,      tags:[]},
+const SEED = {bands:[{id:'tou',name:'Two of Us',
+setlists:[
+  {id:'sl1',name:'Il Nove 29/3/2026',date:'2026-03-29',
+   songIds:['s01','s02','s03','s04','s05','s06','s07','s08','s10','s11','s12','s13','s14','s15','s16','s17','s18','s19','s20','s21','s23','s24','s25','s26','s28','s29','s30','s31','s32','s33','s34','s35','s36','s37','s38','s39','s41','mobvrnnwqd8gq']},
+  {id:'mobx4lj6nuwwv',name:'Il Nove 24/4/2026',date:'2026-04-24',
+   songIds:['s01','s02','s03','s04','s05','s06','s07','s08','s10','s11','s18','mobx4gbien69s','s16','mobwys0zxdtab','s12','s13','s14','s15','mobx10bto98vo','s19','s20','s21','mobx70xqr1njm','s23','mobxcagv7zvgk','mobwy45ykmxg3','s22','mobx3suewssgb','s17','s24','s25','s26','s28','s29','s30','s32','mobx34z6fdygx','s33','s34','s35','mobwzwj4octlr','mobwz3ketsbt7','s37','s36','s39','mobvrnnwqd8gq','s41','mobwnzg39cdvz']}
+],
+songs:[
+  {id:'s01', title:'Out on the weekend',               artist:'Neil Young',           key:'A',   capo:2,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s02', title:'Look out for my love',             artist:'Neil Young',           key:'Eb',  capo:6,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s03', title:'The needle and the damage done',   artist:'Neil Young',           key:'C',   capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s04', title:'While my guitar gently weeps',     artist:'The Beatles',          key:'G#m', capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s05', title:'Blackbird',                        artist:'The Beatles',          key:'F',   capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s06', title:'First time ever I saw your face',  artist:'Johnny Cash',          key:'C',   capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s07', title:'Society',                          artist:'Eddie Vedder',         key:'Bbm', capo:6,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s08', title:'Johnny 99',                        artist:'Bruce Springsteen',    key:'A',   capo:5,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s09', title:'Highway Patrolman',                artist:'Bruce Springsteen',    key:'D',   capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s10', title:"I'm on fire",                      artist:'Bruce Springsteen',    key:'E',   capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s11', title:'Tears in Heaven',                  artist:'Eric Clapton',         key:'G#',  capo:null, capoSimone:1,    twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s12', title:'America',                          artist:'Simon & Garfunkel',    key:'C',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s13', title:'59th Street Bridge Song',          artist:'Simon & Garfunkel',    key:'Eb',  capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s14', title:'Scarborough Fair',                 artist:'Simon & Garfunkel',    key:'Dm',  capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s15', title:'The sound of silence',             artist:'Simon & Garfunkel',    key:'Dm',  capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s16', title:"Don't think twice it's alright",   artist:'Bob Dylan',            key:'E',   capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s17', title:'Masters of War',                   artist:'Bob Dylan',            key:'C#m', capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s18', title:'Blowing in the Wind',              artist:'Bob Dylan',            key:'C',   capo:5,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s19', title:'Festival',                         artist:'Francesco De Gregori', key:'F#',  capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s20', title:'Alice',                            artist:'Francesco De Gregori', key:'F',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s21', title:'Leggero',                          artist:'Ligabue',              key:'Bb',  capo:3,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s22', title:'Love in vain',                     artist:'Robert Johnson',       key:'F#',  capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s23', title:'32-20 Blues',                      artist:'Robert Johnson',       key:'G',   capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'s24', title:'The weight',                       artist:'The Band',             key:'F#',  capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s25', title:'I shall be released',              artist:'Bob Dylan',            key:'G',   capo:5,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s26', title:'Forever young',                    artist:'Bob Dylan',            key:'C',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s27', title:'Nebraska',                         artist:'Bruce Springsteen',    key:'D',   capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s28', title:'My My Hey Hey',                    artist:'Neil Young',           key:'Bb',  capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'s29', title:'Pocahontas',                       artist:'Neil Young',           key:'C',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s30', title:'Powderfinger',                     artist:'Neil Young',           key:'D',   capo:2,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s31', title:'Jersey Girl',                      artist:'Tom Waits',            key:'Ab',  capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s32', title:'Mrs Robinson',                     artist:'Simon & Garfunkel',    key:'G',   capo:7,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s33', title:'The Boxer',                        artist:'Simon & Garfunkel',    key:'Ab',  capo:2,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s34', title:'The man who sold the world',       artist:'David Bowie',          key:'G#',  capo:4,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s35', title:'Space Oddity',                     artist:'David Bowie',          key:'Bb',  capo:3,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s36', title:'We can work it out',               artist:'The Beatles',          key:'C',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s37', title:'Two of us',                        artist:'The Beatles',          key:'F',   capo:3,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s38', title:'One',                              artist:'U2',                   key:'Gm',  capo:3,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s39', title:'Wish you were here',               artist:'Pink Floyd',           key:'F#',  capo:6,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s40', title:'Hallelujah',                       artist:'Leonard Cohen',        key:'Bb',  capo:3,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s41', title:"Knockin' on heaven's door",        artist:'Bob Dylan',            key:'G',   capo:3,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:'harp G', tags:[]},
+  {id:'s42', title:'Una vita da mediano',              artist:'Ligabue',              key:'Eb',  capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'s43', title:'Working class hero',               artist:'John Lennon',          key:'Am',  capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobvrnnwqd8gq',title:'Comfortably Numb',        artist:'Pink Floyd',           key:'Am',  capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobwnzg39cdvz',title:'Like a rolling stone',    artist:'Bob Dylan',            key:'Bb',  capo:3,    capoSimone:null, twoGuitars:true,  harp:true,  link:null,notes:null,     tags:[]},
+  {id:'mobwru03pd137',title:'Layla',                   artist:'Eric Clapton',         key:'Dm',  capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobwy45ykmxg3',title:'Purple Rain',             artist:'Prince',               key:'A',   capo:2,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobwys0zxdtab',title:"Nobody knows you when you're down and out",artist:'Eric Clapton',key:'Bb',capo:3,capoSimone:null,twoGuitars:true,harp:false,link:null,notes:null,tags:[]},
+  {id:'mobwz3ketsbt7',title:'Hotel California',        artist:'Eagles',               key:'Em',  capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobwzwj4octlr',title:'Tequila Sunrise',         artist:'Eagles',               key:'G',   capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobx10bto98vo',title:'Love hurts',              artist:'Gram Parsons',         key:'G',   capo:5,    capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobx34z6fdygx',title:'Homeward Bound',          artist:'Simon & Garfunkel',    key:'Ab',  capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobx3suewssgb',title:'Tambourine Man',          artist:'Bob Dylan',            key:'D',   capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'mobx4gbien69s',title:'Simple Twist of Fate',    artist:'Bob Dylan',            key:'D',   capo:null, capoSimone:null, twoGuitars:false, harp:true,  link:null,notes:null,     tags:[]},
+  {id:'mobx70xqr1njm',title:'BeppeAnna',               artist:'Banda Bardot',         key:'Am',  capo:null, capoSimone:null, twoGuitars:false, harp:false, link:null,notes:null,     tags:[]},
+  {id:'mobxcagv7zvgk',title:'Cream',                   artist:'Prince',               key:'A',   capo:null, capoSimone:null, twoGuitars:true,  harp:false, link:null,notes:null,     tags:[]},
 ]}]};
 
 function migrateFromRp3() {
@@ -420,15 +434,21 @@ function migrateFromRp3() {
   } catch { return null; }
 }
 
-let db = (() => {
+let db = null;
+
+async function loadDb() {
   try {
     const s = localStorage.getItem('rp4');
     if (s) { const p = JSON.parse(s); if (p.bands && p.bands.length) return p; }
   } catch {}
   const migrated = migrateFromRp3();
   if (migrated) { localStorage.setItem('rp4', JSON.stringify(migrated)); return migrated; }
+  try {
+    const r = await fetch('repertoire.json');
+    if (r.ok) { const p = await r.json(); if (p.bands && p.bands.length) { localStorage.setItem('rp4', JSON.stringify(p)); return p; } }
+  } catch {}
   return SEED;
-})();
+}
 
 const save = () => localStorage.setItem('rp4', JSON.stringify(db));
 const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -436,7 +456,7 @@ const h    = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 const safeUrl = u => { try { const p = new URL(u); return ['http:','https:'].includes(p.protocol) ? u : null; } catch { return null; } };
 
 // ── Active state ───────────────────────────────────────────────────────────────
-let activeBandId    = db.bands[0]?.id ?? null;
+let activeBandId    = null;
 let activeTab       = 'songs';
 let activeSetlistId = null;
 let activeFilters   = new Set();
@@ -1018,7 +1038,7 @@ function importData(e) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
-render();
+loadDb().then(data => { db = data; activeBandId = db.bands[0]?.id ?? null; render(); });
 </script>
 </body>
 </html>
