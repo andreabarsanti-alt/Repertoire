@@ -104,6 +104,7 @@ header h1 { font-size: 1.1rem; letter-spacing: .03em; }
 .sl-song-row.drag-over { background: #e8f0ff; border-bottom-color: #2255cc; }
 .sl-song-row.dragging { opacity: .4; }
 .sl-drag   { color: #ccc; font-size: 1rem; cursor: grab; }
+.sl-move-btns { display: none; }
 .sl-num    { color: #bbb; text-align: right; font-size: .82rem; }
 .order-inp { width:100%; text-align:center; padding:2px 0; border:1px solid transparent; border-radius:3px; font-size:.8rem; color:#bbb; background:transparent; -moz-appearance:textfield; }
 .order-inp::-webkit-inner-spin-button { opacity:0; }
@@ -190,17 +191,25 @@ header h1 { font-size: 1.1rem; letter-spacing: .03em; }
   .sl-song-row {
     display: flex; flex-wrap: wrap; align-items: center;
     gap: 3px 6px; padding: 9px 6px;
-    padding-left: 42px; padding-right: 52px; position: relative;
+    padding-left: 46px; padding-right: 52px; position: relative;
     cursor: default;
   }
   .sl-song-row .sl-drag  { display: none; }
-  .sl-song-row .order-inp {
-    position: absolute; left: 4px; top: 50%; transform: translateY(-50%); width: 32px;
+  .sl-song-row .order-inp { display: none; }
+  .sl-move-btns {
+    display: flex; flex-direction: column; gap: 2px;
+    position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
   }
+  .sl-move-btns button {
+    background: #f0f0f4; border: none; border-radius: 3px;
+    width: 28px; height: 22px; cursor: pointer; font-size: .75rem;
+    color: #555; padding: 0; line-height: 1;
+  }
+  .sl-move-btns button:active { background: #ddd; }
   .sl-song-row .sl-title  { flex: 0 0 100%; font-size: .93rem; }
   .sl-song-row .sl-artist { flex: 0 0 100%; }
   .sl-song-row a.sl-link  { position: absolute; top: 9px; right: 36px; font-size: 1rem; }
-  .sl-song-row > button   { position: absolute; top: 7px; right: 4px; }
+  .sl-song-row > button.btn   { position: absolute; top: 7px; right: 4px; }
 
   /* Setlist detail action bar */
   .detail-header { gap: 6px; }
@@ -621,8 +630,8 @@ function renderSongs() {
         `<span class="s-title">${h(s.title)}</span>` +
         `<span class="s-artist">${h(s.artist??'')}</span>` +
         `<span class="s-key">${h(s.key??'')}</span>` +
-        `<span class="s-capo">${s.capo?'capo '+s.capo:''}</span>` +
-        `<span class="s-capo">${s.capoSimone?'capo '+s.capoSimone:''}</span>` +
+        `<span class="s-capo">${s.capo?'A: '+s.capo:''}</span>` +
+        `<span class="s-capo">${s.capoSimone?'S: '+s.capoSimone:''}</span>` +
         `<span class="s-instr">${s.twoGuitars?'<span class="badge badge-2g">2G</span>':''}</span>` +
         `<span class="s-instr">${s.harp?'<span class="badge badge-h">H</span>':''}</span>` +
         `<span class="s-tags">${slChips}</span>` +
@@ -703,11 +712,12 @@ function renderSetlistDetail() {
     rows += `<div class="sl-song-row sl-cols" draggable="true" ondragstart="onDragStart(event,'${sEnc}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${slEnc}','${sEnc}')" ondragend="onDragEnd(event)">` +
       `<span class="sl-drag">⠿</span>` +
       `<input class="order-inp" type="number" value="${order}" min="1" max="${sl.songIds.length}" onclick="event.stopPropagation()" onchange="reorderSong(decodeURIComponent('${slEnc}'),decodeURIComponent('${sEnc}'),this.value)" onkeydown="if(event.key==='Enter')this.blur()">` +
+      `<div class="sl-move-btns"><button onclick="event.stopPropagation();moveInSetlist(decodeURIComponent('${slEnc}'),decodeURIComponent('${sEnc}'),-1)">↑</button><button onclick="event.stopPropagation();moveInSetlist(decodeURIComponent('${slEnc}'),decodeURIComponent('${sEnc}'),1)">↓</button></div>` +
       `<span class="sl-title">${h(s.title)}</span>` +
       `<span class="sl-artist">${h(s.artist??'')}</span>` +
       `<span class="sl-key">${h(s.key??'')}</span>` +
-      `<span class="sl-capo">${s.capo?'capo '+s.capo:''}</span>` +
-      `<span class="sl-capo">${s.capoSimone?'capo '+s.capoSimone:''}</span>` +
+      `<span class="sl-capo">${s.capo?'A: '+s.capo:''}</span>` +
+      `<span class="sl-capo">${s.capoSimone?'S: '+s.capoSimone:''}</span>` +
       `<span>${s.twoGuitars?'<span class="badge badge-2g">2G</span>':''}</span>` +
       `<span>${s.harp?'<span class="badge badge-h">H</span>':''}</span>` +
       (url?`<a class="sl-link" href="${h(url)}" target="_blank" rel="noopener">🔗</a>`:'<span></span>') +
@@ -927,6 +937,16 @@ function duplicateSetlist(slId) {
 }
 
 // ── Setlist order ─────────────────────────────────────────────────────────────
+function moveInSetlist(slId, songId, dir) {
+  const sl = band().setlists.find(s => s.id === slId);
+  const idx = sl.songIds.indexOf(songId);
+  const to  = idx + dir;
+  if (to < 0 || to >= sl.songIds.length) return;
+  sl.songIds.splice(idx, 1);
+  sl.songIds.splice(to, 0, songId);
+  save(); renderContent();
+}
+
 function reorderSong(slId, songId, val) {
   const n  = parseInt(val);
   const sl = band().setlists.find(s => s.id === slId);
