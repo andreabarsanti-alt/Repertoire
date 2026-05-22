@@ -624,7 +624,18 @@ let dragIdx = null;
 async function boot() {
   const saved = localStorage.getItem('rep_v2');
   if (saved) {
-    try { db = JSON.parse(saved); } catch {}
+    try {
+      db = JSON.parse(saved);
+      // Migrate any old locale-subdomain UG links (it., www., etc.)
+      let dirty = false;
+      db.songs.forEach(s => {
+        if (s.ugLink) {
+          const fixed = normalizeUG(s.ugLink);
+          if (fixed !== s.ugLink) { s.ugLink = fixed; dirty = true; }
+        }
+      });
+      if (dirty) save();
+    } catch {}
   } else {
     try {
       const r = await fetch('repertoire.json');
