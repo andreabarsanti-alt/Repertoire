@@ -881,7 +881,7 @@ function saveSong() {
     key:    document.getElementById('f-key').value.trim(),
     capo:   document.getElementById('f-capo').value.trim(),
     harp:   document.getElementById('f-harp').value.trim(),
-    ugLink: document.getElementById('f-uglink').value.trim(),
+    ugLink: normalizeUG(document.getElementById('f-uglink').value),
   };
 
   if (editSongId) {
@@ -1093,6 +1093,13 @@ document.addEventListener('keydown', e => {
 // ─────────────────────────────────────────
 // UTILS
 // ─────────────────────────────────────────
+function normalizeUG(url) {
+  if (!url) return '';
+  // Convert any locale/www subdomain to tabs.ultimate-guitar.com for Universal Links
+  return url.trim().replace(/^https?:\/\/(?:[a-z]{2}|www)\.ultimate-guitar\.com/,
+                             'https://tabs.ultimate-guitar.com');
+}
+
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
