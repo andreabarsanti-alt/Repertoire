@@ -1584,9 +1584,7 @@ function saveGithubConfig() {
 }
 
 async function pushToGithub() {
-  const cfg = getGithubConfig();
-  if (!cfg || !cfg.token || !cfg.owner || !cfg.repo) { openGithubConfigModal(); return; }
-  doPush(cfg);
+  openGithubConfigModal();
 }
 
 async function doPush(cfg) {
