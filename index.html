@@ -636,6 +636,7 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
   <div class="toolbar">
     <button class="btn btn-primary" onclick="openSongModal()">+ Add Song</button>
     <button class="btn btn-secondary btn-sm" onclick="openUGImport()" title="Import from Ultimate Guitar">⬇ UG</button>
+    <button class="btn btn-secondary btn-sm" onclick="openPrintModal('songs')" title="Print song list">⎙ Print</button>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
   <div class="tbl-wrap">
@@ -764,6 +765,25 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
       <button class="btn btn-primary" id="ug-import-btn" onclick="confirmUGImport()" disabled>Add Song</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PRINT MODAL ══ -->
+<div class="overlay hidden" id="print-modal">
+  <div class="modal" style="max-width:320px">
+    <h2>Print options</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="print-capo" style="width:16px;height:16px"> Include Capo
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="print-harp" style="width:16px;height:16px"> Include Harp
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('print-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="doPrint()">Print</button>
     </div>
   </div>
 </div>
@@ -1287,6 +1307,7 @@ function renderSetDetail() {
       <h2>${esc(sl.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${songs.length} songs</span></h2>
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
+        <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
         <button class="btn btn-primary   btn-sm" onclick="openAddSongsModal()">+ Add Songs</button>
       </div>
     </div>
@@ -1434,6 +1455,72 @@ function confirmAddSongs() {
 function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+let _printTarget = null;
+function openPrintModal(target) {
+  _printTarget = target;
+  document.getElementById('print-modal').classList.remove('hidden');
+}
+
+function doPrint() {
+  const inclCapo = document.getElementById('print-capo').checked;
+  const inclHarp = document.getElementById('print-harp').checked;
+  closeModal('print-modal');
+
+  let songs, title;
+  if (_printTarget === 'setlist') {
+    const sl = db.setlists.find(s => s.id === activeSetId);
+    if (!sl) return;
+    songs = sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean);
+    title = sl.name;
+  } else {
+    songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
+    title = 'Songs';
+  }
+
+  const extraCol = inclCapo || inclHarp;
+  const rows = songs.map((s, i) => {
+    let extras = '';
+    if (inclCapo && s.capo) extras += `<span class="badge">Capo ${s.capo}</span>`;
+    if (inclHarp && s.harp) extras += `<span class="badge harp">Harp ${s.harp}</span>`;
+    return `<tr>
+      <td class="num">${i + 1}</td>
+      <td class="ttl">${s.title}</td>
+      <td class="key">${s.key || ''}</td>
+      ${extraCol ? `<td class="ext">${extras}</td>` : ''}
+    </tr>`;
+  }).join('');
+
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${title}</title>
+<style>
+  body { font-family: Georgia, serif; margin: 36px 48px; color: #000; }
+  h1 { font-size: 1.4rem; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em;
+       border-bottom: 1px solid #000; padding: 4px 8px; }
+  td { padding: 7px 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+  .num { color: #888; width: 28px; text-align: right; padding-right: 12px; }
+  .key { font-weight: 700; width: 36px; }
+  .ext { width: 140px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 4px;
+           font-size: 0.78rem; margin-right: 4px; border: 1px solid #bbb; font-family: sans-serif; }
+  .harp { border-color: #6a0; color: #3a0; }
+  @media print { body { margin: 16px 24px; } }
+</style></head><body>
+<h1>${title}</h1>
+<table>
+  <thead><tr>
+    <th class="num">#</th><th>Title</th><th>Key</th>
+    ${extraCol ? '<th></th>' : ''}
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+</body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 250);
+}
+
 document.querySelectorAll('.overlay').forEach(o =>
   o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); })
 );
@@ -1513,17 +1600,38 @@ function renderPlayList(autoScroll = true) {
 // Detect centered song after scroll snaps
 (function() {
   const list = document.getElementById('play-list');
+
+  function snapIdx() {
+    if (!playSetId) return -1;
+    const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return -1;
+    const max = sl.songIds.filter(id => db.songs.find(s => s.id === id)).length - 1;
+    return Math.max(0, Math.min(max, Math.round(list.scrollTop / PLAY_ITEM_H)));
+  }
+
+  // Immediate: just toggle the class + progress so the highlight moves with the scroll
+  function onScrollLive() {
+    if (!playSetId) return;
+    const idx = snapIdx(); if (idx < 0 || idx === playIdx) return;
+    playIdx = idx;
+    list.querySelectorAll('.play-song').forEach((el, i) => el.classList.toggle('play-current', i === idx));
+    const sl = db.setlists.find(s => s.id === playSetId);
+    if (sl) {
+      const len = sl.songIds.filter(id => db.songs.find(s => s.id === id)).length;
+      document.getElementById('play-progress').textContent = `${idx + 1} / ${len}`;
+    }
+  }
+
+  // After snap settles: full re-render to restore nav buttons, link, badges
   function onSnap() {
     if (!playSetId) return;
-    const i  = Math.round(list.scrollTop / PLAY_ITEM_H);
-    const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return;
-    const max = sl.songIds.filter(id => db.songs.find(s => s.id === id)).length - 1;
-    const idx = Math.max(0, Math.min(max, i));
-    if (idx !== playIdx) { playIdx = idx; renderPlayList(false); }
+    const idx = snapIdx(); if (idx < 0) return;
+    playIdx = idx; renderPlayList(false);
   }
+
+  list.addEventListener('scroll', onScrollLive);
   list.addEventListener('scrollend', onSnap);
   let _st;
-  list.addEventListener('scroll', () => { clearTimeout(_st); _st = setTimeout(onSnap, 120); });
+  list.addEventListener('scroll', () => { clearTimeout(_st); _st = setTimeout(onSnap, 60); });
 })();
 
 function handlePlayClick(e, idx) {
