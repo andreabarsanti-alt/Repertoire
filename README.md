@@ -5,28 +5,32 @@ A single-page web app for managing a musical repertoire — built to run on an i
 ## Features
 
 ### Visualizer
-- Songs displayed as animated floating bubbles, grouped by **Artist**, **Tag**, or **Setlist**
+- Songs displayed as animated floating glass bubbles, grouped by tag
 - Bubble size scales with the number of songs in the group
-- Click a bubble to open an overlay listing all songs in that group
-- Click a song title to open it directly in Ultimate Guitar
+- Click a bubble to open an overlay listing all songs in that group with Key / Capo / Harp badges
+- Click a song title to open it in Ultimate Guitar
 
 ### Songs
-- Full sortable, searchable table of all songs
-- Add, edit, and delete songs
-- Each song stores: Title, Artist, Tags, Key, Capo, Harp, Ultimate Guitar link
-- Key / Capo / Harp shown as white badge chips next to the title in all views
+- Sortable, searchable table of all songs
+- Add, inline-edit, and delete songs
+- Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
+- Key / Capo / Harp shown as badge chips in all views
+- **Quick UG Import** — paste a Ultimate Guitar URL to auto-detect title and artist
+- Tag autocomplete when editing — suggests existing tags as you type
 
 ### Setlists
-- Create and manage multiple setlists / gig setlists
+- Create and manage multiple setlists
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
-- Click a song title to open it in Ultimate Guitar
+- **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar
 
 ### Data
 - All data stored in `localStorage` (persists across sessions on the same device)
 - On first load, seeds from `repertoire.json` if no saved data exists
+- Detects when the repo file differs from local data and offers to sync
 - **Export** — downloads current state as `repertoire.json`
 - **Import** — loads a previously exported JSON file
+- **Push to GitHub** — pushes `repertoire.json` directly to the repo via GitHub API
 
 ## Hosting on GitHub Pages
 

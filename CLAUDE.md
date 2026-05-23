@@ -45,7 +45,13 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 
 ## Key Implementation Details
 
-- Songs displayed as animated floating bubbles in the Visualizer, grouped by Tag or Setlist
-- Ultimate Guitar links use Universal Link domain for iPad app compatibility
-- Export/Import functionality for data backup via JSON files
-- Drag-and-drop reordering in setlists
+- **Theme**: Deep blue-black / muted teal (`#3d9e8c`) studio/DAW aesthetic
+- **Visualizer**: Animated glass bubbles packed with a circle-packing algorithm, grouped by tag; bubble size proportional to song count
+- **Songs table**: Inline editing (click row or ✎ button); sortable columns; tag autocomplete dropdown on tags fields
+- **Quick UG Import**: Parses title and artist from a UG URL slug — no network request needed. Pattern: `/tab/{artist}/{title}-{type}-{id}`
+- **Ultimate Guitar links**: Normalized to `tabs.ultimate-guitar.com` Universal Link domain for iOS app compatibility
+- **Setlists**: Drag-and-drop reordering via HTML5 drag API; touch-friendly ↑↓ buttons
+- **Play mode**: Scroll-snap drum-roll UX — fixed 100px items, CSS `scroll-snap-type: y mandatory`, centered item detected via `scrollend` + debounced `scroll`. Auto-advances on return from UG via `visibilitychange`
+- **GitHub push**: Uses GitHub Contents API (PUT) to commit `repertoire.json` directly; config stored in `localStorage`
+- **Repo sync**: On boot, fetches `repertoire.json` and compares fingerprints; shows banner if remote differs
+- **Viewport fix**: Resets viewport meta on `visibilitychange` to prevent iPad Safari zoom-out on app resume
