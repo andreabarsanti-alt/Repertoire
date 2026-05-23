@@ -708,6 +708,7 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
       Token needs <strong>Contents: Read & Write</strong> permission.<br>Settings are stored locally in your browser.
     </p>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="clearGithubConfig()" style="margin-right:auto">Clear settings</button>
       <button class="btn btn-secondary" onclick="closeModal('github-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveGithubConfig()">Save &amp; Push</button>
     </div>
@@ -1533,6 +1534,17 @@ document.getElementById('f-set-name').addEventListener('keydown', e => e.key==='
 // ─────────────────────────────────────────
 function getGithubConfig() {
   try { return JSON.parse(localStorage.getItem('rep_github_config') || 'null'); } catch { return null; }
+}
+
+function clearGithubConfig() {
+  localStorage.removeItem('rep_github_config');
+  const auto = autoDetectGithub();
+  document.getElementById('gh-token').value  = '';
+  document.getElementById('gh-owner').value  = auto.owner;
+  document.getElementById('gh-repo').value   = auto.repo;
+  document.getElementById('gh-branch').value = 'main';
+  document.getElementById('gh-path').value   = 'repertoire.json';
+  toast('GitHub settings cleared');
 }
 
 function autoDetectGithub() {
