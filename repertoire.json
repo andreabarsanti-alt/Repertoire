@@ -106,7 +106,7 @@
       "capo": "6",
       "harp": "",
       "tags": "Eddie Vedder",
-      "ugLink": ""
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/eddie-vedder/society-official-1948063"
     },
     {
       "id": "s08",
@@ -160,7 +160,7 @@
       "capo": "3",
       "harp": "",
       "tags": "Eric Clapton, Blues",
-      "ugLink": ""
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/nobody-knows-you-when-youre-down-and-out-official-5505261"
     },
     {
       "id": "s12",
@@ -394,7 +394,7 @@
       "capo": "3",
       "harp": "",
       "tags": "U2",
-      "ugLink": ""
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391"
     },
     {
       "id": "s39",
@@ -422,15 +422,6 @@
       "harp": "",
       "tags": "Leonard Cohen",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/jeff-buckley/hallelujah-official-2143565"
-    },
-    {
-      "id": "s43",
-      "title": "Working class hero",
-      "key": "Am",
-      "capo": "",
-      "harp": "",
-      "tags": "John Lennon",
-      "ugLink": ""
     },
     {
       "id": "mobwy45ykmxg3",
@@ -475,7 +466,7 @@
       "capo": "5",
       "harp": "",
       "tags": "Gram Parsons",
-      "ugLink": ""
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/gram-parsons/love-hurts-chords-1905656"
     },
     {
       "id": "mobx70xqr1njm",
@@ -566,6 +557,42 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=KUa6P3BrGtydxflzIN8eGo0V&tab_id=30461633"
+    },
+    {
+      "id": "6dec3f02-828c-43d7-916f-825d825a2bac",
+      "title": "C’è una strana espressione nei tuoi occhi",
+      "tags": "The Rokes, Italiana",
+      "key": "",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rokes/ce-una-strana-chords-82189"
+    },
+    {
+      "id": "115ff934-ff2d-4102-b150-0ca7d303f124",
+      "title": "No Surprises",
+      "tags": "Radiohead,",
+      "key": "",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/no-surprises-official-1910937"
+    },
+    {
+      "id": "86b59268-5f33-4c3a-be96-a3099959ca4e",
+      "title": "With Or Without You",
+      "tags": "U2,",
+      "key": "",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/with-or-without-you-official-1955543"
+    },
+    {
+      "id": "465fc6a1-c309-497e-b675-120109708544",
+      "title": "Working Class Hero",
+      "tags": "John Lennon,",
+      "key": "Am",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/john-lennon/working-class-hero-official-2081789"
     }
   ],
   "setlists": [
