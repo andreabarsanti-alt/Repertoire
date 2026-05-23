@@ -575,6 +575,15 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 }
 .play-current .kch-wrap { margin-top: 8px; justify-content: center; }
 .play-current .kch { font-size: 1.0rem; padding: 6px 14px; background: rgba(61,158,140,.2); border-color: rgba(61,158,140,.4); color: #6ed4c0; }
+.play-title-row { display: flex; align-items: center; gap: 20px; }
+.play-nav-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.6rem; line-height: 1;
+  color: rgba(255,255,255,.75); padding: 6px 10px; border-radius: 8px;
+  transition: color .15s; flex-shrink: 0;
+}
+.play-nav-btn:hover { color: rgba(255,255,255,.9); }
+.play-nav-btn:disabled { opacity: 0.2; cursor: default; }
 
 </style>
 </head>
@@ -736,8 +745,6 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
     <div id="play-header">
       <div id="play-set-title"></div>
       <span id="play-progress"></span>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="stepPlay(-1)" title="Previous">↑</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="stepPlay(1)"  title="Next">↓</button>
       <button class="close-x" onclick="closePlay()">×</button>
     </div>
     <div id="play-list"></div>
@@ -1481,9 +1488,16 @@ function renderPlayList(autoScroll = true) {
     const title  = cur && s.ugLink
       ? `<a href="${esc(s.ugLink)}" target="_blank" onclick="playOpenedUG=true">${esc(s.title)}</a>`
       : esc(s.title);
+    const titleEl = cur
+      ? `<div class="play-title-row">
+          <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(-1)" title="Previous" ${i===0?'disabled':''}>↑</button>
+          <div class="play-title-text">${title}</div>
+          <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(1)" title="Next" ${i===songs.length-1?'disabled':''}>↓</button>
+        </div>`
+      : `<div class="play-title-text">${title}</div>`;
     return `<div class="play-song${cur ? ' play-current' : ''}" data-idx="${i}" onclick="handlePlayClick(event,${i})">
       ${cur ? `<div class="play-num">${i + 1}.</div>` : ''}
-      <div class="play-title-text">${title}</div>
+      ${titleEl}
       ${cur && badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </div>`;
   }).join('');
