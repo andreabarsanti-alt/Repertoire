@@ -1488,9 +1488,14 @@ function handlePlayClick(e, idx) {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && playOpenedUG && playSetId) {
-    playOpenedUG = false;
-    stepPlay(1);
+  if (!document.hidden) {
+    // Reset viewport scale — Safari on iPad sometimes zooms out on app resume
+    const m = document.querySelector('meta[name=viewport]');
+    m.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    if (playOpenedUG && playSetId) {
+      playOpenedUG = false;
+      stepPlay(1);
+    }
   }
 });
 
