@@ -762,6 +762,10 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
       <input class="fi" id="ug-import-url" type="url" placeholder="https://tabs.ultimate-guitar.com/tab/…" oninput="onUGImportInput()">
     </div>
     <div id="ug-import-preview" style="display:none;padding:10px 13px;background:var(--surface2);border-radius:var(--radius);margin-bottom:4px;font-size:0.82rem;color:var(--text-dim)"></div>
+    <div class="fg">
+      <label>Tags (comma separated)</label>
+      <input class="fi" id="ug-import-tags" type="text" placeholder="artist, genre, style">
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
       <button class="btn btn-primary" id="ug-import-btn" onclick="confirmUGImport()" disabled>Add Song</button>
@@ -1844,6 +1848,7 @@ function parseUGUrl(url) {
 
 function openUGImport() {
   document.getElementById('ug-import-url').value = '';
+  document.getElementById('ug-import-tags').value = '';
   document.getElementById('ug-import-preview').style.display = 'none';
   document.getElementById('ug-import-btn').disabled = true;
   openModal('ug-import-modal');
@@ -1867,11 +1872,12 @@ function onUGImportInput() {
 
 function confirmUGImport() {
   const url    = document.getElementById('ug-import-url').value.trim();
+  const tags   = document.getElementById('ug-import-tags').value.trim();
   const parsed = parseUGUrl(url);
   closeModal('ug-import-modal');
   document.getElementById('song-modal-title').textContent = 'Add Song';
   document.getElementById('f-title').value  = parsed?.title  || '';
-  document.getElementById('f-tags').value   = parsed?.artist ? parsed.artist + ', ' : '';
+  document.getElementById('f-tags').value   = tags || (parsed?.artist ? parsed.artist + ', ' : '');
   document.getElementById('f-key').value    = '';
   document.getElementById('f-capo').value   = '';
   document.getElementById('f-harp').value   = '';
@@ -1882,6 +1888,9 @@ function confirmUGImport() {
 
 document.getElementById('ug-import-url').addEventListener('keydown', e => {
   if (e.key === 'Enter') confirmUGImport();
+});
+document.getElementById('ug-import-tags').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && tagAcEl.style.display === 'none') confirmUGImport();
 });
 
 // ─────────────────────────────────────────
@@ -1931,10 +1940,10 @@ function selectTagAc(e, tag) {
 }
 
 document.addEventListener('input', e => {
-  if (['f-tags','ie-tags'].includes(e.target.id)) showTagAc(e.target);
+  if (['f-tags','ie-tags','ug-import-tags'].includes(e.target.id)) showTagAc(e.target);
 });
 document.addEventListener('focusout', e => {
-  if (['f-tags','ie-tags'].includes(e.target.id)) setTimeout(hideTagAc, 150);
+  if (['f-tags','ie-tags','ug-import-tags'].includes(e.target.id)) setTimeout(hideTagAc, 150);
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && tagAcEl.style.display !== 'none') { hideTagAc(); e.stopPropagation(); }
