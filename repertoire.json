@@ -183,7 +183,7 @@
     {
       "id": "s14",
       "title": "Scarborough Fair",
-      "key": "Dm",
+      "key": "Ebm",
       "capo": "",
       "harp": "",
       "tags": "Simon & Garfunkel",
@@ -202,7 +202,7 @@
       "id": "s32",
       "title": "Mrs Robinson",
       "key": "G",
-      "capo": "7",
+      "capo": "",
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/mrs-robinson-official-2153469"
@@ -210,7 +210,7 @@
     {
       "id": "s33",
       "title": "The Boxer",
-      "key": "Ab",
+      "key": "A",
       "capo": "2",
       "harp": "",
       "tags": "Simon & Garfunkel",
@@ -381,8 +381,8 @@
     {
       "id": "s35",
       "title": "Space Oddity",
-      "key": "Bb",
-      "capo": "3",
+      "key": "B",
+      "capo": "4",
       "harp": "",
       "tags": "David Bowie",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-official-1960239"
@@ -490,8 +490,8 @@
       "id": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
       "title": "Kodachrome",
       "tags": "Simon & Garfunkel",
-      "key": "G",
-      "capo": "",
+      "key": "Eb",
+      "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/paul-simon/kodachrome-official-3012761"
     },
@@ -509,7 +509,7 @@
       "title": "Here Comes The Sun",
       "tags": "The Beatles,",
       "key": "G",
-      "capo": "5",
+      "capo": "6",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/here-comes-the-sun-official-1990437"
     },
@@ -517,7 +517,7 @@
       "id": "e48da248-3058-469a-89c2-52b5de9ae6ee",
       "title": "I Am A Rock",
       "tags": "Simon & Garfunkel",
-      "key": "",
+      "key": "Bb",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/i-am-a-rock-official-3183473"
@@ -526,8 +526,8 @@
       "id": "61c15a11-1643-472f-8394-a1e50e28d7e6",
       "title": "A Hazy Shade Of Winter",
       "tags": "Simon & Garfunkel,",
-      "key": "",
-      "capo": "",
+      "key": "Cm",
+      "capo": "3",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/a-hazy-shade-of-winter-official-3269117"
     },
@@ -593,6 +593,87 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/john-lennon/working-class-hero-official-2081789"
+    },
+    {
+      "id": "babba8c0-8d5b-4895-aaa1-82ea835874bf",
+      "title": "Si Viaggiare",
+      "tags": "Italiana, Lucio Battisti",
+      "key": "",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/lucio-battisti/si-viaggiare-chords-1900826"
+    },
+    {
+      "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
+      "title": "Heroes",
+      "tags": "David Bowie,",
+      "key": "D",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/heroes-official-2457982"
+    },
+    {
+      "id": "86da8e3a-0412-4612-acf2-ac53ee65a491",
+      "title": "Starman",
+      "tags": "David Bowie,",
+      "key": "F#m",
+      "capo": "2",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/starman-official-2085341"
+    },
+    {
+      "id": "b5f5de41-59b0-4fec-aedd-5014761404c5",
+      "title": "Fragile",
+      "tags": "Sting,",
+      "key": "Ebm",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/sting/fragile-official-2463044"
+    },
+    {
+      "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
+      "title": "39",
+      "tags": "Queen,",
+      "key": "",
+      "capo": "-1",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497"
+    },
+    {
+      "id": "9f70d931-5b49-4190-ab24-9aa29961e234",
+      "title": "A Day In The Life",
+      "tags": "The Beatles,",
+      "key": "",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/a-day-in-the-life-official-2146997"
+    },
+    {
+      "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
+      "title": "All My Loving",
+      "tags": "The Beatles,",
+      "key": "D",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855"
+    },
+    {
+      "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
+      "title": "And I Love Her",
+      "tags": "The Beatles,",
+      "key": "D",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/and-i-love-her-official-2042407"
+    },
+    {
+      "id": "8b195afc-2191-4028-976a-b77044a54478",
+      "title": "Something",
+      "tags": "The Beatles,",
+      "key": "B",
+      "capo": "2",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/something-official-1997363"
     }
   ],
   "setlists": [
