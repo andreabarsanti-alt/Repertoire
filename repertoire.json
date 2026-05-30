@@ -60,7 +60,7 @@
       "key": "G#m",
       "capo": "4",
       "harp": "",
-      "tags": "The Beatles",
+      "tags": "The Beatles,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/while-my-guitar-gently-weeps-official-1962225"
     },
     {
@@ -69,7 +69,7 @@
       "key": "F",
       "capo": "",
       "harp": "",
-      "tags": "The Beatles",
+      "tags": "The Beatles,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/blackbird-official-2093927"
     },
     {
@@ -78,7 +78,7 @@
       "key": "C",
       "capo": "5",
       "harp": "",
-      "tags": "The Beatles",
+      "tags": "The Beatles,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/we-can-work-it-out-official-2091581"
     },
     {
@@ -87,7 +87,7 @@
       "key": "F",
       "capo": "3",
       "harp": "",
-      "tags": "The Beatles",
+      "tags": "The Beatles,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/two-of-us-official-2148807"
     },
     {
@@ -141,7 +141,7 @@
       "key": "G#",
       "capo": "",
       "harp": "",
-      "tags": "Eric Clapton",
+      "tags": "Eric Clapton,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/tears-in-heaven-official-1934645"
     },
     {
@@ -150,7 +150,7 @@
       "key": "Dm",
       "capo": "5",
       "harp": "",
-      "tags": "Eric Clapton",
+      "tags": "Eric Clapton,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/layla-official-3551282"
     },
     {
@@ -375,7 +375,7 @@
       "key": "G#",
       "capo": "4",
       "harp": "",
-      "tags": "David Bowie",
+      "tags": "David Bowie,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/the-man-who-sold-the-world-official-2076777"
     },
     {
@@ -384,7 +384,7 @@
       "key": "B",
       "capo": "4",
       "harp": "",
-      "tags": "David Bowie",
+      "tags": "David Bowie,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-official-1960239"
     },
     {
@@ -393,7 +393,7 @@
       "key": "Gm",
       "capo": "3",
       "harp": "",
-      "tags": "U2",
+      "tags": "U2,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391"
     },
     {
@@ -402,7 +402,7 @@
       "key": "F#",
       "capo": "6",
       "harp": "",
-      "tags": "Pink Floyd",
+      "tags": "Pink Floyd,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/wish-you-were-here-official-2412207"
     },
     {
@@ -411,7 +411,7 @@
       "key": "Am",
       "capo": "",
       "harp": "",
-      "tags": "Pink Floyd",
+      "tags": "Pink Floyd,  British",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/comfortably-numb-official-1939571"
     },
     {
@@ -507,7 +507,7 @@
     {
       "id": "51af4aea-828e-45ad-b215-50dd9f750afe",
       "title": "Here Comes The Sun",
-      "tags": "The Beatles,",
+      "tags": "The Beatles,  British",
       "key": "G",
       "capo": "6",
       "harp": "",
@@ -552,7 +552,7 @@
     {
       "id": "12836013-3483-4122-a342-218470148f7d",
       "title": "Brain Damage / Eclipse",
-      "tags": "Pink Floyd,",
+      "tags": "Pink Floyd,  British",
       "key": "D",
       "capo": "",
       "harp": "",
@@ -561,7 +561,7 @@
     {
       "id": "6dec3f02-828c-43d7-916f-825d825a2bac",
       "title": "C’è una strana espressione nei tuoi occhi",
-      "tags": "The Rokes, Italiana",
+      "tags": "The Rokes, Italiana,  British",
       "key": "",
       "capo": "",
       "harp": "",
@@ -570,7 +570,7 @@
     {
       "id": "115ff934-ff2d-4102-b150-0ca7d303f124",
       "title": "No Surprises",
-      "tags": "Radiohead,",
+      "tags": "Radiohead,  British",
       "key": "",
       "capo": "",
       "harp": "",
@@ -579,7 +579,7 @@
     {
       "id": "86b59268-5f33-4c3a-be96-a3099959ca4e",
       "title": "With Or Without You",
-      "tags": "U2,",
+      "tags": "U2,  British",
       "key": "",
       "capo": "",
       "harp": "",
@@ -588,7 +588,7 @@
     {
       "id": "465fc6a1-c309-497e-b675-120109708544",
       "title": "Working Class Hero",
-      "tags": "John Lennon,",
+      "tags": "John Lennon,  British",
       "key": "Am",
       "capo": "",
       "harp": "",
@@ -606,7 +606,7 @@
     {
       "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
       "title": "Heroes",
-      "tags": "David Bowie,",
+      "tags": "David Bowie,  British",
       "key": "D",
       "capo": "",
       "harp": "",
@@ -615,7 +615,7 @@
     {
       "id": "86da8e3a-0412-4612-acf2-ac53ee65a491",
       "title": "Starman",
-      "tags": "David Bowie,",
+      "tags": "David Bowie,  British",
       "key": "F#m",
       "capo": "2",
       "harp": "",
@@ -624,7 +624,7 @@
     {
       "id": "b5f5de41-59b0-4fec-aedd-5014761404c5",
       "title": "Fragile",
-      "tags": "Sting,",
+      "tags": "Sting,  British",
       "key": "Ebm",
       "capo": "",
       "harp": "",
@@ -633,7 +633,7 @@
     {
       "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
       "title": "39",
-      "tags": "Queen,",
+      "tags": "Queen, British",
       "key": "",
       "capo": "-1",
       "harp": "",
@@ -642,7 +642,7 @@
     {
       "id": "9f70d931-5b49-4190-ab24-9aa29961e234",
       "title": "A Day In The Life",
-      "tags": "The Beatles,",
+      "tags": "The Beatles,  British",
       "key": "",
       "capo": "",
       "harp": "",
@@ -651,7 +651,7 @@
     {
       "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
       "title": "All My Loving",
-      "tags": "The Beatles,",
+      "tags": "The Beatles,  British",
       "key": "D",
       "capo": "",
       "harp": "",
@@ -660,7 +660,7 @@
     {
       "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
       "title": "And I Love Her",
-      "tags": "The Beatles,",
+      "tags": "The Beatles,  British",
       "key": "D",
       "capo": "",
       "harp": "",
@@ -669,7 +669,7 @@
     {
       "id": "8b195afc-2191-4028-976a-b77044a54478",
       "title": "Something",
-      "tags": "The Beatles,",
+      "tags": "The Beatles,  British",
       "key": "B",
       "capo": "2",
       "harp": "",
