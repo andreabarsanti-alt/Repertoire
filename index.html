@@ -962,7 +962,9 @@ async function checkRepoSync() {
 
 function acceptSync() {
   const banner = document.getElementById('sync-banner');
+  const localTagMeta = db.tagMeta || {};
   db = banner._repoData;
+  if (!db.tagMeta) db.tagMeta = localTagMeta;
   save(); renderAll();
   banner.classList.add('hidden');
   toast('Loaded from repo');
@@ -988,6 +990,7 @@ function importJSON(e) {
     try {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
+        if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
         db = d; save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
