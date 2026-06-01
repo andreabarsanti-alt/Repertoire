@@ -748,7 +748,98 @@
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/wild-horses-official-2469000"
     }
   ],
-  "tagMeta": {},
+  "tagMeta": {
+    "Banda Bardot": {
+      "artist": true
+    },
+    "Bob Dylan": {
+      "artist": true
+    },
+    "Bruce Springsteen": {
+      "artist": true
+    },
+    "David Bowie": {
+      "artist": true
+    },
+    "Eagles": {
+      "artist": true
+    },
+    "Eddie Vedder": {
+      "artist": true
+    },
+    "Eric Clapton": {
+      "artist": true
+    },
+    "Francesco De Gregori": {
+      "artist": true
+    },
+    "Gram Parsons": {
+      "artist": true
+    },
+    "Italiana": {
+      "artist": true
+    },
+    "John Lennon": {
+      "artist": true
+    },
+    "Johnny Cash": {
+      "artist": true
+    },
+    "Leonard Cohen": {
+      "artist": true
+    },
+    "Ligabue": {
+      "artist": true
+    },
+    "Lucio Battisti": {
+      "artist": true
+    },
+    "Neil Young": {
+      "artist": true
+    },
+    "Pink Floyd": {
+      "artist": true
+    },
+    "Prince": {
+      "artist": true
+    },
+    "Queen": {
+      "artist": true
+    },
+    "R E M": {
+      "artist": true
+    },
+    "Radiohead": {
+      "artist": true
+    },
+    "Robert Johnson": {
+      "artist": true
+    },
+    "Simon & Garfunkel": {
+      "artist": true
+    },
+    "Sting": {
+      "artist": true
+    },
+    "The Band": {
+      "artist": true
+    },
+    "The Beatles": {
+      "artist": true
+    },
+    "The Rokes": {
+      "artist": true
+    },
+    "The Rolling Stones": {
+      "artist": true
+    },
+    "Tom Waits": {
+      "artist": true
+    },
+    "U2": {
+      "artist": true
+    }
+  },
   "setlists": [
     {
       "id": "sl1",
