@@ -185,6 +185,68 @@ nav { display: flex; gap: 3px; flex: 1; }
   text-shadow: 0 1px 4px rgba(0,0,0,.5);
   position: relative; z-index: 1;
 }
+.bubble-type-badge {
+  font-size: 0.55rem; opacity: .65; margin-top: 2px; letter-spacing: .06em;
+  text-transform: uppercase; position: relative; z-index: 1;
+}
+.bubble.artist-bubble {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18),
+              0 10px 36px rgba(0,0,0,.55),
+              0 0 0 1px rgba(196,158,50,.3);
+}
+.bubble.artist-bubble.active-bubble {
+  box-shadow: 0 0 0 3px rgba(196,158,50,.9),
+              0 0 28px rgba(196,158,50,.4),
+              inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* ── VIZ TOOLBAR ──────────────────────────── */
+#viz-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 0 14px 0; flex-wrap: wrap;
+}
+#viz-filters { display: flex; gap: 4px; }
+.viz-filter-btn {
+  padding: 7px 16px; border: 1px solid var(--border);
+  border-radius: 20px; cursor: pointer;
+  font-size: 0.78rem; font-weight: 500;
+  background: transparent; color: var(--text-dim);
+  transition: all .18s;
+}
+.viz-filter-btn.active {
+  background: var(--accent); color: #e8f8f5;
+  border-color: var(--accent); font-weight: 600;
+}
+.viz-filter-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
+
+/* ── TAG EDITOR ───────────────────────────── */
+#tag-editor-list { max-height: 58dvh; overflow-y: auto; }
+.te-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(30,42,58,.7);
+}
+.te-row:last-child { border-bottom: none; }
+.te-input {
+  flex: 1; min-height: 36px; padding: 6px 10px; font-size: 0.82rem;
+}
+.te-artist-btn {
+  flex-shrink: 0; padding: 5px 12px;
+  border-radius: 12px; border: 1px solid var(--border);
+  font-size: 0.72rem; font-weight: 500; cursor: pointer;
+  background: transparent; color: var(--text-dim);
+  transition: all .15s; white-space: nowrap;
+}
+.te-artist-btn.active {
+  background: rgba(196,150,50,.18); border-color: rgba(196,150,50,.55); color: #d4aa50;
+}
+.te-del-btn {
+  flex-shrink: 0; width: 32px; height: 32px;
+  border-radius: 6px; border: none; cursor: pointer;
+  background: transparent; color: var(--text-dim);
+  font-size: 1rem; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.te-del-btn:hover { background: rgba(196,74,74,.18); color: var(--danger); }
 
 /* Detail overlay */
 #bubble-detail {
@@ -619,6 +681,14 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 
 <!-- ══ VISUALIZER ══ -->
 <div id="tab-viz" class="tab active">
+  <div id="viz-toolbar">
+    <div id="viz-filters">
+      <button class="viz-filter-btn active" data-filter="all"    onclick="setVizFilter('all')">All</button>
+      <button class="viz-filter-btn"        data-filter="artist" onclick="setVizFilter('artist')">Artists</button>
+      <button class="viz-filter-btn"        data-filter="tag"    onclick="setVizFilter('tag')">Tags</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="openTagEditor()">✎ Tags</button>
+  </div>
   <div id="bubbles-wrap"></div>
   <div id="bubble-detail" class="hidden" onclick="if(event.target===this)closeDetail()">
     <div id="bubble-detail-inner">
@@ -801,13 +871,14 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 // ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
-let db = { songs: [], setlists: [] };
+let db = { songs: [], setlists: [], tagMeta: {} };
 let activeBubble  = null;
 let inlineEditId  = null;
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let dragIdx = null;
+let vizFilter = 'all';
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -843,6 +914,7 @@ async function boot() {
       if (r.ok) { db = await r.json(); save(); }
     } catch {}
   }
+  if (!db.tagMeta) db.tagMeta = {};
   renderAll();
 }
 
@@ -953,7 +1025,17 @@ const PALETTE = [
   ['rgba(176,80,90,0.82)','rgba(130,40,52,0.72)'],
   ['rgba(60,150,148,0.82)','rgba(32,100,98,0.72)'],
 ];
-function bubbleColor(i) { return PALETTE[i % PALETTE.length]; }
+const ARTIST_PALETTE = [
+  ['rgba(196,148,50,0.82)','rgba(148,100,20,0.72)'],
+  ['rgba(200,110,58,0.82)','rgba(152,70,26,0.72)'],
+  ['rgba(188,80,100,0.82)','rgba(142,44,62,0.72)'],
+  ['rgba(178,158,48,0.82)','rgba(130,112,18,0.72)'],
+  ['rgba(202,120,68,0.82)','rgba(154,78,30,0.72)'],
+  ['rgba(184,88,130,0.82)','rgba(136,50,88,0.72)'],
+];
+function bubbleColor(i, isArtist) {
+  return isArtist ? ARTIST_PALETTE[i % ARTIST_PALETTE.length] : PALETTE[i % PALETTE.length];
+}
 
 // ─────────────────────────────────────────
 // VISUALIZER
@@ -962,8 +1044,18 @@ function getGroups() {
   const g = {};
   db.songs.forEach(s => {
     const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-    if (!tags.length) { (g['Untagged'] = g['Untagged'] || []).push(s); }
-    else tags.forEach(t => (g[t] = g[t] || []).push(s));
+    if (!tags.length) {
+      if (vizFilter !== 'artist') (g['Untagged'] = g['Untagged'] || []).push(s);
+    } else {
+      tags.forEach(t => {
+        const isArtist = !!(db.tagMeta?.[t]?.artist);
+        if (vizFilter === 'all' ||
+            (vizFilter === 'artist' && isArtist) ||
+            (vizFilter === 'tag' && !isArtist)) {
+          (g[t] = g[t] || []).push(s);
+        }
+      });
+    }
   });
   return g;
 }
@@ -1037,7 +1129,8 @@ function renderBubbles() {
   const max   = Math.max(...keys.map(k => groups[k].length));
   const items = keys.map((key, i) => ({
     key, count: groups[key].length, i,
-    r: Math.round(38 + (groups[key].length / max) * 52)
+    r: Math.round(38 + (groups[key].length / max) * 52),
+    artist: !!(db.tagMeta?.[key]?.artist)
   }));
 
   packBubbles(items);
@@ -1055,14 +1148,14 @@ function renderBubbles() {
   wrap.style.height = (packH + 2 * PAD) + 'px';
 
   wrap.innerHTML = items.map(c => {
-    const [c1, c2] = bubbleColor(c.i);
+    const [c1, c2] = bubbleColor(c.i, c.artist);
     const dur   = (3.4 + (c.i % 7) * 0.38).toFixed(2);
     const delay = -((c.i * 0.41) % 4);
     const sel   = activeBubble === c.key;
     const left  = Math.round(c.x + offsetX - c.r);
     const top   = Math.round(c.y + offsetY - c.r);
     const size  = c.r * 2;
-    return `<div class="bubble${sel ? ' active-bubble' : ''}"
+    return `<div class="bubble${sel ? ' active-bubble' : ''}${c.artist ? ' artist-bubble' : ''}"
       style="width:${size}px;height:${size}px;left:${left}px;top:${top}px;
              background:radial-gradient(circle at 38% 38%, ${c1}, ${c2});
              --bdur:${dur}s;animation-delay:${delay}s"
@@ -1070,6 +1163,7 @@ function renderBubbles() {
       onclick="clickBubble(this.dataset.key)">
       <span class="bubble-name">${esc(c.key)}</span>
       <span class="bubble-count">${c.count} song${c.count !== 1 ? 's' : ''}</span>
+      ${c.artist ? '<span class="bubble-type-badge">artist</span>' : ''}
     </div>`;
   }).join('');
 
@@ -1106,6 +1200,88 @@ function showDetail(name, songs) {
 }
 
 function closeDetail() { activeBubble = null; renderBubbles(); }
+
+// ─────────────────────────────────────────
+// VIZ FILTER
+// ─────────────────────────────────────────
+function setVizFilter(f) {
+  vizFilter = f;
+  document.querySelectorAll('.viz-filter-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.filter === f)
+  );
+  renderBubbles();
+}
+
+// ─────────────────────────────────────────
+// TAG EDITOR
+// ─────────────────────────────────────────
+function openTagEditor() {
+  const tags = allTags();
+  const list = document.getElementById('tag-editor-list');
+  if (!tags.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);padding:14px 0">No tags yet</div>';
+  } else {
+    list.innerHTML = tags.map(t => {
+      const isArtist = !!(db.tagMeta?.[t]?.artist);
+      return `<div class="te-row" data-original="${esc(t)}">
+        <input class="fi te-input" value="${esc(t)}" />
+        <button class="te-artist-btn${isArtist ? ' active' : ''}" onclick="this.classList.toggle('active')">Artist</button>
+        <button class="te-del-btn" onclick="this.closest('.te-row').remove()" title="Delete tag">✕</button>
+      </div>`;
+    }).join('');
+  }
+  openModal('tag-editor-modal');
+}
+
+function applyTagEdits() {
+  const originalTagSet = new Set(allTags());
+  const rows = [...document.querySelectorAll('#tag-editor-list .te-row')];
+  const edits = new Map();
+  rows.forEach(row => {
+    const original = row.dataset.original;
+    const newName  = row.querySelector('.te-input').value.trim();
+    const isArtist = row.querySelector('.te-artist-btn').classList.contains('active');
+    edits.set(original, { newName, isArtist });
+  });
+
+  // Tags whose rows were deleted
+  const deleted = [...originalTagSet].filter(t => !edits.has(t));
+  deleted.forEach(tag => {
+    db.songs.forEach(s => {
+      const parts = (s.tags||'').split(',').map(x=>x.trim()).filter(x=>x && x!==tag);
+      s.tags = parts.join(', ');
+    });
+    delete db.tagMeta[tag];
+  });
+
+  // Apply renames and artist flags
+  edits.forEach(({ newName, isArtist }, original) => {
+    if (!newName) return;
+    if (newName !== original) {
+      db.songs.forEach(s => {
+        const parts = (s.tags||'').split(',').map(x=>x.trim()).filter(Boolean);
+        if (parts.includes(original)) {
+          const replaced = parts.map(p => p === original ? newName : p);
+          s.tags = [...new Set(replaced)].join(', ');
+        }
+      });
+      delete db.tagMeta[original];
+    }
+    if (isArtist) {
+      db.tagMeta[newName] = { ...(db.tagMeta[newName]||{}), artist: true };
+    } else {
+      if (db.tagMeta[newName]) {
+        delete db.tagMeta[newName].artist;
+        if (!Object.keys(db.tagMeta[newName]).length) delete db.tagMeta[newName];
+      }
+    }
+  });
+
+  save();
+  renderAll();
+  closeModal('tag-editor-modal');
+  toast('Tags saved');
+}
 
 // ─────────────────────────────────────────
 // KEY / CAPO / HARP BADGES
@@ -1951,5 +2127,16 @@ document.addEventListener('keydown', e => {
 
 boot();
 </script>
+
+<div class="overlay hidden" id="tag-editor-modal">
+  <div class="modal" style="max-width:520px">
+    <h2>Edit Tags</h2>
+    <div id="tag-editor-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('tag-editor-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="applyTagEdits()">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
