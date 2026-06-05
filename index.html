@@ -1496,6 +1496,16 @@ function scDeleteAsl(id) {
   save(); renderScoring(); renderSets();
 }
 
+function duplicateAutoSetlist(autoId) {
+  const autoSet = (db.autoSetlists||[]).find(a => a.id === autoId); if (!autoSet) return;
+  const ranked = getAutoSetlist(autoSet.typeId);
+  const sl = { id: uid(), name: autoSet.name + ' (copy)', songIds: ranked.map(s => s.id) };
+  db.setlists.push(sl);
+  activeSetId = sl.id;
+  save(); renderSets(); renderSetDetail();
+  toast('Saved as manual setlist');
+}
+
 // ─────────────────────────────────────────
 // KEY / CAPO / HARP BADGES
 // ─────────────────────────────────────────
@@ -1764,6 +1774,7 @@ function renderSetDetail() {
       <div class="set-detail-header">
         <h2>⚡ ${esc(autoSet.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${ranked.length} songs</span></h2>
         <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="duplicateAutoSetlist('${autoSet.id}')">⎘ Save as Manual</button>
           <button class="btn btn-secondary btn-sm" onclick="openPlay('${autoSet.id}')">▶ Play</button>
         </div>
       </div>
