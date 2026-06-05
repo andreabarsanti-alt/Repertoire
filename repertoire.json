@@ -1060,6 +1060,8 @@
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667",
       "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
         "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
       }
     },
@@ -1100,6 +1102,8 @@
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/karma-police-official-1911473",
       "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao6",
         "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
       }
     },
@@ -1475,28 +1479,6 @@
           "name": "Nuova"
         }
       ]
-    },
-    {
-      "id": "1bd29196-a8f2-42ea-a2de-b5d6359a93bd",
-      "name": "Importanza ",
-      "options": [
-        {
-          "id": "b9ccb57e-4027-4610-ba93-5a08867efc77",
-          "name": "Necessaria"
-        },
-        {
-          "id": "5666508d-2ed8-47ce-8672-f599f7dec8d9",
-          "name": "Zoccolo Duro"
-        },
-        {
-          "id": "1e678fb9-a5a6-49a5-a32a-adc49acda52d",
-          "name": "Bis"
-        },
-        {
-          "id": "bd8e1421-5aa0-4e51-97b9-0eff88bfb1b3",
-          "name": "Se capita"
-        }
-      ]
     }
   ],
   "autoSetTypes": [
@@ -1531,8 +1513,8 @@
         "st3": 4
       },
       "__none__": {
-        "st1": 1,
-        "st2": 1,
+        "st1": 0,
+        "st2": 0,
         "st3": 1
       }
     },
@@ -1576,7 +1558,7 @@
       },
       "ao10": {
         "st1": 3,
-        "st2": 8,
+        "st2": 10,
         "st3": 10
       },
       "__none__": {
@@ -1586,35 +1568,8 @@
       },
       "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346": {
         "st1": 0,
-        "st2": 1,
+        "st2": 10,
         "st3": 10
-      }
-    },
-    "1bd29196-a8f2-42ea-a2de-b5d6359a93bd": {
-      "__none__": {
-        "st1": 1,
-        "st2": 1,
-        "st3": 1
-      },
-      "b9ccb57e-4027-4610-ba93-5a08867efc77": {
-        "st1": 10,
-        "st2": 5,
-        "st3": 8
-      },
-      "5666508d-2ed8-47ce-8672-f599f7dec8d9": {
-        "st1": 8,
-        "st2": 5,
-        "st3": 8
-      },
-      "1e678fb9-a5a6-49a5-a32a-adc49acda52d": {
-        "st1": 5,
-        "st2": 3,
-        "st3": 3
-      },
-      "bd8e1421-5aa0-4e51-97b9-0eff88bfb1b3": {
-        "st1": 1,
-        "st2": 3,
-        "st3": 3
       }
     }
   },
