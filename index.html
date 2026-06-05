@@ -1554,10 +1554,10 @@ function selectSet(id) {
 
 function songScore(s, typeIdx) {
   const ap = db.attributePoints;
-  let pts = 0;
-  if (s.arrangement && ap.arrangement[s.arrangement]) pts += ap.arrangement[s.arrangement][typeIdx] || 0;
-  if (s.result      && ap.result[s.result])           pts += ap.result[s.result][typeIdx]           || 0;
-  if (s.rehearsed   && ap.rehearsed[s.rehearsed])     pts += ap.rehearsed[s.rehearsed][typeIdx]     || 0;
+  let pts = 1;
+  if (s.arrangement && ap.arrangement[s.arrangement]) pts *= ap.arrangement[s.arrangement][typeIdx] ?? 1;
+  if (s.result      && ap.result[s.result])           pts *= ap.result[s.result][typeIdx]           ?? 1;
+  if (s.rehearsed   && ap.rehearsed[s.rehearsed])     pts *= ap.rehearsed[s.rehearsed][typeIdx]     ?? 1;
   return pts;
 }
 
