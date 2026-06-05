@@ -764,15 +764,7 @@ select.fi { cursor: pointer; }
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead>
-        <tr>
-          <th class="sort-ind" data-col="title"  onclick="sortBy('title')">Title</th>
-          <th class="sort-ind" data-col="tags"   onclick="sortBy('tags')">Artists</th>
-          <th>Attributes</th>
-          <th class="sort-ind" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
-          <th></th>
-        </tr>
-      </thead>
+      <thead id="songs-thead"></thead>
       <tbody id="songs-tbody"></tbody>
     </table>
   </div>
@@ -1553,6 +1545,32 @@ function sortBy(col) {
   renderSongs();
 }
 
+function attrSortVal(s, col) {
+  if (!col.startsWith('attr_')) return String(s[col] || '').toLowerCase();
+  const grpId = col.slice(5);
+  const grp = (db.attrGroups || []).find(g => g.id === grpId);
+  if (!grp) return '';
+  const optId = (s.attrs || {})[grpId];
+  const opt = optId ? grp.options.find(o => o.id === optId) : null;
+  return opt ? opt.name.toLowerCase() : '';
+}
+
+function renderSongsHeader() {
+  const attrCols = (db.attrGroups || []).map(grp => {
+    const col = `attr_${grp.id}`;
+    const cls = sortCol === col ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
+    return `<th class="${cls}" data-col="${esc(col)}" onclick="sortBy('${col}')">${esc(grp.name)}</th>`;
+  }).join('');
+  const cls = c => sortCol === c ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
+  document.getElementById('songs-thead').innerHTML = `<tr>
+    <th class="${cls('title')}"  data-col="title"  onclick="sortBy('title')">Title</th>
+    <th class="${cls('tags')}"   data-col="tags"   onclick="sortBy('tags')">Artists</th>
+    ${attrCols}
+    <th class="${cls('ugLink')}" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
+    <th></th>
+  </tr>`;
+}
+
 function renderSongs() {
   const q  = (document.getElementById('songs-search').value || '').toLowerCase();
   let rows = db.songs.filter(s =>
@@ -1563,20 +1581,17 @@ function renderSongs() {
   );
 
   rows.sort((a, b) => {
-    const av = String(a[sortCol] || '').toLowerCase();
-    const bv = String(b[sortCol] || '').toLowerCase();
+    const av = attrSortVal(a, sortCol);
+    const bv = attrSortVal(b, sortCol);
     return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
-  document.querySelectorAll('th[data-col]').forEach(th => {
-    th.className = th.dataset.col === sortCol
-      ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc')
-      : 'sort-ind';
-  });
+  renderSongsHeader();
 
+  const colCount = 4 + (db.attrGroups || []).length;
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
     return;
   }
 
@@ -1596,11 +1611,10 @@ function songDisplayRow(s) {
     ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
     : `<strong>${esc(s.title)}</strong>`;
   const CHIP_CLS = ['arr','res','reh'];
-  const attrChips = (db.attrGroups||[]).map((grp, gi) => {
+  const attrTds = (db.attrGroups||[]).map((grp, gi) => {
     const optId = (s.attrs||{})[grp.id];
-    if (!optId) return '';
-    const opt = grp.options.find(o => o.id === optId);
-    return opt ? `<span class="attr-chip ${CHIP_CLS[gi % 3]}">${esc(opt.name)}</span>` : '';
+    const opt = optId ? grp.options.find(o => o.id === optId) : null;
+    return `<td>${opt ? `<span class="attr-chip ${CHIP_CLS[gi % 3]}">${esc(opt.name)}</span>` : '<span style="color:var(--text-dim)">—</span>'}</td>`;
   }).join('');
   return `<tr style="cursor:pointer" onclick="handleRowClick(event,'${s.id}')">
     <td>
@@ -1608,7 +1622,7 @@ function songDisplayRow(s) {
       ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </td>
     <td>${artists}</td>
-    <td>${attrChips || '<span style="color:var(--text-dim)">—</span>'}</td>
+    ${attrTds}
     <td>${ug}</td>
     <td><div class="row-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
@@ -1619,10 +1633,10 @@ function songDisplayRow(s) {
 
 function songEditRow(s) {
   const k = `onkeydown="handleInlineKey(event,'${s.id}')"`;
-  const attrSelects = (db.attrGroups||[]).map(grp => {
+  const attrEditTds = (db.attrGroups||[]).map(grp => {
     const curOptId = (s.attrs||{})[grp.id] || '';
     const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-    return `<select class="inline-fi" data-grp="${grp.id}" style="margin-top:4px"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select>`;
+    return `<td><select class="inline-fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select></td>`;
   }).join('');
   return `<tr class="editing-row">
     <td>
@@ -1634,7 +1648,7 @@ function songEditRow(s) {
       </div>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
-    <td>${attrSelects}</td>
+    ${attrEditTds}
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
