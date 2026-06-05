@@ -178,7 +178,10 @@
       "capo": "",
       "harp": "",
       "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-59th-street-bridge-song-feelin-groovy-official-3524351"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-59th-street-bridge-song-feelin-groovy-official-3524351",
+      "arrangement": "Cover",
+      "result": "Always good",
+      "rehearsed": "Enough"
     },
     {
       "id": "s14",
@@ -322,7 +325,10 @@
       "capo": "5",
       "harp": "",
       "tags": "Francesco De Gregori",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/francesco-de-gregori/alice-chords-1459003"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/francesco-de-gregori/alice-chords-1459003",
+      "arrangement": "Unplugged",
+      "result": "Always good",
+      "rehearsed": "Too little"
     },
     {
       "id": "s21",
@@ -349,7 +355,10 @@
       "capo": "",
       "harp": "",
       "tags": "Robert Johnson",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212",
+      "arrangement": "Cover",
+      "result": "Always good",
+      "rehearsed": "Too little"
     },
     {
       "id": "s24",
@@ -484,7 +493,10 @@
       "key": "D",
       "capo": "",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/already-one-chords-1962923"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/already-one-chords-1962923",
+      "arrangement": "Unplugged",
+      "result": "Da migliorare",
+      "rehearsed": "New"
     },
     {
       "id": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
@@ -529,7 +541,10 @@
       "key": "Cm",
       "capo": "3",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/a-hazy-shade-of-winter-official-3269117"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/a-hazy-shade-of-winter-official-3269117",
+      "arrangement": "Cover",
+      "result": "Always great",
+      "rehearsed": "Enough"
     },
     {
       "id": "a5cec934-e00c-4de9-b8d2-cebd2f239df6",
@@ -646,7 +661,10 @@
       "key": "C#",
       "capo": "",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855",
+      "arrangement": "Unplugged",
+      "result": "Always good",
+      "rehearsed": "Too little"
     },
     {
       "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
@@ -1029,5 +1047,63 @@
         "mobwnzg39cdvz"
       ]
     }
-  ]
+  ],
+  "attributePoints": {
+    "arrangement": {
+      "Special": [
+        5,
+        3,
+        3
+      ],
+      "Cover": [
+        4,
+        3,
+        2
+      ],
+      "Unplugged": [
+        3,
+        2,
+        2
+      ]
+    },
+    "result": {
+      "Always great": [
+        5,
+        3,
+        1
+      ],
+      "Always good": [
+        3,
+        3,
+        1
+      ],
+      "Da migliorare": [
+        2,
+        2,
+        5
+      ]
+    },
+    "rehearsed": {
+      "Always": [
+        5,
+        2,
+        2
+      ],
+      "Enough": [
+        5,
+        2,
+        2
+      ],
+      "Too little": [
+        1,
+        2,
+        5
+      ],
+      "New": [
+        0,
+        0,
+        15
+      ]
+    }
+  }
 }
