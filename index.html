@@ -954,11 +954,22 @@ const DEFAULT_AUTO_SET_TYPES = [
   {id:'st1',name:'Gig'},{id:'st2',name:'Pre-Gig Rehearsal'},{id:'st3',name:'Rehearsal'}
 ];
 function defaultPoints() {
+  const z = {st1:0,st2:0,st3:0};
   return {
-    ag1:{ao1:{st1:5,st2:3,st3:3},ao2:{st1:4,st2:3,st3:2},ao3:{st1:3,st2:2,st3:2}},
-    ag2:{ao4:{st1:5,st2:3,st3:1},ao5:{st1:3,st2:3,st3:1},ao6:{st1:2,st2:2,st3:5}},
-    ag3:{ao7:{st1:5,st2:2,st3:2},ao8:{st1:5,st2:2,st3:2},ao9:{st1:1,st2:2,st3:5},ao10:{st1:0,st2:0,st3:15}},
+    ag1:{__none__:deepCopy(z),ao1:{st1:5,st2:3,st3:3},ao2:{st1:4,st2:3,st3:2},ao3:{st1:3,st2:2,st3:2}},
+    ag2:{__none__:deepCopy(z),ao4:{st1:5,st2:3,st3:1},ao5:{st1:3,st2:3,st3:1},ao6:{st1:2,st2:2,st3:5}},
+    ag3:{__none__:deepCopy(z),ao7:{st1:5,st2:2,st3:2},ao8:{st1:5,st2:2,st3:2},ao9:{st1:1,st2:2,st3:5},ao10:{st1:0,st2:0,st3:15}},
   };
+}
+function ensureNonePoints() {
+  (db.attrGroups||[]).forEach(grp => {
+    if (!db.points[grp.id]) db.points[grp.id] = {};
+    if (!db.points[grp.id]['__none__']) db.points[grp.id]['__none__'] = {};
+    (db.autoSetTypes||[]).forEach(t => {
+      if (db.points[grp.id]['__none__'][t.id] === undefined)
+        db.points[grp.id]['__none__'][t.id] = 0;
+    });
+  });
 }
 function defaultAutoSetlists() {
   return [
@@ -1039,6 +1050,7 @@ async function boot() {
   if (!db.tagMeta) db.tagMeta = {};
   if (migrateScoring()) save();
   if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
+  ensureNonePoints();
   renderAll();
 }
 
@@ -1118,7 +1130,7 @@ function importJSON(e) {
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
         db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
-        save(); renderAll(); toast('Imported!');
+        ensureNonePoints(); save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
   };
@@ -1343,6 +1355,15 @@ function renderScoring() {
     </th>`).join('');
 
   const groupBodies = groups.map(grp => {
+    const noneRow = (() => {
+      const ptCells = types.map(t => {
+        const v = db.points?.[grp.id]?.['__none__']?.[t.id] ?? 0;
+        return `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="999" value="${v}" data-grp="${grp.id}" data-opt="__none__" data-type="${t.id}" oninput="scSavePoint(this)"></td>`;
+      }).join('');
+      return `<tr>
+        <td><span style="display:inline-block;min-width:110px;font-size:0.78rem;color:var(--text-dim);padding:5px 8px;font-style:italic">(no ${esc(grp.name.toLowerCase())})</span></td>
+        ${ptCells}</tr>`;
+    })();
     const optRows = grp.options.map(opt => {
       const ptCells = types.map(t => {
         const v = db.points?.[grp.id]?.[opt.id]?.[t.id] ?? 1;
@@ -1365,6 +1386,7 @@ function renderScoring() {
           </div>
         </td>
       </tr>
+      ${noneRow}
       ${optRows}
     </tbody>`;
   }).join('');
@@ -1436,6 +1458,8 @@ function scSaveAslType(sel) {
 function scAddGroup() {
   const id = uid();
   db.attrGroups.push({id, name:'New Group', options:[]});
+  db.points[id] = {'__none__':{}};
+  (db.autoSetTypes||[]).forEach(t => { db.points[id]['__none__'][t.id] = 0; });
   save(); renderScoring(); renderSongs();
 }
 function scDeleteGroup(grpId) {
@@ -1465,8 +1489,10 @@ function scAddType() {
   const id = uid();
   db.autoSetTypes.push({id, name:'New Type'});
   (db.attrGroups||[]).forEach(grp => {
+    if (!db.points[grp.id]) db.points[grp.id] = {};
+    if (!db.points[grp.id]['__none__']) db.points[grp.id]['__none__'] = {};
+    db.points[grp.id]['__none__'][id] = 0;
     (grp.options||[]).forEach(opt => {
-      if (!db.points[grp.id]) db.points[grp.id] = {};
       if (!db.points[grp.id][opt.id]) db.points[grp.id][opt.id] = {};
       db.points[grp.id][opt.id][id] = 1;
     });
@@ -1749,10 +1775,8 @@ function songScore(s, typeId) {
   if (!groups.length) return 0;
   let score = 1;
   for (const grp of groups) {
-    const optId = (s.attrs||{})[grp.id];
-    if (!optId) return 0;
-    const pts = db.points?.[grp.id]?.[optId]?.[typeId];
-    if (pts === undefined) return 0;
+    const optId = (s.attrs||{})[grp.id] || '__none__';
+    const pts = db.points?.[grp.id]?.[optId]?.[typeId] ?? 0;
     score *= pts;
   }
   return score;
@@ -2340,7 +2364,7 @@ async function pullFromGithub() {
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
     db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
-    save(); renderAll();
+    ensureNonePoints(); save(); renderAll();
     document.getElementById('sync-banner').classList.add('hidden');
     toast('Pulled from GitHub!');
   } catch (err) {
