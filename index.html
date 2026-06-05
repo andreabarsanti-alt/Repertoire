@@ -1356,14 +1356,17 @@ function renderScoring() {
         <td><span style="display:inline-block;min-width:110px;font-size:0.78rem;color:var(--text-dim);padding:5px 8px;font-style:italic">(no ${esc(grp.name.toLowerCase())})</span></td>
         ${ptCells}</tr>`;
     })();
-    const optRows = grp.options.map(opt => {
+    const optRows = grp.options.map((opt, oi) => {
       const ptCells = types.map(t => {
         const v = db.points?.[grp.id]?.[opt.id]?.[t.id] ?? 1;
         return `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="999" value="${v}" data-grp="${grp.id}" data-opt="${opt.id}" data-type="${t.id}" oninput="scSavePoint(this)"></td>`;
       }).join('');
+      const last = oi === grp.options.length - 1;
       return `<tr>
         <td><div style="display:flex;align-items:center;gap:5px">
           <input class="fi sc-opt-input" value="${esc(opt.name)}" data-grpid="${grp.id}" data-optid="${opt.id}" oninput="scSaveOptName(this)">
+          <button class="btn btn-secondary btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 7px" onclick="scMoveOpt('${grp.id}','${opt.id}',-1)" ${oi===0?'disabled':''} title="Move up">↑</button>
+          <button class="btn btn-secondary btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 7px" onclick="scMoveOpt('${grp.id}','${opt.id}',1)"  ${last?'disabled':''} title="Move down">↓</button>
           <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteOpt('${grp.id}','${opt.id}')" title="Delete">✕</button>
         </div></td>${ptCells}</tr>`;
     }).join('');
@@ -1469,6 +1472,14 @@ function scAddOpt(grpId) {
   db.points[grpId][optId] = {};
   (db.autoSetTypes||[]).forEach(t => { db.points[grpId][optId][t.id] = 1; });
   save(); renderScoring();
+}
+function scMoveOpt(grpId, optId, dir) {
+  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
+  const i = grp.options.findIndex(o => o.id === optId);
+  const j = i + dir;
+  if (j < 0 || j >= grp.options.length) return;
+  [grp.options[i], grp.options[j]] = [grp.options[j], grp.options[i]];
+  save(); renderScoring(); renderSongs();
 }
 function scDeleteOpt(grpId, optId) {
   const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
