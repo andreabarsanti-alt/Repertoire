@@ -188,7 +188,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/america-official-2983322",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao4",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s13",
@@ -540,7 +544,11 @@
       "harp": "",
       "tags": "Banda Bardot",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/2044469",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao6",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "e9e7e2b8-920f-4092-815f-45f8f03f42d0",
@@ -752,7 +760,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/and-i-love-her-official-2042407",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao6",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "8b195afc-2191-4028-976a-b77044a54478",
