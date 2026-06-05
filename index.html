@@ -700,6 +700,9 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 }
 select.inline-fi { cursor: pointer; }
 select.fi { cursor: pointer; }
+.sc-group-row td { background: var(--surface2); padding: 8px 10px; border-top: 2px solid var(--border); }
+.sc-type-input { text-align: center; min-width: 90px; font-size: 0.78rem; padding: 5px 8px; min-height: 32px; }
+.sc-opt-input  { min-width: 110px; font-size: 0.78rem; padding: 5px 8px; min-height: 32px; }
 
 </style>
 </head>
@@ -797,11 +800,7 @@ select.fi { cursor: pointer; }
       <div class="fg"><label>Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
     </div>
-    <div class="fg-row">
-      <div class="fg"><label>Arrangement</label><select class="fi" id="f-arrangement"><option value="">—</option><option>Special</option><option>Cover</option><option>Unplugged</option></select></div>
-      <div class="fg"><label>Result</label><select class="fi" id="f-result"><option value="">—</option><option>Always great</option><option>Always good</option><option>Da migliorare</option></select></div>
-      <div class="fg"><label>Rehearsed</label><select class="fi" id="f-rehearsed"><option value="">—</option><option>Always</option><option>Enough</option><option>Too little</option><option>New</option></select></div>
-    </div>
+    <div id="f-attrs-row" class="fg-row"></div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('song-modal')">Cancel</button>
@@ -922,7 +921,6 @@ select.fi { cursor: pointer; }
   <div style="padding:0;max-width:680px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:1.05rem;font-weight:600;color:var(--accent)">Auto-Setlist Point Values</h2>
-      <button class="btn btn-primary btn-sm" onclick="saveScoring()">Save</button>
     </div>
     <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5">Points per attribute value for each auto-generated setlist type. Songs are ranked by total score.</p>
     <div id="scoring-table"></div>
@@ -938,22 +936,63 @@ select.fi { cursor: pointer; }
 // ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
-const DEFAULT_ATTR_POINTS = {
-  arrangement: { Special:[5,3,3], Cover:[4,3,2], Unplugged:[3,2,2] },
-  result: { 'Always great':[5,3,1], 'Always good':[3,3,1], 'Da migliorare':[2,2,5] },
-  rehearsed: { Always:[5,2,2], Enough:[5,2,2], 'Too little':[1,2,5], New:[0,0,15] }
-};
-const ATTR_OPTS = {
-  arrangement: ['Special','Cover','Unplugged'],
-  result: ['Always great','Always good','Da migliorare'],
-  rehearsed: ['Always','Enough','Too little','New']
-};
-const AUTO_SETS = [
-  { id:'__auto_gig__',     name:'Gig',                 idx:0 },
-  { id:'__auto_pregig__',  name:'Rehearsal (pre-gig)', idx:1 },
-  { id:'__auto_rehears__', name:'Rehearsal',            idx:2 },
+function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
+
+const DEFAULT_ATTR_GROUPS = [
+  { id:'ag1', name:'Arrangement', options:[
+    {id:'ao1',name:'Special'},{id:'ao2',name:'Cover'},{id:'ao3',name:'Unplugged'}
+  ]},
+  { id:'ag2', name:'Result', options:[
+    {id:'ao4',name:'Always great'},{id:'ao5',name:'Always good'},{id:'ao6',name:'Da migliorare'}
+  ]},
+  { id:'ag3', name:'Rehearsed', options:[
+    {id:'ao7',name:'Always'},{id:'ao8',name:'Enough'},{id:'ao9',name:'Too little'},{id:'ao10',name:'New'}
+  ]},
 ];
-let db = { songs: [], setlists: [], tagMeta: {}, attributePoints: JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS)) };
+const DEFAULT_AUTO_SET_TYPES = [
+  {id:'st1',name:'Gig'},{id:'st2',name:'Pre-Gig Rehearsal'},{id:'st3',name:'Rehearsal'}
+];
+function defaultPoints() {
+  return {
+    ag1:{ao1:{st1:5,st2:3,st3:3},ao2:{st1:4,st2:3,st3:2},ao3:{st1:3,st2:2,st3:2}},
+    ag2:{ao4:{st1:5,st2:3,st3:1},ao5:{st1:3,st2:3,st3:1},ao6:{st1:2,st2:2,st3:5}},
+    ag3:{ao7:{st1:5,st2:2,st3:2},ao8:{st1:5,st2:2,st3:2},ao9:{st1:1,st2:2,st3:5},ao10:{st1:0,st2:0,st3:15}},
+  };
+}
+function defaultAutoSetlists() {
+  return [
+    {id:'asl1',name:'Gig',typeId:'st1'},
+    {id:'asl2',name:'Rehearsal (pre-gig)',typeId:'st2'},
+    {id:'asl3',name:'Rehearsal',typeId:'st3'},
+  ];
+}
+
+const OLD_ATTR_MAP = {
+  ag1:{Special:'ao1',Cover:'ao2',Unplugged:'ao3'},
+  ag2:{'Always great':'ao4','Always good':'ao5','Da migliorare':'ao6'},
+  ag3:{Always:'ao7',Enough:'ao8','Too little':'ao9',New:'ao10'},
+};
+function migrateScoring() {
+  if (db.attrGroups) return false;
+  db.attrGroups    = deepCopy(DEFAULT_ATTR_GROUPS);
+  db.autoSetTypes  = deepCopy(DEFAULT_AUTO_SET_TYPES);
+  db.points        = defaultPoints();
+  db.autoSetlists  = defaultAutoSetlists();
+  db.songs.forEach(s => {
+    if (!s.attrs) {
+      s.attrs = {};
+      if (s.arrangement) s.attrs.ag1 = OLD_ATTR_MAP.ag1[s.arrangement] || '';
+      if (s.result)      s.attrs.ag2 = OLD_ATTR_MAP.ag2[s.result]      || '';
+      if (s.rehearsed)   s.attrs.ag3 = OLD_ATTR_MAP.ag3[s.rehearsed]   || '';
+    }
+    delete s.arrangement; delete s.result; delete s.rehearsed;
+  });
+  delete db.attributePoints;
+  return true;
+}
+
+let db = { songs:[], setlists:[], tagMeta:{}, attrGroups:deepCopy(DEFAULT_ATTR_GROUPS),
+           autoSetTypes:deepCopy(DEFAULT_AUTO_SET_TYPES), points:defaultPoints(), autoSetlists:defaultAutoSetlists() };
 let activeBubble  = null;
 let inlineEditId  = null;
 let editSetId    = null;
@@ -997,7 +1036,8 @@ async function boot() {
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
-  if (!db.attributePoints) db.attributePoints = JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
+  if (migrateScoring()) save();
+  if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
   renderAll();
 }
 
@@ -1046,10 +1086,10 @@ async function checkRepoSync() {
 function acceptSync() {
   const banner = document.getElementById('sync-banner');
   const localTagMeta = db.tagMeta || {};
-  const localAttrPts = db.attributePoints || JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
   db = banner._repoData;
   if (!db.tagMeta) db.tagMeta = localTagMeta;
-  if (!db.attributePoints) db.attributePoints = localAttrPts;
+  migrateScoring();
+  if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
   save(); renderAll();
   banner.classList.add('hidden');
   toast('Loaded from repo');
@@ -1076,8 +1116,8 @@ function importJSON(e) {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-        if (!d.attributePoints) d.attributePoints = JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
-        db = d; save(); renderAll(); toast('Imported!');
+        db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
+        save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
   };
@@ -1289,44 +1329,171 @@ function closeDetail() { activeBubble = null; renderBubbles(); }
 function renderScoring() {
   const el = document.getElementById('scoring-table');
   if (!el) return;
-  const ap = db.attributePoints;
-  const colLabels = ['Gig', 'Pre-Gig Rehearsal', 'Rehearsal'];
+  const types   = db.autoSetTypes  || [];
+  const groups  = db.attrGroups    || [];
+  const autoSls = db.autoSetlists  || [];
 
-  const section = (title, key) => {
-    const rows = Object.entries(ap[key]).map(([name, pts]) =>
-      `<tr>
-        <td class="sc-name">${esc(name)}</td>
-        ${pts.map((p, i) => `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="99" value="${p}" data-attr="${key}" data-val="${esc(name)}" data-idx="${i}"></td>`).join('')}
-      </tr>`
-    ).join('');
-    return `<div class="sc-section">
-      <div class="sc-section-title">${title}</div>
+  const typeHeaders = types.map(t => `
+    <th style="min-width:100px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0">
+        <input class="fi sc-type-input" value="${esc(t.name)}" data-typeid="${t.id}" oninput="scSaveTypeName(this)">
+        <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 8px" onclick="scDeleteType('${t.id}')" title="Delete type">✕</button>
+      </div>
+    </th>`).join('');
+
+  const groupBodies = groups.map(grp => {
+    const optRows = grp.options.map(opt => {
+      const ptCells = types.map(t => {
+        const v = db.points?.[grp.id]?.[opt.id]?.[t.id] ?? 1;
+        return `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="999" value="${v}" data-grp="${grp.id}" data-opt="${opt.id}" data-type="${t.id}" oninput="scSavePoint(this)"></td>`;
+      }).join('');
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:5px">
+          <input class="fi sc-opt-input" value="${esc(opt.name)}" data-grpid="${grp.id}" data-optid="${opt.id}" oninput="scSaveOptName(this)">
+          <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteOpt('${grp.id}','${opt.id}')" title="Delete">✕</button>
+        </div></td>${ptCells}</tr>`;
+    }).join('');
+
+    return `<tbody>
+      <tr class="sc-group-row">
+        <td colspan="${types.length + 1}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <input class="fi" value="${esc(grp.name)}" data-grpid="${grp.id}" oninput="scSaveGroupName(this)" style="font-weight:600;min-width:120px;font-size:0.82rem;padding:5px 8px;min-height:32px">
+            <button class="btn btn-secondary btn-sm" onclick="scAddOpt('${grp.id}')">+ Option</button>
+            <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteGroup('${grp.id}')" title="Delete group">✕</button>
+          </div>
+        </td>
+      </tr>
+      ${optRows}
+    </tbody>`;
+  }).join('');
+
+  const aslRows = autoSls.map(asl => {
+    const typeOpts = types.map(t => `<option value="${t.id}"${asl.typeId===t.id?' selected':''}>${esc(t.name)}</option>`).join('');
+    return `<tr>
+      <td><input class="fi" value="${esc(asl.name)}" data-aslid="${asl.id}" oninput="scSaveAslName(this)" style="min-width:140px;font-size:0.82rem;padding:5px 8px;min-height:32px"></td>
+      <td><select class="fi" data-aslid="${asl.id}" onchange="scSaveAslType(this)" style="min-width:160px"><option value="">—</option>${typeOpts}</select></td>
+      <td><button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteAsl('${asl.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="overflow-x:auto;margin-bottom:32px">
       <table class="sc-table">
-        <thead><tr><th></th>${colLabels.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
-        <tbody>${rows}</tbody>
+        <thead><tr>
+          <th style="text-align:left;min-width:160px">
+            <button class="btn btn-secondary btn-sm" onclick="scAddGroup()">+ Add Group</button>
+          </th>
+          ${typeHeaders}
+          <th><button class="btn btn-secondary btn-sm" onclick="scAddType()">+ Add Type</button></th>
+        </tr></thead>
+        ${groupBodies}
       </table>
-    </div>`;
-  };
-
-  el.innerHTML =
-    section('Arrangement', 'arrangement') +
-    section('Result', 'result') +
-    section('Rehearsed', 'rehearsed');
+    </div>
+    <div class="sc-section-title">Auto-Setlists</div>
+    <table class="sc-table" style="margin-bottom:16px">
+      <thead><tr><th style="text-align:left">Name</th><th>Setlist Type</th><th></th></tr></thead>
+      <tbody>
+        ${aslRows}
+        <tr><td colspan="3" style="padding-top:8px">
+          <button class="btn btn-secondary btn-sm" onclick="scAddAsl()">+ New Auto-Setlist</button>
+        </td></tr>
+      </tbody>
+    </table>`;
 }
 
-function saveScoring() {
-  document.querySelectorAll('.sc-input').forEach(inp => {
-    const attr = inp.dataset.attr;
-    const val  = inp.dataset.val;
-    const idx  = +inp.dataset.idx;
-    const num  = Math.max(0, parseInt(inp.value) || 0);
-    if (db.attributePoints[attr]?.[val] !== undefined) {
-      db.attributePoints[attr][val][idx] = num;
-    }
-  });
+// ── Scoring live-edit handlers ──
+function scSavePoint(inp) {
+  const {grp,opt,type} = inp.dataset;
+  if (!db.points[grp]) db.points[grp] = {};
+  if (!db.points[grp][opt]) db.points[grp][opt] = {};
+  db.points[grp][opt][type] = Math.max(0, parseInt(inp.value) || 0);
   save();
-  if (AUTO_SETS.find(a => a.id === activeSetId)) renderSetDetail();
-  toast('Scoring saved');
+  if ((db.autoSetlists||[]).find(a => a.id === activeSetId)) renderSetDetail();
+}
+function scSaveGroupName(inp) {
+  const g = db.attrGroups.find(g => g.id === inp.dataset.grpid);
+  if (g) { g.name = inp.value; save(); }
+}
+function scSaveOptName(inp) {
+  const g = db.attrGroups.find(g => g.id === inp.dataset.grpid);
+  const o = g?.options.find(o => o.id === inp.dataset.optid);
+  if (o) { o.name = inp.value; save(); renderSongs(); }
+}
+function scSaveTypeName(inp) {
+  const t = db.autoSetTypes.find(t => t.id === inp.dataset.typeid);
+  if (t) { t.name = inp.value; save(); renderSets(); }
+}
+function scSaveAslName(inp) {
+  const a = db.autoSetlists.find(a => a.id === inp.dataset.aslid);
+  if (a) { a.name = inp.value; save(); renderSets(); }
+}
+function scSaveAslType(sel) {
+  const a = db.autoSetlists.find(a => a.id === sel.dataset.aslid);
+  if (a) { a.typeId = sel.value; save(); if (activeSetId === a.id) renderSetDetail(); }
+}
+function scAddGroup() {
+  const id = uid();
+  db.attrGroups.push({id, name:'New Group', options:[]});
+  save(); renderScoring(); renderSongs();
+}
+function scDeleteGroup(grpId) {
+  if (!confirm('Delete this group and all its options?')) return;
+  db.attrGroups = db.attrGroups.filter(g => g.id !== grpId);
+  delete db.points[grpId];
+  db.songs.forEach(s => { if (s.attrs) delete s.attrs[grpId]; });
+  save(); renderScoring(); renderSongs(); renderSets();
+}
+function scAddOpt(grpId) {
+  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
+  const optId = uid();
+  grp.options.push({id:optId, name:'New Option'});
+  if (!db.points[grpId]) db.points[grpId] = {};
+  db.points[grpId][optId] = {};
+  (db.autoSetTypes||[]).forEach(t => { db.points[grpId][optId][t.id] = 1; });
+  save(); renderScoring();
+}
+function scDeleteOpt(grpId, optId) {
+  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
+  grp.options = grp.options.filter(o => o.id !== optId);
+  if (db.points[grpId]) delete db.points[grpId][optId];
+  db.songs.forEach(s => { if (s.attrs?.[grpId] === optId) delete s.attrs[grpId]; });
+  save(); renderScoring(); renderSongs();
+}
+function scAddType() {
+  const id = uid();
+  db.autoSetTypes.push({id, name:'New Type'});
+  (db.attrGroups||[]).forEach(grp => {
+    (grp.options||[]).forEach(opt => {
+      if (!db.points[grp.id]) db.points[grp.id] = {};
+      if (!db.points[grp.id][opt.id]) db.points[grp.id][opt.id] = {};
+      db.points[grp.id][opt.id][id] = 1;
+    });
+  });
+  save(); renderScoring();
+}
+function scDeleteType(typeId) {
+  if (!confirm('Delete this type? Auto-setlists of this type will also be removed.')) return;
+  db.autoSetTypes = db.autoSetTypes.filter(t => t.id !== typeId);
+  db.autoSetlists = (db.autoSetlists||[]).filter(a => a.typeId !== typeId);
+  (db.attrGroups||[]).forEach(grp => {
+    (grp.options||[]).forEach(opt => {
+      if (db.points?.[grp.id]?.[opt.id]) delete db.points[grp.id][opt.id][typeId];
+    });
+  });
+  if (!(db.autoSetlists||[]).find(a => a.id === activeSetId)) activeSetId = null;
+  save(); renderScoring(); renderSets(); renderSetDetail();
+}
+function scAddAsl() {
+  const id = uid();
+  const firstType = db.autoSetTypes?.[0]?.id || '';
+  db.autoSetlists.push({id, name:'New Setlist', typeId: firstType});
+  save(); renderScoring(); renderSets();
+}
+function scDeleteAsl(id) {
+  db.autoSetlists = db.autoSetlists.filter(a => a.id !== id);
+  if (activeSetId === id) { activeSetId = null; renderSetDetail(); }
+  save(); renderScoring(); renderSets();
 }
 
 // ─────────────────────────────────────────
@@ -1391,11 +1558,13 @@ function songDisplayRow(s) {
   const titleEl = s.ugLink
     ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
     : `<strong>${esc(s.title)}</strong>`;
-  const attrChips = [
-    s.arrangement ? `<span class="attr-chip arr">${esc(s.arrangement)}</span>` : '',
-    s.result      ? `<span class="attr-chip res">${esc(s.result)}</span>`      : '',
-    s.rehearsed   ? `<span class="attr-chip reh">${esc(s.rehearsed)}</span>`   : '',
-  ].join('');
+  const CHIP_CLS = ['arr','res','reh'];
+  const attrChips = (db.attrGroups||[]).map((grp, gi) => {
+    const optId = (s.attrs||{})[grp.id];
+    if (!optId) return '';
+    const opt = grp.options.find(o => o.id === optId);
+    return opt ? `<span class="attr-chip ${CHIP_CLS[gi % 3]}">${esc(opt.name)}</span>` : '';
+  }).join('');
   return `<tr style="cursor:pointer" onclick="handleRowClick(event,'${s.id}')">
     <td>
       ${titleEl}
@@ -1411,13 +1580,13 @@ function songDisplayRow(s) {
   </tr>`;
 }
 
-function attrSel(id, key, val) {
-  const opts = ATTR_OPTS[key].map(o => `<option${val===o?' selected':''}>${esc(o)}</option>`).join('');
-  return `<select class="inline-fi" id="${id}" style="margin-top:4px"><option value="">— ${key} —</option>${opts}</select>`;
-}
-
 function songEditRow(s) {
   const k = `onkeydown="handleInlineKey(event,'${s.id}')"`;
+  const attrSelects = (db.attrGroups||[]).map(grp => {
+    const curOptId = (s.attrs||{})[grp.id] || '';
+    const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
+    return `<select class="inline-fi" data-grp="${grp.id}" style="margin-top:4px"><option value="">— ${esc(grp.name)} —</option>${opts}</select>`;
+  }).join('');
   return `<tr class="editing-row">
     <td>
       <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
@@ -1428,11 +1597,7 @@ function songEditRow(s) {
       </div>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
-    <td>
-      ${attrSel('ie-arrangement','arrangement', s.arrangement||'')}
-      ${attrSel('ie-result',     'result',      s.result     ||'')}
-      ${attrSel('ie-rehearsed',  'rehearsed',   s.rehearsed  ||'')}
-    </td>
+    <td>${attrSelects}</td>
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
@@ -1467,10 +1632,11 @@ function saveInlineEdit(id) {
   s.key         = document.getElementById('ie-key')?.value.trim()         || '';
   s.capo        = document.getElementById('ie-capo')?.value.trim()        || '';
   s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
-  s.ugLink      = normalizeUG(document.getElementById('ie-uglink')?.value || '');
-  s.arrangement = document.getElementById('ie-arrangement')?.value        || '';
-  s.result      = document.getElementById('ie-result')?.value             || '';
-  s.rehearsed   = document.getElementById('ie-rehearsed')?.value          || '';
+  s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
+  s.attrs  = {};
+  document.querySelectorAll('.editing-row select[data-grp]').forEach(sel => {
+    if (sel.value) s.attrs[sel.dataset.grp] = sel.value;
+  });
   inlineEditId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -1482,15 +1648,13 @@ function cancelInlineEdit() {
 
 function openSongModal() {
   document.getElementById('song-modal-title').textContent = 'Add Song';
-  document.getElementById('f-title').value       = '';
-  document.getElementById('f-tags').value        = '';
-  document.getElementById('f-key').value         = '';
-  document.getElementById('f-capo').value        = '';
-  document.getElementById('f-harp').value        = '';
-  document.getElementById('f-uglink').value      = '';
-  document.getElementById('f-arrangement').value = '';
-  document.getElementById('f-result').value      = '';
-  document.getElementById('f-rehearsed').value   = '';
+  document.getElementById('f-title').value  = '';
+  document.getElementById('f-tags').value   = '';
+  document.getElementById('f-key').value    = '';
+  document.getElementById('f-capo').value   = '';
+  document.getElementById('f-harp').value   = '';
+  document.getElementById('f-uglink').value = '';
+  renderSongModalAttrs({});
   openModal('song-modal');
   document.getElementById('f-title').focus();
 }
@@ -1505,13 +1669,27 @@ function saveSong() {
     key:         document.getElementById('f-key').value.trim(),
     capo:        document.getElementById('f-capo').value.trim(),
     harp:        document.getElementById('f-harp').value.trim(),
-    ugLink:      normalizeUG(document.getElementById('f-uglink').value),
-    arrangement: document.getElementById('f-arrangement').value || '',
-    result:      document.getElementById('f-result').value      || '',
-    rehearsed:   document.getElementById('f-rehearsed').value   || '',
+    ugLink: normalizeUG(document.getElementById('f-uglink').value),
+    attrs:  readModalAttrs(),
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
+}
+
+function renderSongModalAttrs(attrsVal) {
+  const row = document.getElementById('f-attrs-row'); if (!row) return;
+  row.innerHTML = (db.attrGroups||[]).map(grp => {
+    const cur = attrsVal[grp.id] || '';
+    const opts = grp.options.map(o => `<option value="${esc(o.id)}"${cur===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
+    return `<div class="fg"><label>${esc(grp.name)}</label><select class="fi" data-grp="${grp.id}"><option value="">—</option>${opts}</select></div>`;
+  }).join('');
+}
+function readModalAttrs() {
+  const attrs = {};
+  document.querySelectorAll('#f-attrs-row select[data-grp]').forEach(sel => {
+    if (sel.value) attrs[sel.dataset.grp] = sel.value;
+  });
+  return attrs;
 }
 
 function deleteSong(id) {
@@ -1526,11 +1704,14 @@ function deleteSong(id) {
 // ─────────────────────────────────────────
 function renderSets() {
   const el = document.getElementById('sets-list');
+  const autoSets = db.autoSetlists || [];
   const autoHtml = `<div class="auto-sets-divider">Auto-generated</div>` +
-    AUTO_SETS.map(a => `
-      <div class="set-item auto-set${activeSetId===a.id?' active':''}" onclick="selectSet('${a.id}')">
-        <span class="set-name">⚡ ${esc(a.name)}</span>
-      </div>`).join('');
+    (autoSets.length
+      ? autoSets.map(a => `
+          <div class="set-item auto-set${activeSetId===a.id?' active':''}" onclick="selectSet('${a.id}')">
+            <span class="set-name">⚡ ${esc(a.name)}</span>
+          </div>`).join('')
+      : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None — create in Scoring tab</div>');
   const userHtml = db.setlists.length
     ? db.setlists.map(sl => `
       <div class="set-item${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
@@ -1552,27 +1733,30 @@ function selectSet(id) {
   renderSetDetail();
 }
 
-function songScore(s, typeIdx) {
-  const ap = db.attributePoints;
-  let pts = 1;
-  if (s.arrangement && ap.arrangement[s.arrangement]) pts *= ap.arrangement[s.arrangement][typeIdx] ?? 1;
-  if (s.result      && ap.result[s.result])           pts *= ap.result[s.result][typeIdx]           ?? 1;
-  if (s.rehearsed   && ap.rehearsed[s.rehearsed])     pts *= ap.rehearsed[s.rehearsed][typeIdx]     ?? 1;
-  return pts;
+function songScore(s, typeId) {
+  let score = 1;
+  (db.attrGroups||[]).forEach(grp => {
+    const optId = (s.attrs||{})[grp.id];
+    if (optId) {
+      const pts = db.points?.[grp.id]?.[optId]?.[typeId];
+      if (pts !== undefined) score *= pts;
+    }
+  });
+  return score;
 }
 
-function getAutoSetlist(typeIdx) {
+function getAutoSetlist(typeId) {
   return [...db.songs]
-    .map(s => ({ ...s, _score: songScore(s, typeIdx) }))
+    .map(s => ({ ...s, _score: songScore(s, typeId) }))
     .sort((a, b) => b._score - a._score);
 }
 
 function renderSetDetail() {
   const el = document.getElementById('set-detail');
 
-  const autoSet = AUTO_SETS.find(a => a.id === activeSetId);
+  const autoSet = (db.autoSetlists||[]).find(a => a.id === activeSetId);
   if (autoSet) {
-    const ranked = getAutoSetlist(autoSet.idx);
+    const ranked = getAutoSetlist(autoSet.typeId);
     el.innerHTML = `
       <div class="set-detail-header">
         <h2>⚡ ${esc(autoSet.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${ranked.length} songs</span></h2>
@@ -1583,7 +1767,7 @@ function renderSetDetail() {
       <div id="sl-list">
         ${!ranked.length
           ? '<div class="empty" style="padding:20px">No songs yet — add songs and set their attributes</div>'
-          : ranked.map((s, i) => autoSlRow(s, i, autoSet.idx)).join('')}
+          : ranked.map((s, i) => autoSlRow(s, i, autoSet.typeId)).join('')}
       </div>`;
     return;
   }
@@ -1634,12 +1818,16 @@ function slRow(s, i, total) {
   </div>`;
 }
 
-function autoSlRow(s, i, typeIdx) {
+function autoSlRow(s, i, typeId) {
   const titleEl = s.ugLink
     ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
     : `<span class="sl-title">${esc(s.title)}</span>`;
   const badges = kchBadges(s);
-  const attrMeta = [s.arrangement, s.result, s.rehearsed].filter(Boolean).join(' · ') || '—';
+  const attrMeta = (db.attrGroups||[]).map(grp => {
+    const optId = (s.attrs||{})[grp.id];
+    const opt = optId ? grp.options.find(o => o.id === optId) : null;
+    return opt ? opt.name : null;
+  }).filter(Boolean).join(' · ') || '—';
   return `<div class="sl-row" data-idx="${i}">
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
@@ -1649,7 +1837,7 @@ function autoSlRow(s, i, typeIdx) {
       </div>
       <div class="sl-meta">${esc(s.tags||'')}${s.tags?' · ':''}${esc(attrMeta)}</div>
     </div>
-    <span class="score-badge">${s._score !== undefined ? s._score : songScore(s, typeIdx)}</span>
+    <span class="score-badge">${s._score !== undefined ? s._score : songScore(s, typeId)}</span>
   </div>`;
 }
 
@@ -1850,9 +2038,9 @@ let playOpenedUG = false;
 const PLAY_ITEM_H = 120;
 
 function openPlay(setId) {
-  const autoSet = AUTO_SETS.find(a => a.id === setId);
+  const autoSet = (db.autoSetlists||[]).find(a => a.id === setId);
   if (autoSet) {
-    _playOverrideSongs = getAutoSetlist(autoSet.idx);
+    _playOverrideSongs = getAutoSetlist(autoSet.typeId);
     playSetId = setId; playIdx = 0; playOpenedUG = false;
     document.getElementById('play-set-title').textContent = '⚡ ' + autoSet.name;
     document.getElementById('play-view').classList.remove('hidden');
@@ -2199,6 +2387,7 @@ function confirmUGImport() {
   document.getElementById('f-capo').value   = '';
   document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = parsed?.ugLink || url;
+  renderSongModalAttrs({});
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
 }
