@@ -1596,7 +1596,7 @@ function songEditRow(s) {
   const attrSelects = (db.attrGroups||[]).map(grp => {
     const curOptId = (s.attrs||{})[grp.id] || '';
     const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-    return `<select class="inline-fi" data-grp="${grp.id}" style="margin-top:4px"><option value="">— ${esc(grp.name)} —</option>${opts}</select>`;
+    return `<select class="inline-fi" data-grp="${grp.id}" style="margin-top:4px"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select>`;
   }).join('');
   return `<tr class="editing-row">
     <td>
@@ -1692,7 +1692,7 @@ function renderSongModalAttrs(attrsVal) {
   row.innerHTML = (db.attrGroups||[]).map(grp => {
     const cur = attrsVal[grp.id] || '';
     const opts = grp.options.map(o => `<option value="${esc(o.id)}"${cur===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-    return `<div class="fg"><label>${esc(grp.name)}</label><select class="fi" data-grp="${grp.id}"><option value="">—</option>${opts}</select></div>`;
+    return `<div class="fg"><label>${esc(grp.name)}</label><select class="fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select></div>`;
   }).join('');
 }
 function readModalAttrs() {
