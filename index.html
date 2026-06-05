@@ -647,6 +647,60 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 .play-nav-btn:hover { color: rgba(255,255,255,.9); }
 .play-nav-btn:disabled { opacity: 0.2; cursor: default; }
 
+/* ══ SCORING TAB ══════════════════════════ */
+#tab-scoring { padding: 18px; }
+.sc-section { margin-bottom: 28px; }
+.sc-section-title {
+  font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--accent); margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.sc-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.sc-table th {
+  padding: 7px 14px; text-align: center; color: var(--text-dim);
+  font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: .05em;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.sc-table th:first-child { text-align: left; min-width: 130px; }
+.sc-table td { padding: 6px 10px; border-top: 1px solid rgba(30,42,58,.5); }
+.sc-name { font-weight: 500; color: var(--text); padding-right: 10px; }
+.sc-input {
+  width: 62px; text-align: center; padding: 5px 8px;
+  min-height: 32px; font-size: 0.82rem; font-family: var(--fm);
+}
+/* Attribute chips in songs table */
+.attr-chip {
+  display: inline-block; padding: 2px 7px; border-radius: 8px;
+  font-size: 0.67rem; font-family: var(--fm); margin: 1px 1px 0 0;
+  white-space: nowrap;
+}
+.attr-chip.arr { background: rgba(70,130,180,.14); border: 1px solid rgba(70,130,180,.28); color: #7ab8e8; }
+.attr-chip.res { background: rgba(196,148,50,.14); border: 1px solid rgba(196,148,50,.28); color: #d4aa50; }
+.attr-chip.reh { background: rgba(58,170,126,.14); border: 1px solid rgba(58,170,126,.28); color: #3aaa7e; }
+/* Score badge in auto-setlist */
+.score-badge {
+  flex-shrink: 0; min-width: 34px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(61,158,140,.1); border: 1px solid rgba(61,158,140,.22);
+  border-radius: 8px; font-family: var(--fm); font-size: 0.82rem;
+  color: var(--accent); font-weight: 600; padding: 0 8px;
+}
+/* Auto-setlist item */
+.set-item.auto-set {
+  border-left: 2px solid rgba(61,158,140,.35);
+  background: rgba(61,158,140,.03);
+}
+.set-item.auto-set.active {
+  background: rgba(61,158,140,.1); border-color: rgba(61,158,140,.35);
+  border-left-color: var(--accent);
+}
+.auto-sets-divider {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-dim); padding: 4px 6px 2px; margin-top: 4px;
+}
+select.inline-fi { cursor: pointer; }
+select.fi { cursor: pointer; }
+
 </style>
 </head>
 <body>
@@ -660,6 +714,7 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
     <button class="tab-btn" data-tab="sets">Setlists</button>
+    <button class="tab-btn" data-tab="scoring">Scoring</button>
   </nav>
   <div class="hdr-actions">
     <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
@@ -682,12 +737,6 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 <!-- ══ VISUALIZER ══ -->
 <div id="tab-viz" class="tab active">
   <div id="viz-toolbar">
-    <div id="viz-filters">
-      <button class="viz-filter-btn active" data-filter="all"    onclick="setVizFilter('all')">All</button>
-      <button class="viz-filter-btn"        data-filter="artist" onclick="setVizFilter('artist')">Artists</button>
-      <button class="viz-filter-btn"        data-filter="tag"    onclick="setVizFilter('tag')">Tags</button>
-    </div>
-    <button class="btn btn-secondary btn-sm" onclick="openTagEditor()">✎ Tags</button>
   </div>
   <div id="bubbles-wrap"></div>
   <div id="bubble-detail" class="hidden" onclick="if(event.target===this)closeDetail()">
@@ -714,7 +763,8 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
       <thead>
         <tr>
           <th class="sort-ind" data-col="title"  onclick="sortBy('title')">Title</th>
-          <th class="sort-ind" data-col="tags"   onclick="sortBy('tags')">Tags</th>
+          <th class="sort-ind" data-col="tags"   onclick="sortBy('tags')">Artists</th>
+          <th>Attributes</th>
           <th class="sort-ind" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
           <th></th>
         </tr>
@@ -741,11 +791,16 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
   <div class="modal">
     <h2 id="song-modal-title">Add Song</h2>
     <div class="fg"><label>Title *</label><input class="fi" id="f-title" type="text" placeholder="Song title"></div>
-    <div class="fg"><label>Tags (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, rock, acoustic"></div>
+    <div class="fg"><label>Artists (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, The Beatles"></div>
     <div class="fg-row">
       <div class="fg"><label>Key</label><input class="fi" id="f-key" type="text" placeholder="G"></div>
       <div class="fg"><label>Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Arrangement</label><select class="fi" id="f-arrangement"><option value="">—</option><option>Special</option><option>Cover</option><option>Unplugged</option></select></div>
+      <div class="fg"><label>Result</label><select class="fi" id="f-result"><option value="">—</option><option>Always great</option><option>Always good</option><option>Da migliorare</option></select></div>
+      <div class="fg"><label>Rehearsed</label><select class="fi" id="f-rehearsed"><option value="">—</option><option>Always</option><option>Enough</option><option>Too little</option><option>New</option></select></div>
     </div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="modal-footer">
@@ -833,8 +888,8 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
     </div>
     <div id="ug-import-preview" style="display:none;padding:10px 13px;background:var(--surface2);border-radius:var(--radius);margin-bottom:4px;font-size:0.82rem;color:var(--text-dim)"></div>
     <div class="fg">
-      <label>Tags (comma separated)</label>
-      <input class="fi" id="ug-import-tags" type="text" placeholder="artist, genre, style">
+      <label>Artists (comma separated)</label>
+      <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
@@ -862,6 +917,18 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
   </div>
 </div>
 
+<!-- ══ SCORING ══ -->
+<div id="tab-scoring" class="tab">
+  <div style="padding:0;max-width:680px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+      <h2 style="font-size:1.05rem;font-weight:600;color:var(--accent)">Auto-Setlist Point Values</h2>
+      <button class="btn btn-primary btn-sm" onclick="saveScoring()">Save</button>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5">Points per attribute value for each auto-generated setlist type. Songs are ranked by total score.</p>
+    <div id="scoring-table"></div>
+  </div>
+</div>
+
 <div id="tag-ac"></div>
 <div id="toast"></div>
 
@@ -871,14 +938,29 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 // ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
-let db = { songs: [], setlists: [], tagMeta: {} };
+const DEFAULT_ATTR_POINTS = {
+  arrangement: { Special:[5,3,3], Cover:[4,3,2], Unplugged:[3,2,2] },
+  result: { 'Always great':[5,3,1], 'Always good':[3,3,1], 'Da migliorare':[2,2,5] },
+  rehearsed: { Always:[5,2,2], Enough:[5,2,2], 'Too little':[1,2,5], New:[0,0,15] }
+};
+const ATTR_OPTS = {
+  arrangement: ['Special','Cover','Unplugged'],
+  result: ['Always great','Always good','Da migliorare'],
+  rehearsed: ['Always','Enough','Too little','New']
+};
+const AUTO_SETS = [
+  { id:'__auto_gig__',     name:'Gig',                 idx:0 },
+  { id:'__auto_pregig__',  name:'Rehearsal (pre-gig)', idx:1 },
+  { id:'__auto_rehears__', name:'Rehearsal',            idx:2 },
+];
+let db = { songs: [], setlists: [], tagMeta: {}, attributePoints: JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS)) };
 let activeBubble  = null;
 let inlineEditId  = null;
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let dragIdx = null;
-let vizFilter = 'all';
+let _playOverrideSongs = null;
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -915,6 +997,7 @@ async function boot() {
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
+  if (!db.attributePoints) db.attributePoints = JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
   renderAll();
 }
 
@@ -963,8 +1046,10 @@ async function checkRepoSync() {
 function acceptSync() {
   const banner = document.getElementById('sync-banner');
   const localTagMeta = db.tagMeta || {};
+  const localAttrPts = db.attributePoints || JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
   db = banner._repoData;
   if (!db.tagMeta) db.tagMeta = localTagMeta;
+  if (!db.attributePoints) db.attributePoints = localAttrPts;
   save(); renderAll();
   banner.classList.add('hidden');
   toast('Loaded from repo');
@@ -991,6 +1076,7 @@ function importJSON(e) {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
+        if (!d.attributePoints) d.attributePoints = JSON.parse(JSON.stringify(DEFAULT_ATTR_POINTS));
         db = d; save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
@@ -1009,7 +1095,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
 }));
 
-function renderAll() { renderBubbles(); renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); }
+function renderAll() { renderBubbles(); renderSongs(); renderSets(); renderScoring(); if (activeSetId) renderSetDetail(); }
 
 // ─────────────────────────────────────────
 // BUBBLE COLOURS — warm, semi-transparent for glass
@@ -1048,16 +1134,9 @@ function getGroups() {
   db.songs.forEach(s => {
     const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean);
     if (!tags.length) {
-      if (vizFilter !== 'artist') (g['Untagged'] = g['Untagged'] || []).push(s);
+      (g['Untagged'] = g['Untagged'] || []).push(s);
     } else {
-      tags.forEach(t => {
-        const isArtist = !!(db.tagMeta?.[t]?.artist);
-        if (vizFilter === 'all' ||
-            (vizFilter === 'artist' && isArtist) ||
-            (vizFilter === 'tag' && !isArtist)) {
-          (g[t] = g[t] || []).push(s);
-        }
-      });
+      tags.forEach(t => { (g[t] = g[t] || []).push(s); });
     }
   });
   return g;
@@ -1133,7 +1212,7 @@ function renderBubbles() {
   const items = keys.map((key, i) => ({
     key, count: groups[key].length, i,
     r: Math.round(38 + (groups[key].length / max) * 52),
-    artist: !!(db.tagMeta?.[key]?.artist)
+    artist: key !== 'Untagged'
   }));
 
   packBubbles(items);
@@ -1205,85 +1284,49 @@ function showDetail(name, songs) {
 function closeDetail() { activeBubble = null; renderBubbles(); }
 
 // ─────────────────────────────────────────
-// VIZ FILTER
+// SCORING TAB
 // ─────────────────────────────────────────
-function setVizFilter(f) {
-  vizFilter = f;
-  document.querySelectorAll('.viz-filter-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.filter === f)
-  );
-  renderBubbles();
+function renderScoring() {
+  const el = document.getElementById('scoring-table');
+  if (!el) return;
+  const ap = db.attributePoints;
+  const colLabels = ['Gig', 'Pre-Gig Rehearsal', 'Rehearsal'];
+
+  const section = (title, key) => {
+    const rows = Object.entries(ap[key]).map(([name, pts]) =>
+      `<tr>
+        <td class="sc-name">${esc(name)}</td>
+        ${pts.map((p, i) => `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="99" value="${p}" data-attr="${key}" data-val="${esc(name)}" data-idx="${i}"></td>`).join('')}
+      </tr>`
+    ).join('');
+    return `<div class="sc-section">
+      <div class="sc-section-title">${title}</div>
+      <table class="sc-table">
+        <thead><tr><th></th>${colLabels.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  };
+
+  el.innerHTML =
+    section('Arrangement', 'arrangement') +
+    section('Result', 'result') +
+    section('Rehearsed', 'rehearsed');
 }
 
-// ─────────────────────────────────────────
-// TAG EDITOR
-// ─────────────────────────────────────────
-function openTagEditor() {
-  const tags = allTags();
-  const list = document.getElementById('tag-editor-list');
-  if (!tags.length) {
-    list.innerHTML = '<div style="color:var(--text-dim);padding:14px 0">No tags yet</div>';
-  } else {
-    list.innerHTML = tags.map(t => {
-      const isArtist = !!(db.tagMeta?.[t]?.artist);
-      return `<div class="te-row" data-original="${esc(t)}">
-        <input class="fi te-input" value="${esc(t)}" />
-        <button class="te-artist-btn${isArtist ? ' active' : ''}" onclick="this.classList.toggle('active')">Artist</button>
-        <button class="te-del-btn" onclick="this.closest('.te-row').remove()" title="Delete tag">✕</button>
-      </div>`;
-    }).join('');
-  }
-  openModal('tag-editor-modal');
-}
-
-function applyTagEdits() {
-  const originalTagSet = new Set(allTags());
-  const rows = [...document.querySelectorAll('#tag-editor-list .te-row')];
-  const edits = new Map();
-  rows.forEach(row => {
-    const original = row.dataset.original;
-    const newName  = row.querySelector('.te-input').value.trim();
-    const isArtist = row.querySelector('.te-artist-btn').classList.contains('active');
-    edits.set(original, { newName, isArtist });
-  });
-
-  // Tags whose rows were deleted
-  const deleted = [...originalTagSet].filter(t => !edits.has(t));
-  deleted.forEach(tag => {
-    db.songs.forEach(s => {
-      const parts = (s.tags||'').split(',').map(x=>x.trim()).filter(x=>x && x!==tag);
-      s.tags = parts.join(', ');
-    });
-    delete db.tagMeta[tag];
-  });
-
-  // Apply renames and artist flags
-  edits.forEach(({ newName, isArtist }, original) => {
-    if (!newName) return;
-    if (newName !== original) {
-      db.songs.forEach(s => {
-        const parts = (s.tags||'').split(',').map(x=>x.trim()).filter(Boolean);
-        if (parts.includes(original)) {
-          const replaced = parts.map(p => p === original ? newName : p);
-          s.tags = [...new Set(replaced)].join(', ');
-        }
-      });
-      delete db.tagMeta[original];
-    }
-    if (isArtist) {
-      db.tagMeta[newName] = { ...(db.tagMeta[newName]||{}), artist: true };
-    } else {
-      if (db.tagMeta[newName]) {
-        delete db.tagMeta[newName].artist;
-        if (!Object.keys(db.tagMeta[newName]).length) delete db.tagMeta[newName];
-      }
+function saveScoring() {
+  document.querySelectorAll('.sc-input').forEach(inp => {
+    const attr = inp.dataset.attr;
+    const val  = inp.dataset.val;
+    const idx  = +inp.dataset.idx;
+    const num  = Math.max(0, parseInt(inp.value) || 0);
+    if (db.attributePoints[attr]?.[val] !== undefined) {
+      db.attributePoints[attr][val][idx] = num;
     }
   });
-
   save();
-  renderAll();
-  closeModal('tag-editor-modal');
-  toast('Tags saved');
+  if (AUTO_SETS.find(a => a.id === activeSetId)) renderSetDetail();
+  toast('Scoring saved');
 }
 
 // ─────────────────────────────────────────
@@ -1329,7 +1372,7 @@ function renderSongs() {
 
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="4"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
     return;
   }
 
@@ -1339,8 +1382,8 @@ function renderSongs() {
 }
 
 function songDisplayRow(s) {
-  const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
-               .map(t => `<span class="tag-chip">${esc(t)}</span>`).join('');
+  const artists = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
+                 .map(t => `<span class="tag-chip">${esc(t)}</span>`).join('');
   const ug = s.ugLink
     ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank">↗ UG</a>`
     : '<span style="color:var(--text-dim)">—</span>';
@@ -1348,12 +1391,18 @@ function songDisplayRow(s) {
   const titleEl = s.ugLink
     ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
     : `<strong>${esc(s.title)}</strong>`;
+  const attrChips = [
+    s.arrangement ? `<span class="attr-chip arr">${esc(s.arrangement)}</span>` : '',
+    s.result      ? `<span class="attr-chip res">${esc(s.result)}</span>`      : '',
+    s.rehearsed   ? `<span class="attr-chip reh">${esc(s.rehearsed)}</span>`   : '',
+  ].join('');
   return `<tr style="cursor:pointer" onclick="handleRowClick(event,'${s.id}')">
     <td>
       ${titleEl}
       ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </td>
-    <td>${tags}</td>
+    <td>${artists}</td>
+    <td>${attrChips || '<span style="color:var(--text-dim)">—</span>'}</td>
     <td>${ug}</td>
     <td><div class="row-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
@@ -1362,18 +1411,28 @@ function songDisplayRow(s) {
   </tr>`;
 }
 
+function attrSel(id, key, val) {
+  const opts = ATTR_OPTS[key].map(o => `<option${val===o?' selected':''}>${esc(o)}</option>`).join('');
+  return `<select class="inline-fi" id="${id}" style="margin-top:4px"><option value="">— ${key} —</option>${opts}</select>`;
+}
+
 function songEditRow(s) {
   const k = `onkeydown="handleInlineKey(event,'${s.id}')"`;
   return `<tr class="editing-row">
     <td>
-      <input class="inline-fi" id="ie-title"  value="${esc(s.title)}"    placeholder="Title" ${k}>
+      <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
       <div class="inline-kch-row">
         <input class="inline-fi inline-sm" id="ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
         <input class="inline-fi inline-sm" id="ie-capo" value="${esc(s.capo||'')}" placeholder="Capo" ${k}>
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
     </td>
-    <td><input class="inline-fi" id="ie-tags"   value="${esc(s.tags  ||'')}" placeholder="Tags"   ${k}></td>
+    <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
+    <td>
+      ${attrSel('ie-arrangement','arrangement', s.arrangement||'')}
+      ${attrSel('ie-result',     'result',      s.result     ||'')}
+      ${attrSel('ie-rehearsed',  'rehearsed',   s.rehearsed  ||'')}
+    </td>
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
@@ -1403,12 +1462,15 @@ function saveInlineEdit(id) {
   if (!s) return;
   const title = document.getElementById('ie-title')?.value.trim();
   if (!title) { toast('Title is required'); return; }
-  s.title  = title;
-  s.tags   = document.getElementById('ie-tags')?.value.trim()   || '';
-  s.key    = document.getElementById('ie-key')?.value.trim()    || '';
-  s.capo   = document.getElementById('ie-capo')?.value.trim()   || '';
-  s.harp   = document.getElementById('ie-harp')?.value.trim()   || '';
-  s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
+  s.title       = title;
+  s.tags        = document.getElementById('ie-tags')?.value.trim()        || '';
+  s.key         = document.getElementById('ie-key')?.value.trim()         || '';
+  s.capo        = document.getElementById('ie-capo')?.value.trim()        || '';
+  s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
+  s.ugLink      = normalizeUG(document.getElementById('ie-uglink')?.value || '');
+  s.arrangement = document.getElementById('ie-arrangement')?.value        || '';
+  s.result      = document.getElementById('ie-result')?.value             || '';
+  s.rehearsed   = document.getElementById('ie-rehearsed')?.value          || '';
   inlineEditId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -1420,12 +1482,15 @@ function cancelInlineEdit() {
 
 function openSongModal() {
   document.getElementById('song-modal-title').textContent = 'Add Song';
-  document.getElementById('f-title').value  = '';
-  document.getElementById('f-tags').value   = '';
-  document.getElementById('f-key').value    = '';
-  document.getElementById('f-capo').value   = '';
-  document.getElementById('f-harp').value   = '';
-  document.getElementById('f-uglink').value = '';
+  document.getElementById('f-title').value       = '';
+  document.getElementById('f-tags').value        = '';
+  document.getElementById('f-key').value         = '';
+  document.getElementById('f-capo').value        = '';
+  document.getElementById('f-harp').value        = '';
+  document.getElementById('f-uglink').value      = '';
+  document.getElementById('f-arrangement').value = '';
+  document.getElementById('f-result').value      = '';
+  document.getElementById('f-rehearsed').value   = '';
   openModal('song-modal');
   document.getElementById('f-title').focus();
 }
@@ -1434,13 +1499,16 @@ function saveSong() {
   const title = document.getElementById('f-title').value.trim();
   if (!title) { toast('Title is required'); return; }
   db.songs.push({
-    id:     uid(),
+    id:          uid(),
     title,
-    tags:   document.getElementById('f-tags').value.trim(),
-    key:    document.getElementById('f-key').value.trim(),
-    capo:   document.getElementById('f-capo').value.trim(),
-    harp:   document.getElementById('f-harp').value.trim(),
-    ugLink: normalizeUG(document.getElementById('f-uglink').value),
+    tags:        document.getElementById('f-tags').value.trim(),
+    key:         document.getElementById('f-key').value.trim(),
+    capo:        document.getElementById('f-capo').value.trim(),
+    harp:        document.getElementById('f-harp').value.trim(),
+    ugLink:      normalizeUG(document.getElementById('f-uglink').value),
+    arrangement: document.getElementById('f-arrangement').value || '',
+    result:      document.getElementById('f-result').value      || '',
+    rehearsed:   document.getElementById('f-rehearsed').value   || '',
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
@@ -1458,18 +1526,24 @@ function deleteSong(id) {
 // ─────────────────────────────────────────
 function renderSets() {
   const el = document.getElementById('sets-list');
-  if (!db.setlists.length) {
-    el.innerHTML = '<div class="empty" style="padding:14px;font-size:0.8rem">No setlists yet</div>';
-    return;
-  }
-  el.innerHTML = db.setlists.map(sl => `
-    <div class="set-item${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
-      <span class="set-name">${esc(sl.name)}</span>
-      <div class="set-actions">
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Rename">✎</button>
-        <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
-      </div>
-    </div>`).join('');
+  const autoHtml = `<div class="auto-sets-divider">Auto-generated</div>` +
+    AUTO_SETS.map(a => `
+      <div class="set-item auto-set${activeSetId===a.id?' active':''}" onclick="selectSet('${a.id}')">
+        <span class="set-name">⚡ ${esc(a.name)}</span>
+      </div>`).join('');
+  const userHtml = db.setlists.length
+    ? db.setlists.map(sl => `
+      <div class="set-item${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
+        <span class="set-name">${esc(sl.name)}</span>
+        <div class="set-actions">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Rename">✎</button>
+          <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
+        </div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No manual setlists yet</div>';
+  el.innerHTML = autoHtml +
+    `<div class="auto-sets-divider" style="margin-top:10px">Manual</div>` +
+    userHtml;
 }
 
 function selectSet(id) {
@@ -1478,8 +1552,42 @@ function selectSet(id) {
   renderSetDetail();
 }
 
+function songScore(s, typeIdx) {
+  const ap = db.attributePoints;
+  let pts = 0;
+  if (s.arrangement && ap.arrangement[s.arrangement]) pts += ap.arrangement[s.arrangement][typeIdx] || 0;
+  if (s.result      && ap.result[s.result])           pts += ap.result[s.result][typeIdx]           || 0;
+  if (s.rehearsed   && ap.rehearsed[s.rehearsed])     pts += ap.rehearsed[s.rehearsed][typeIdx]     || 0;
+  return pts;
+}
+
+function getAutoSetlist(typeIdx) {
+  return [...db.songs]
+    .map(s => ({ ...s, _score: songScore(s, typeIdx) }))
+    .sort((a, b) => b._score - a._score);
+}
+
 function renderSetDetail() {
   const el = document.getElementById('set-detail');
+
+  const autoSet = AUTO_SETS.find(a => a.id === activeSetId);
+  if (autoSet) {
+    const ranked = getAutoSetlist(autoSet.idx);
+    el.innerHTML = `
+      <div class="set-detail-header">
+        <h2>⚡ ${esc(autoSet.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${ranked.length} songs</span></h2>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="openPlay('${autoSet.id}')">▶ Play</button>
+        </div>
+      </div>
+      <div id="sl-list">
+        ${!ranked.length
+          ? '<div class="empty" style="padding:20px">No songs yet — add songs and set their attributes</div>'
+          : ranked.map((s, i) => autoSlRow(s, i, autoSet.idx)).join('')}
+      </div>`;
+    return;
+  }
+
   const sl = db.setlists.find(s => s.id === activeSetId);
   if (!sl) { el.innerHTML = '<div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>'; return; }
 
@@ -1523,6 +1631,25 @@ function slRow(s, i, total) {
       <button class="btn btn-secondary btn-sm btn-icon" onclick="moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeSlSong('${s.id}')" title="Remove">✕</button>
     </div>
+  </div>`;
+}
+
+function autoSlRow(s, i, typeIdx) {
+  const titleEl = s.ugLink
+    ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
+    : `<span class="sl-title">${esc(s.title)}</span>`;
+  const badges = kchBadges(s);
+  const attrMeta = [s.arrangement, s.result, s.rehearsed].filter(Boolean).join(' · ') || '—';
+  return `<div class="sl-row" data-idx="${i}">
+    <span class="sl-num">${i+1}.</span>
+    <div class="sl-info">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+        ${titleEl}
+        ${badges ? `<div class="kch-wrap" style="margin-top:0">${badges}</div>` : ''}
+      </div>
+      <div class="sl-meta">${esc(s.tags||'')}${s.tags?' · ':''}${esc(attrMeta)}</div>
+    </div>
+    <span class="score-badge">${s._score !== undefined ? s._score : songScore(s, typeIdx)}</span>
   </div>`;
 }
 
@@ -1723,7 +1850,17 @@ let playOpenedUG = false;
 const PLAY_ITEM_H = 120;
 
 function openPlay(setId) {
+  const autoSet = AUTO_SETS.find(a => a.id === setId);
+  if (autoSet) {
+    _playOverrideSongs = getAutoSetlist(autoSet.idx);
+    playSetId = setId; playIdx = 0; playOpenedUG = false;
+    document.getElementById('play-set-title').textContent = '⚡ ' + autoSet.name;
+    document.getElementById('play-view').classList.remove('hidden');
+    requestAnimationFrame(() => renderPlayList('instant'));
+    return;
+  }
   const sl = db.setlists.find(s => s.id === setId); if (!sl) return;
+  _playOverrideSongs = null;
   playSetId = setId; playIdx = 0; playOpenedUG = false;
   document.getElementById('play-set-title').textContent = sl.name;
   document.getElementById('play-view').classList.remove('hidden');
@@ -1732,19 +1869,23 @@ function openPlay(setId) {
 
 function closePlay() {
   document.getElementById('play-view').classList.add('hidden');
-  playSetId = null; playOpenedUG = false;
+  playSetId = null; playOpenedUG = false; _playOverrideSongs = null;
+}
+
+function getPlaySongs() {
+  if (_playOverrideSongs) return _playOverrideSongs;
+  const sl = db.setlists.find(s => s.id === playSetId);
+  return sl ? sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean) : [];
 }
 
 function stepPlay(dir) {
-  const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return;
-  const len = sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean).length;
+  const len = getPlaySongs().length;
   playIdx = Math.max(0, Math.min(len - 1, playIdx + dir));
   renderPlayList(true);
 }
 
 function renderPlayList(autoScroll = true) {
-  const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return;
-  const songs = sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean);
+  const songs = getPlaySongs(); if (!songs.length) return;
   document.getElementById('play-progress').textContent = `${playIdx + 1} / ${songs.length}`;
 
   const list = document.getElementById('play-list');
@@ -1786,8 +1927,8 @@ function renderPlayList(autoScroll = true) {
 
   function snapIdx() {
     if (!playSetId) return -1;
-    const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return -1;
-    const max = sl.songIds.filter(id => db.songs.find(s => s.id === id)).length - 1;
+    const max = getPlaySongs().length - 1;
+    if (max < 0) return -1;
     return Math.max(0, Math.min(max, Math.round(list.scrollTop / PLAY_ITEM_H)));
   }
 
@@ -1797,11 +1938,8 @@ function renderPlayList(autoScroll = true) {
     const idx = snapIdx(); if (idx < 0 || idx === playIdx) return;
     playIdx = idx;
     list.querySelectorAll('.play-song').forEach((el, i) => el.classList.toggle('play-current', i === idx));
-    const sl = db.setlists.find(s => s.id === playSetId);
-    if (sl) {
-      const len = sl.songIds.filter(id => db.songs.find(s => s.id === id)).length;
-      document.getElementById('play-progress').textContent = `${idx + 1} / ${len}`;
-    }
+    const len = getPlaySongs().length;
+    if (len) document.getElementById('play-progress').textContent = `${idx + 1} / ${len}`;
   }
 
   // After snap settles: full re-render to restore nav buttons, link, badges
@@ -2131,15 +2269,5 @@ document.addEventListener('keydown', e => {
 boot();
 </script>
 
-<div class="overlay hidden" id="tag-editor-modal">
-  <div class="modal" style="max-width:520px">
-    <h2>Edit Tags</h2>
-    <div id="tag-editor-list"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('tag-editor-modal')">Cancel</button>
-      <button class="btn btn-primary"   onclick="applyTagEdits()">Save</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
