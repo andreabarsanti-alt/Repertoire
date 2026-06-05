@@ -8,7 +8,11 @@
       "capo": "2",
       "harp": "A",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/out-on-the-weekend-official-2650377",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s02",
@@ -18,7 +22,11 @@
       "capo": "6",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/look-out-for-my-love-chords-2812820",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s03",
@@ -28,7 +36,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/the-needle-and-the-damage-done-official-2453756",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s28",
@@ -38,7 +50,11 @@
       "capo": "",
       "harp": "Bb",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/my-my-hey-hey-out-of-the-blue-official-2478502",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s29",
@@ -48,7 +64,11 @@
       "capo": "5",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/pocahontas-official-3639335",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s30",
@@ -58,7 +78,11 @@
       "capo": "2",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/powderfinger-official-3197855",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s04",
@@ -68,7 +92,11 @@
       "harp": "",
       "tags": "The Beatles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/while-my-guitar-gently-weeps-official-1962225",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s05",
@@ -78,7 +106,11 @@
       "harp": "",
       "tags": "The Beatles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/blackbird-official-2093927",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao4",
+        "ag3": "ao7"
+      }
     },
     {
       "id": "s36",
@@ -88,7 +120,11 @@
       "harp": "",
       "tags": "The Beatles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/we-can-work-it-out-official-2091581",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s37",
@@ -98,7 +134,11 @@
       "harp": "",
       "tags": "The Beatles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/two-of-us-official-2148807",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s06",
@@ -108,7 +148,11 @@
       "harp": "",
       "tags": "Johnny Cash",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/johnny-cash/first-time-ever-i-saw-your-face-chords-481113",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s07",
@@ -118,7 +162,11 @@
       "harp": "",
       "tags": "Eddie Vedder",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eddie-vedder/society-official-1948063",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s08",
@@ -128,7 +176,11 @@
       "harp": "A",
       "tags": "Bruce Springsteen",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/johnny-99-official-5982602",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s10",
@@ -138,7 +190,11 @@
       "harp": "E",
       "tags": "Bruce Springsteen",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/im-on-fire-official-2153455",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s27",
@@ -148,7 +204,11 @@
       "harp": "D",
       "tags": "Bruce Springsteen",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/nebraska-official-4580714",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "s11",
@@ -158,7 +218,11 @@
       "harp": "",
       "tags": "Eric Clapton",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/tears-in-heaven-official-1934645",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao7"
+      }
     },
     {
       "id": "mobwru03pd137",
@@ -168,7 +232,11 @@
       "harp": "",
       "tags": "Eric Clapton",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/layla-official-3551282",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobwys0zxdtab",
@@ -178,7 +246,11 @@
       "harp": "",
       "tags": "Eric Clapton",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/nobody-knows-you-when-youre-down-and-out-official-5505261",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s12",
@@ -216,7 +288,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/scarborough-fair-official-2531112",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s15",
@@ -226,7 +302,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-sound-of-silence-official-1960213",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s32",
@@ -236,7 +316,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/mrs-robinson-official-2153469",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s33",
@@ -246,7 +330,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-boxer-official-2466966",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "mobx34z6fdygx",
@@ -256,7 +344,11 @@
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/homeward-bound-official-2461302",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s16",
@@ -266,7 +358,11 @@
       "harp": "E",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/dont-think-twice-its-all-right-official-2089509",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s17",
@@ -276,7 +372,11 @@
       "harp": "",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/masters-of-war-official-2081537",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s18",
@@ -286,7 +386,11 @@
       "harp": "C",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/blowin-in-the-wind-official-2077645",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s25",
@@ -296,7 +400,11 @@
       "harp": "G",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/i-shall-be-released-official-3279212",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s26",
@@ -306,7 +414,11 @@
       "harp": "",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/forever-young-official-2912006",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s41",
@@ -316,7 +428,11 @@
       "harp": "G",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/knockin-on-heavens-door-official-2212929",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "mobwnzg39cdvz",
@@ -326,7 +442,11 @@
       "harp": "Bb",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/like-a-rolling-stone-official-2479228",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobx3suewssgb",
@@ -336,7 +456,11 @@
       "harp": "D",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/mr-tambourine-man-official-2010709",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobx4gbien69s",
@@ -346,7 +470,11 @@
       "harp": "D",
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/simple-twist-of-fate-official-2506920",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "s19",
@@ -356,7 +484,11 @@
       "harp": "",
       "tags": "Francesco De Gregori",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/francesco-de-gregori/festival-chords-4087321",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao4",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "s20",
@@ -380,7 +512,11 @@
       "harp": "",
       "tags": "Ligabue",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/leggero-chords-1264465",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s22",
@@ -390,7 +526,11 @@
       "harp": "",
       "tags": "Robert Johnson, The Rolling Stones",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/love-in-vain-official-2981081",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s23",
@@ -414,7 +554,11 @@
       "harp": "",
       "tags": "The Band",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-band/the-weight-official-2476186",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s31",
@@ -424,7 +568,11 @@
       "harp": "",
       "tags": "Tom Waits",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/jersey-girl-official-5624274",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao6",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "s34",
@@ -434,7 +582,11 @@
       "harp": "",
       "tags": "David Bowie",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/the-man-who-sold-the-world-official-2076777",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s35",
@@ -444,7 +596,11 @@
       "harp": "",
       "tags": "David Bowie",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-official-1960239",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s38",
@@ -454,7 +610,11 @@
       "harp": "",
       "tags": "U2",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "s39",
@@ -464,7 +624,11 @@
       "harp": "",
       "tags": "Pink Floyd",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/wish-you-were-here-official-2412207",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobvrnnwqd8gq",
@@ -474,7 +638,11 @@
       "harp": "",
       "tags": "Pink Floyd",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/comfortably-numb-official-1939571",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "s40",
@@ -484,7 +652,10 @@
       "harp": "",
       "tags": "Leonard Cohen",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/jeff-buckley/hallelujah-official-2143565",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobwy45ykmxg3",
@@ -494,7 +665,11 @@
       "harp": "",
       "tags": "Prince",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/prince/purple-rain-official-2421559",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobxcagv7zvgk",
@@ -504,7 +679,11 @@
       "harp": "",
       "tags": "Prince",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/prince/cream-official-4606757",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "mobwz3ketsbt7",
@@ -514,7 +693,11 @@
       "harp": "",
       "tags": "Eagles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-official-1910943",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobwzwj4octlr",
@@ -524,7 +707,11 @@
       "harp": "",
       "tags": "Eagles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/eagles/tequila-sunrise-official-2580984",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "mobx10bto98vo",
@@ -534,7 +721,11 @@
       "harp": "",
       "tags": "Gram Parsons",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/gram-parsons/love-hurts-chords-1905656",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "mobx70xqr1njm",
@@ -547,7 +738,7 @@
       "attrs": {
         "ag1": "ao3",
         "ag2": "ao6",
-        "ag3": "ao9"
+        "ag3": "ao10"
       }
     },
     {
@@ -572,7 +763,11 @@
       "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/paul-simon/kodachrome-official-3012761",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao4",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "c94a7825-c876-4dfe-be01-468295c75458",
@@ -582,7 +777,9 @@
       "capo": "3",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/una-vita-da-mediano-chords-1765661",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "51af4aea-828e-45ad-b215-50dd9f750afe",
@@ -592,7 +789,11 @@
       "capo": "6",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/here-comes-the-sun-official-1990437",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "e48da248-3058-469a-89c2-52b5de9ae6ee",
@@ -602,7 +803,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/i-am-a-rock-official-3183473",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "61c15a11-1643-472f-8394-a1e50e28d7e6",
@@ -626,7 +831,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/girl-from-the-north-country-official-2076165",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao6",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
@@ -636,7 +845,10 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/sweet-home-chicago-official-2185005",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "12836013-3483-4122-a342-218470148f7d",
@@ -646,7 +858,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=KUa6P3BrGtydxflzIN8eGo0V&tab_id=30461633",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao4",
+        "ag3": "ao8"
+      }
     },
     {
       "id": "6dec3f02-828c-43d7-916f-825d825a2bac",
@@ -656,7 +872,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rokes/ce-una-strana-chords-82189",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao6",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "115ff934-ff2d-4102-b150-0ca7d303f124",
@@ -666,7 +886,11 @@
       "capo": "3",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/no-surprises-official-1910937",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao4",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "86b59268-5f33-4c3a-be96-a3099959ca4e",
@@ -676,17 +900,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/with-or-without-you-official-1955543",
-      "attrs": {}
-    },
-    {
-      "id": "465fc6a1-c309-497e-b675-120109708544",
-      "title": "Working Class Hero",
-      "tags": "John Lennon",
-      "key": "Am",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/john-lennon/working-class-hero-official-2081789",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "babba8c0-8d5b-4895-aaa1-82ea835874bf",
@@ -696,7 +914,9 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/lucio-battisti/si-viaggiare-chords-1900826",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
@@ -706,7 +926,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/heroes-official-2457982",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao4",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "86da8e3a-0412-4612-acf2-ac53ee65a491",
@@ -716,7 +940,9 @@
       "capo": "2",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/starman-official-2085341",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "b5f5de41-59b0-4fec-aedd-5014761404c5",
@@ -726,7 +952,10 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/sting/fragile-official-2463044",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
@@ -736,7 +965,9 @@
       "capo": "-1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
@@ -774,27 +1005,11 @@
       "capo": "2",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/something-official-1997363",
-      "attrs": {}
-    },
-    {
-      "id": "5206f549-d5bf-4f83-86df-83d915f8bc90",
-      "title": "A Hard Rains A Gonna Fall",
-      "tags": "Bob Dylan",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/a-hard-rains-a-gonna-fall-official-2231207",
-      "attrs": {}
-    },
-    {
-      "id": "bb599fdd-9fb1-4976-9144-da023b583758",
-      "title": "Corrina Corrina",
-      "tags": "Bob Dylan",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/corrina-corrina-official-4223026",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "b79c9194-0cd6-4314-a72e-ceb4a5ddc064",
@@ -804,7 +1019,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=vO9omnicDw0VN4PWuCUBRQUr&tab_id=30458183",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "fde76324-becf-4df7-8c8b-17e03d8c8c1e",
@@ -814,7 +1033,9 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/r-e-m-/everybody-hurts-official-1979985",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "bd2920c9-b948-4788-a1f4-15268bab1e2e",
@@ -824,7 +1045,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/paint-it-black-official-2137031",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "5e051375-d77f-4dab-b610-9dba96aaa638",
@@ -834,7 +1059,9 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "214bf23d-b10c-4475-b93c-8608d81ca91d",
@@ -844,7 +1071,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/sympathy-for-the-devil-official-2383129",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9",
@@ -854,7 +1085,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/wild-horses-official-2469000",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc",
@@ -864,7 +1099,9 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/karma-police-official-1911473",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "7093eab3-255f-4300-ba1e-df0efc6d1059",
@@ -874,27 +1111,23 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bee-gees/how-deep-is-your-love-official-1950233",
-      "attrs": {}
-    },
-    {
-      "id": "9164d339-f3d5-4c02-a46b-16a2b4e49200",
-      "title": "Jumpin Jack Flash",
-      "tags": "The Rolling Stones",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/jumpin-jack-flash-official-2155273",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "c19b1ae6-5c2f-41be-b369-04efabfb5210",
       "title": "Day tripper / jumpin jack flash",
-      "tags": "The Beatles",
+      "tags": "The Beatles, The Rolling Stones,",
       "key": "",
       "capo": "",
       "harp": "",
       "ugLink": "",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao1",
+        "ag2": "ao6",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "fde7f81b-696b-4eb6-975f-18463905e07a",
@@ -904,7 +1137,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/hey-jude-official-1910973",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao9"
+      }
     },
     {
       "id": "48059d27-3a58-415f-8814-1199e07162e4",
@@ -914,7 +1151,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/creep-official-1911339",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "fccb7d11-ae07-4874-aec2-17c29e060147",
@@ -924,7 +1165,9 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/paul-simon/slip-slidin-away-official-4606982",
-      "attrs": {}
+      "attrs": {
+        "ag3": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346"
+      }
     },
     {
       "id": "55d7c441-336e-4f1e-98ff-d58eeda0811b",
@@ -934,7 +1177,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/edoardo-bennato/il-rock-di-capitano-uncino-chords-2237641",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao3",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "48e897b1-75e4-401a-9c7f-970839204058",
@@ -944,7 +1191,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/yesterday-official-1981167",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     },
     {
       "id": "72855055-6f25-4472-baaf-df56e543fdda",
@@ -954,7 +1205,11 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/ive-just-seen-a-face-official-2049777",
-      "attrs": {}
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao5",
+        "ag3": "ao10"
+      }
     }
   ],
   "tagMeta": {
@@ -1209,11 +1464,37 @@
         },
         {
           "id": "ao9",
-          "name": "Va riprovata"
+          "name": "Qualche volta"
         },
         {
           "id": "ao10",
+          "name": "Pochissimo"
+        },
+        {
+          "id": "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346",
           "name": "Nuova"
+        }
+      ]
+    },
+    {
+      "id": "1bd29196-a8f2-42ea-a2de-b5d6359a93bd",
+      "name": "Importanza ",
+      "options": [
+        {
+          "id": "b9ccb57e-4027-4610-ba93-5a08867efc77",
+          "name": "Necessaria"
+        },
+        {
+          "id": "5666508d-2ed8-47ce-8672-f599f7dec8d9",
+          "name": "Zoccolo Duro"
+        },
+        {
+          "id": "1e678fb9-a5a6-49a5-a32a-adc49acda52d",
+          "name": "Bis"
+        },
+        {
+          "id": "bd8e1421-5aa0-4e51-97b9-0eff88bfb1b3",
+          "name": "Se capita"
         }
       ]
     }
@@ -1235,58 +1516,105 @@
   "points": {
     "ag1": {
       "ao1": {
-        "st1": 5,
-        "st2": 3,
-        "st3": 3
+        "st1": 10,
+        "st2": 7,
+        "st3": 7
       },
       "ao2": {
-        "st1": 4,
-        "st2": 3,
-        "st3": 3
+        "st1": 5,
+        "st2": 5,
+        "st3": 5
       },
       "ao3": {
-        "st1": 3,
-        "st2": 3,
-        "st3": 3
+        "st1": 4,
+        "st2": 4,
+        "st3": 4
+      },
+      "__none__": {
+        "st1": 1,
+        "st2": 1,
+        "st3": 1
       }
     },
     "ag2": {
       "ao4": {
-        "st1": 5,
-        "st2": 2,
-        "st3": 2
+        "st1": 10,
+        "st2": 5,
+        "st3": 5
       },
       "ao5": {
-        "st1": 3,
-        "st2": 4,
-        "st3": 1
+        "st1": 8,
+        "st2": 7,
+        "st3": 5
       },
       "ao6": {
+        "st1": 3,
+        "st2": 8,
+        "st3": 10
+      },
+      "__none__": {
         "st1": 1,
-        "st2": 3,
-        "st3": 5
+        "st2": 1,
+        "st3": 1
       }
     },
     "ag3": {
       "ao7": {
-        "st1": 5,
-        "st2": 2,
-        "st3": 1
-      },
-      "ao8": {
-        "st1": 5,
+        "st1": 10,
         "st2": 3,
-        "st3": 2
-      },
-      "ao9": {
-        "st1": 1,
-        "st2": 2,
         "st3": 5
       },
+      "ao8": {
+        "st1": 8,
+        "st2": 5,
+        "st3": 5
+      },
+      "ao9": {
+        "st1": 6,
+        "st2": 10,
+        "st3": 8
+      },
       "ao10": {
+        "st1": 3,
+        "st2": 8,
+        "st3": 10
+      },
+      "__none__": {
         "st1": 0,
         "st2": 0,
+        "st3": 5
+      },
+      "d9fd742a-f2ff-48b1-b0e8-2ac142b5f346": {
+        "st1": 0,
+        "st2": 1,
         "st3": 10
+      }
+    },
+    "1bd29196-a8f2-42ea-a2de-b5d6359a93bd": {
+      "__none__": {
+        "st1": 1,
+        "st2": 1,
+        "st3": 1
+      },
+      "b9ccb57e-4027-4610-ba93-5a08867efc77": {
+        "st1": 10,
+        "st2": 5,
+        "st3": 8
+      },
+      "5666508d-2ed8-47ce-8672-f599f7dec8d9": {
+        "st1": 8,
+        "st2": 5,
+        "st3": 8
+      },
+      "1e678fb9-a5a6-49a5-a32a-adc49acda52d": {
+        "st1": 5,
+        "st2": 3,
+        "st3": 3
+      },
+      "bd8e1421-5aa0-4e51-97b9-0eff88bfb1b3": {
+        "st1": 1,
+        "st2": 3,
+        "st3": 3
       }
     }
   },
