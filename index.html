@@ -1734,20 +1734,23 @@ function selectSet(id) {
 }
 
 function songScore(s, typeId) {
+  const groups = db.attrGroups || [];
+  if (!groups.length) return 0;
   let score = 1;
-  (db.attrGroups||[]).forEach(grp => {
+  for (const grp of groups) {
     const optId = (s.attrs||{})[grp.id];
-    if (optId) {
-      const pts = db.points?.[grp.id]?.[optId]?.[typeId];
-      if (pts !== undefined) score *= pts;
-    }
-  });
+    if (!optId) return 0;
+    const pts = db.points?.[grp.id]?.[optId]?.[typeId];
+    if (pts === undefined) return 0;
+    score *= pts;
+  }
   return score;
 }
 
 function getAutoSetlist(typeId) {
   return [...db.songs]
     .map(s => ({ ...s, _score: songScore(s, typeId) }))
+    .filter(s => s._score > 0)
     .sort((a, b) => b._score - a._score);
 }
 
