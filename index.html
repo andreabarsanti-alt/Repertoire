@@ -725,6 +725,7 @@ select.fi { cursor: pointer; }
     <label class="btn btn-secondary btn-sm" style="cursor:pointer">
       Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
     </label>
+    <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull repertoire.json from GitHub">⬇ Pull</button>
     <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push repertoire.json to GitHub">⬆ Push</button>
   </div>
 </header>
@@ -2310,6 +2311,42 @@ async function doPush(cfg) {
     toast('Push failed: ' + err.message, 4000);
   } finally {
     btn.disabled = false; btn.textContent = '⬆ Push';
+  }
+}
+
+async function pullFromGithub() {
+  const cfg = getGithubConfig();
+  if (!cfg) { openGithubConfigModal(); return; }
+  const btn = document.getElementById('btn-pull');
+  btn.disabled = true; btn.textContent = '⬇…';
+  try {
+    const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`;
+    const headers = {
+      'Authorization': `token ${cfg.token}`,
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    const res = await fetch(`${apiUrl}?ref=${encodeURIComponent(cfg.branch)}&_=${Date.now()}`, { headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `GET ${res.status}`);
+    }
+    const file = await res.json();
+    // Decode base64 content (GitHub returns it with newlines)
+    const json = decodeURIComponent(
+      atob(file.content.replace(/\n/g, ''))
+        .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2,'0')).join('')
+    );
+    const d = JSON.parse(json);
+    if (!Array.isArray(d.songs)) throw new Error('Invalid data');
+    if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
+    db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
+    save(); renderAll();
+    document.getElementById('sync-banner').classList.add('hidden');
+    toast('Pulled from GitHub!');
+  } catch (err) {
+    toast('Pull failed: ' + err.message, 4000);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ Pull';
   }
 }
 
