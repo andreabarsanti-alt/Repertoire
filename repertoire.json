@@ -74,8 +74,8 @@
       "id": "s30",
       "title": "Powderfinger",
       "tags": "Neil Young",
-      "key": "D",
-      "capo": "2",
+      "key": "E",
+      "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/powderfinger-official-3197855",
       "attrs": {
@@ -213,7 +213,7 @@
     {
       "id": "s11",
       "title": "Tears in Heaven",
-      "key": "G#",
+      "key": "A",
       "capo": "",
       "harp": "",
       "tags": "Eric Clapton",
@@ -339,8 +339,8 @@
     {
       "id": "mobx34z6fdygx",
       "title": "Homeward Bound",
-      "key": "Ab",
-      "capo": "",
+      "key": "Bb",
+      "capo": "3",
       "harp": "",
       "tags": "Simon & Garfunkel",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/homeward-bound-official-2461302",
@@ -591,8 +591,8 @@
     {
       "id": "s35",
       "title": "Space Oddity",
-      "key": "B",
-      "capo": "4",
+      "key": "C",
+      "capo": "5",
       "harp": "",
       "tags": "David Bowie",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-official-1960239",
@@ -785,7 +785,7 @@
       "id": "51af4aea-828e-45ad-b215-50dd9f750afe",
       "title": "Here Comes The Sun",
       "tags": "The Beatles",
-      "key": "G",
+      "key": "G#",
       "capo": "6",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/here-comes-the-sun-official-1990437",
@@ -799,7 +799,7 @@
       "id": "e48da248-3058-469a-89c2-52b5de9ae6ee",
       "title": "I Am A Rock",
       "tags": "Simon & Garfunkel",
-      "key": "Bb",
+      "key": "C",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/i-am-a-rock-official-3183473",
@@ -813,8 +813,8 @@
       "id": "61c15a11-1643-472f-8394-a1e50e28d7e6",
       "title": "A Hazy Shade Of Winter",
       "tags": "Simon & Garfunkel",
-      "key": "Cm",
-      "capo": "3",
+      "key": "Dm",
+      "capo": "5",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/a-hazy-shade-of-winter-official-3269117",
       "attrs": {
@@ -829,7 +829,7 @@
       "tags": "Bob Dylan",
       "key": "Bb",
       "capo": "",
-      "harp": "",
+      "harp": "Bb",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/girl-from-the-north-country-official-2076165",
       "attrs": {
         "ag1": "ao2",
@@ -841,7 +841,7 @@
       "id": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
       "title": "Sweet Home Chicago",
       "tags": "Robert Johnson",
-      "key": "",
+      "key": "F",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/sweet-home-chicago-official-2185005",
@@ -922,7 +922,7 @@
       "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
       "title": "Heroes",
       "tags": "David Bowie",
-      "key": "A",
+      "key": "D",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/heroes-official-2457982",
@@ -1223,6 +1223,30 @@
       "capo": "",
       "harp": "",
       "ugLink": "",
+      "attrs": {}
+    },
+    {
+      "id": "96b1f45b-00fd-4dad-b7e7-f625e28ddbed",
+      "title": "A Horse With No Name",
+      "tags": "America,",
+      "key": "Em",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-official-2238415",
+      "attrs": {
+        "ag1": "ao2",
+        "ag2": "ao6",
+        "ag3": "ao8"
+      }
+    },
+    {
+      "id": "7f2dfdcf-5ca1-47a7-b4f3-7871da1d90b1",
+      "title": "At The Zoo",
+      "tags": "Simon Garfunkel,",
+      "key": "G",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/at-the-zoo-official-6196298",
       "attrs": {}
     }
   ],
