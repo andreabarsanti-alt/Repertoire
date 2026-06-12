@@ -712,7 +712,7 @@ select.fi { cursor: pointer; }
 
 <!-- HEADER -->
 <header>
-  <h1>Repertoire</h1>
+  <h1>Repertoire<span id="profile-label"></span></h1>
   <nav>
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
@@ -914,6 +914,7 @@ select.fi { cursor: pointer; }
   <div style="padding:0;max-width:680px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
       <h2 style="font-size:1.05rem;font-weight:600;color:var(--accent)">Auto-Setlist Point Values</h2>
+      <button class="btn btn-danger btn-sm" onclick="clearAllSongAttrs()">Clear all song scorings</button>
     </div>
     <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5">Points per attribute value for each auto-generated setlist type. Songs are ranked by total score.</p>
     <div id="scoring-table"></div>
@@ -925,6 +926,14 @@ select.fi { cursor: pointer; }
 
 <script>
 'use strict';
+
+// ─────────────────────────────────────────
+// PROFILE (URL ?profile=name)
+// ─────────────────────────────────────────
+const PROFILE     = new URLSearchParams(location.search).get('profile') || 'two_of_us';
+const STORAGE_KEY = 'rep_v2'            + (PROFILE ? '_' + PROFILE : '');
+const SEED_FILE   = 'repertoire'        + (PROFILE ? '_' + PROFILE : '') + '.json';
+const GH_CFG_KEY  = 'rep_github_config' + (PROFILE ? '_' + PROFILE : '');
 
 // ─────────────────────────────────────────
 // STATE
@@ -1009,7 +1018,11 @@ let _playOverrideSongs = null;
 // PERSISTENCE
 // ─────────────────────────────────────────
 async function boot() {
-  const saved = localStorage.getItem('rep_v2');
+  // One-time migration: move legacy unnamespaced data into the two_of_us key
+  if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem('rep_v2')) {
+    localStorage.setItem(STORAGE_KEY, localStorage.getItem('rep_v2'));
+  }
+  const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       db = JSON.parse(saved);
@@ -1035,7 +1048,7 @@ async function boot() {
     checkRepoSync();
   } else {
     try {
-      const r = await fetch('repertoire.json');
+      const r = await fetch(SEED_FILE);
       if (r.ok) { db = await r.json(); save(); }
     } catch {}
   }
@@ -1043,10 +1056,11 @@ async function boot() {
   if (migrateScoring()) save();
   if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
   ensureNonePoints();
+  document.getElementById('profile-label').textContent = ' · ' + PROFILE.replace(/_/g, ' ');
   renderAll();
 }
 
-function save() { localStorage.setItem('rep_v2', JSON.stringify(db)); }
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 
 // ─────────────────────────────────────────
 // REPO SYNC CHECK
@@ -1066,7 +1080,7 @@ function dbFingerprint(data) {
 
 async function checkRepoSync() {
   try {
-    const r = await fetch('repertoire.json?_=' + Date.now());
+    const r = await fetch(SEED_FILE + '?_=' + Date.now());
     if (!r.ok) return;
     const repoData = await r.json();
     if (!Array.isArray(repoData.songs)) return;
@@ -1524,6 +1538,13 @@ function scDeleteAsl(id) {
   db.autoSetlists = db.autoSetlists.filter(a => a.id !== id);
   if (activeSetId === id) { activeSetId = null; renderSetDetail(); }
   save(); renderScoring(); renderSets();
+}
+
+function clearAllSongAttrs() {
+  if (!confirm('Clear all scoring attributes from every song? This cannot be undone.')) return;
+  db.songs.forEach(s => { s.attrs = {}; });
+  save(); renderSongs(); renderScoring();
+  toast('All song scorings cleared');
 }
 
 function duplicateAutoSetlist(autoId) {
@@ -2263,17 +2284,17 @@ document.getElementById('f-set-name').addEventListener('keydown', e => e.key==='
 // GITHUB PUSH
 // ─────────────────────────────────────────
 function getGithubConfig() {
-  try { return JSON.parse(localStorage.getItem('rep_github_config') || 'null'); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch { return null; }
 }
 
 function clearGithubConfig() {
-  localStorage.removeItem('rep_github_config');
+  localStorage.removeItem(GH_CFG_KEY);
   const auto = autoDetectGithub();
   document.getElementById('gh-token').value  = '';
   document.getElementById('gh-owner').value  = auto.owner;
   document.getElementById('gh-repo').value   = auto.repo;
   document.getElementById('gh-branch').value = 'main';
-  document.getElementById('gh-path').value   = 'repertoire.json';
+  document.getElementById('gh-path').value   = SEED_FILE;
   toast('GitHub settings cleared');
 }
 
@@ -2283,9 +2304,9 @@ function autoDetectGithub() {
   const m = host.match(/^([^.]+)\.github\.io$/);
   if (m) {
     const rm = path.match(/^\/([^/]+)/);
-    return { owner: m[1], repo: rm ? rm[1] : '', branch: 'main', path: 'repertoire.json', token: '' };
+    return { owner: m[1], repo: rm ? rm[1] : '', branch: 'main', path: SEED_FILE, token: '' };
   }
-  return { owner: '', repo: '', branch: 'main', path: 'repertoire.json', token: '' };
+  return { owner: '', repo: '', branch: 'main', path: SEED_FILE, token: '' };
 }
 
 function openGithubConfigModal() {
@@ -2294,7 +2315,7 @@ function openGithubConfigModal() {
   document.getElementById('gh-owner').value  = cfg.owner  || '';
   document.getElementById('gh-repo').value   = cfg.repo   || '';
   document.getElementById('gh-branch').value = cfg.branch || 'main';
-  document.getElementById('gh-path').value   = cfg.path   || 'repertoire.json';
+  document.getElementById('gh-path').value   = cfg.path   || SEED_FILE;
   openModal('github-modal');
   document.getElementById('gh-token').focus();
 }
@@ -2305,10 +2326,10 @@ function saveGithubConfig() {
     owner:  document.getElementById('gh-owner').value.trim(),
     repo:   document.getElementById('gh-repo').value.trim(),
     branch: document.getElementById('gh-branch').value.trim() || 'main',
-    path:   document.getElementById('gh-path').value.trim()   || 'repertoire.json',
+    path:   document.getElementById('gh-path').value.trim()   || SEED_FILE,
   };
   if (!cfg.token || !cfg.owner || !cfg.repo) { toast('Token, Owner and Repo are required'); return; }
-  localStorage.setItem('rep_github_config', JSON.stringify(cfg));
+  localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg));
   closeModal('github-modal');
   doPush(cfg);
 }
@@ -2345,7 +2366,7 @@ async function doPush(cfg) {
       throw new Error(err.message || `GET ${getRes.status}`);
     }
 
-    const body = { message: 'Update repertoire.json via Repertoire app', content, branch: cfg.branch };
+    const body = { message: `Update ${cfg.path} via Repertoire app`, content, branch: cfg.branch };
     if (sha) body.sha = sha;
 
     const putRes = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
