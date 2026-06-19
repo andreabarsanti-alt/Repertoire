@@ -21,16 +21,6 @@
       "attrs": {}
     },
     {
-      "id": "f0b957c1-b973-4935-90f9-3c7bf95bfd7e",
-      "title": "The Promised Land",
-      "tags": "Bruce Springsteen,",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/the-promised-land-chords-84467",
-      "attrs": {}
-    },
-    {
       "id": "b54a644f-b2c2-47de-a554-798190dcb2be",
       "title": "Dancing In The Dark",
       "tags": "Bruce Springsteen,",
@@ -44,7 +34,7 @@
       "id": "a28ca749-80ee-48db-91d3-11fc8c0fae37",
       "title": "Thunder Road",
       "tags": "Bruce Springsteen,",
-      "key": "",
+      "key": "F",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/thunder-road-official-2193713",
@@ -74,8 +64,8 @@
       "id": "5a43733b-bae3-45d8-92c3-bb4729697be2",
       "title": "Hungry Heart",
       "tags": "Bruce Springsteen,",
-      "key": "A",
-      "capo": "-3",
+      "key": "C#",
+      "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/hungry-heart-official-3041775",
       "attrs": {}
@@ -194,7 +184,7 @@
       "id": "e8e64680-ff9f-475a-b75e-31b4829516ca",
       "title": "Tenth Avenue Freeze Out",
       "tags": "Bruce Springsteen,",
-      "key": "",
+      "key": "F",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/tenth-avenue-freeze-out-chords-330512",
@@ -204,30 +194,10 @@
       "id": "232ef30d-30f8-4062-97c4-e24cbd419b71",
       "title": "Rosalita",
       "tags": "Bruce Springsteen,",
-      "key": "",
+      "key": "F",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/rosalita-chords-1454831",
-      "attrs": {}
-    },
-    {
-      "id": "4b98ea37-5ce4-45a0-ab35-d9f84b58b6ea",
-      "title": "Out In The Street",
-      "tags": "Bruce Springsteen,",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/out-in-the-street-chords-2110889",
-      "attrs": {}
-    },
-    {
-      "id": "d6065f2d-fb0f-4a1d-a211-350700fe1857",
-      "title": "Detroit Medley",
-      "tags": "Bruce Springsteen,",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/detroit-medley-chords-792492",
       "attrs": {}
     },
     {
@@ -251,11 +221,11 @@
       "attrs": {}
     },
     {
-      "id": "0262815b-9db5-495f-9a86-dbc3e029f1e4",
-      "title": "I’m going down",
-      "tags": "",
+      "id": "73bc8f45-8bbb-4f69-ac94-cb7f4e329285",
+      "title": "Im Goin Down",
+      "tags": "Bruce Springsteen,",
       "key": "Bb",
-      "capo": "-2",
+      "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/im-goin-down-official-4799708",
       "attrs": {}
