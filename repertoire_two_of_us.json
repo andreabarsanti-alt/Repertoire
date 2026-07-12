@@ -514,7 +514,7 @@
       "id": "mobx10bto98vo",
       "title": "Love hurts",
       "key": "G",
-      "capo": "5",
+      "capo": "0",
       "harp": "",
       "tags": "Gram Parsons",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/gram-parsons/love-hurts-chords-1905656",
@@ -804,7 +804,7 @@
       "id": "7093eab3-255f-4300-ba1e-df0efc6d1059",
       "title": "How Deep Is Your Love",
       "tags": "Bee Gees",
-      "key": "",
+      "key": "B",
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bee-gees/how-deep-is-your-love-official-1950233",
@@ -908,6 +908,26 @@
       "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/at-the-zoo-official-6196298",
+      "attrs": {}
+    },
+    {
+      "id": "c085662b-6fe7-455d-a0f0-5c7e0c0f34d1",
+      "title": "Death Is Not The End",
+      "tags": "Nick Cave The Bad Seeds,",
+      "key": "A",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/death-is-not-the-end-chords-2891969",
+      "attrs": {}
+    },
+    {
+      "id": "c4b351d2-de69-494d-a274-e7dcec1aa131",
+      "title": "Into My Arms",
+      "tags": "Nick Cave The Bad Seeds,",
+      "key": "C",
+      "capo": "",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/into-my-arms-official-2106795",
       "attrs": {}
     }
   ],
@@ -1109,6 +1129,25 @@
         "mobvrnnwqd8gq",
         "s41",
         "mobwnzg39cdvz"
+      ]
+    },
+    {
+      "id": "4b55636b-db5c-42c2-9be7-e4ee82e42058",
+      "name": "Golden",
+      "songIds": [
+        "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
+        "115ff934-ff2d-4102-b150-0ca7d303f124",
+        "mobx10bto98vo",
+        "mobxcagv7zvgk"
+      ]
+    },
+    {
+      "id": "933888d1-a363-462b-be52-82c31b4c730e",
+      "name": "New Songs",
+      "songIds": [
+        "c085662b-6fe7-455d-a0f0-5c7e0c0f34d1",
+        "c4b351d2-de69-494d-a274-e7dcec1aa131",
+        "7093eab3-255f-4300-ba1e-df0efc6d1059"
       ]
     }
   ],
