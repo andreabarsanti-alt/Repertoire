@@ -2331,6 +2331,10 @@ function closeCrdEditor() {
   crdEditorTargetId = null;
 }
 
+// Scroll distance per key press — scales with the current font size (and its 1.7 line-height,
+// matching .crd-body) so a press always jumps a consistent number of lines, not a fixed pixel count.
+function crdScrollStep() { return crdFontSize * 1.7 * 15; }
+
 // Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
 document.addEventListener('keydown', (e) => {
   const reader = document.getElementById('crd-reader');
@@ -2339,10 +2343,10 @@ document.addEventListener('keydown', (e) => {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault();
-    document.getElementById('crd-scroll').scrollBy({ top: 700, behavior: 'smooth' });
+    document.getElementById('crd-scroll').scrollBy({ top: crdScrollStep(), behavior: 'smooth' });
   } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
     e.preventDefault();
-    document.getElementById('crd-scroll').scrollBy({ top: -700, behavior: 'smooth' });
+    document.getElementById('crd-scroll').scrollBy({ top: -crdScrollStep(), behavior: 'smooth' });
   } else if (e.key === 'Escape') {
     closeCrdReader();
   }
