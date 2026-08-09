@@ -2339,10 +2339,10 @@ document.addEventListener('keydown', (e) => {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault();
-    document.getElementById('crd-scroll').scrollBy({ top: 140, behavior: 'smooth' });
+    document.getElementById('crd-scroll').scrollBy({ top: 700, behavior: 'smooth' });
   } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
     e.preventDefault();
-    document.getElementById('crd-scroll').scrollBy({ top: -140, behavior: 'smooth' });
+    document.getElementById('crd-scroll').scrollBy({ top: -700, behavior: 'smooth' });
   } else if (e.key === 'Escape') {
     closeCrdReader();
   }
