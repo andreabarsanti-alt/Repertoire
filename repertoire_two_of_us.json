@@ -1,1195 +1,169 @@
 {
-  "songs": [
-    {
-      "id": "s01",
-      "title": "Out on the weekend",
-      "tags": "Neil Young",
-      "key": "A",
-      "capo": "2",
-      "harp": "A",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/out-on-the-weekend-official-2650377",
-      "attrs": {}
-    },
-    {
-      "id": "s02",
-      "title": "Look out for my love",
-      "tags": "Neil Young",
-      "key": "Eb",
-      "capo": "6",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/look-out-for-my-love-chords-2812820",
-      "attrs": {}
-    },
-    {
-      "id": "s03",
-      "title": "The needle and the damage done",
-      "tags": "Neil Young",
-      "key": "C",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/the-needle-and-the-damage-done-official-2453756",
-      "attrs": {}
-    },
-    {
-      "id": "s28",
-      "title": "My My Hey Hey",
-      "tags": "Neil Young",
-      "key": "Bb",
-      "capo": "",
-      "harp": "Bb",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/my-my-hey-hey-out-of-the-blue-official-2478502",
-      "attrs": {}
-    },
-    {
-      "id": "s29",
-      "title": "Pocahontas",
-      "tags": "Neil Young",
-      "key": "C",
-      "capo": "5",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/pocahontas-official-3639335",
-      "attrs": {}
-    },
-    {
-      "id": "s30",
-      "title": "Powderfinger",
-      "tags": "Neil Young",
-      "key": "E",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/powderfinger-official-3197855",
-      "attrs": {}
-    },
-    {
-      "id": "s04",
-      "title": "While my guitar gently weeps",
-      "key": "G#m",
-      "capo": "4",
-      "harp": "",
-      "tags": "The Beatles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/while-my-guitar-gently-weeps-official-1962225",
-      "attrs": {}
-    },
-    {
-      "id": "s05",
-      "title": "Blackbird",
-      "key": "F#",
-      "capo": "",
-      "harp": "",
-      "tags": "The Beatles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/blackbird-official-2093927",
-      "attrs": {}
-    },
-    {
-      "id": "s36",
-      "title": "We can work it out",
-      "key": "C#",
-      "capo": "7",
-      "harp": "",
-      "tags": "The Beatles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/we-can-work-it-out-official-2091581",
-      "attrs": {}
-    },
-    {
-      "id": "s37",
-      "title": "Two of us",
-      "key": "F#",
-      "capo": "",
-      "harp": "",
-      "tags": "The Beatles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/two-of-us-official-2148807",
-      "attrs": {}
-    },
-    {
-      "id": "s06",
-      "title": "First time ever I saw your face",
-      "key": "C",
-      "capo": "",
-      "harp": "",
-      "tags": "Johnny Cash",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/johnny-cash/first-time-ever-i-saw-your-face-chords-481113",
-      "attrs": {}
-    },
-    {
-      "id": "s07",
-      "title": "Society",
-      "key": "Bbm",
-      "capo": "6",
-      "harp": "",
-      "tags": "Eddie Vedder",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eddie-vedder/society-official-1948063",
-      "attrs": {}
-    },
-    {
-      "id": "s08",
-      "title": "Johnny 99",
-      "key": "A",
-      "capo": "5",
-      "harp": "A",
-      "tags": "Bruce Springsteen",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/johnny-99-official-5982602",
-      "attrs": {}
-    },
-    {
-      "id": "s10",
-      "title": "I'm on fire",
-      "key": "E",
-      "capo": "",
-      "harp": "E",
-      "tags": "Bruce Springsteen",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/im-on-fire-official-2153455",
-      "attrs": {}
-    },
-    {
-      "id": "s27",
-      "title": "Nebraska",
-      "key": "D",
-      "capo": "",
-      "harp": "D",
-      "tags": "Bruce Springsteen",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/nebraska-official-4580714",
-      "attrs": {}
-    },
-    {
-      "id": "s11",
-      "title": "Tears in Heaven",
-      "key": "A",
-      "capo": "",
-      "harp": "",
-      "tags": "Eric Clapton",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/tears-in-heaven-official-1934645",
-      "attrs": {}
-    },
-    {
-      "id": "mobwru03pd137",
-      "title": "Layla",
-      "key": "Dm",
-      "capo": "5",
-      "harp": "",
-      "tags": "Eric Clapton",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/layla-official-3551282",
-      "attrs": {}
-    },
-    {
-      "id": "mobwys0zxdtab",
-      "title": "Nobody knows you when you're down and out",
-      "key": "Bb",
-      "capo": "3",
-      "harp": "",
-      "tags": "Eric Clapton",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/nobody-knows-you-when-youre-down-and-out-official-5505261",
-      "attrs": {}
-    },
-    {
-      "id": "s12",
-      "title": "America",
-      "key": "C",
-      "capo": "6",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/america-official-2983322",
-      "attrs": {}
-    },
-    {
-      "id": "s13",
-      "title": "59th Street Bridge Song",
-      "key": "Eb",
-      "capo": "",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-59th-street-bridge-song-feelin-groovy-official-3524351",
-      "attrs": {}
-    },
-    {
-      "id": "s14",
-      "title": "Scarborough Fair",
-      "key": "Ebm",
-      "capo": "",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/scarborough-fair-official-2531112",
-      "attrs": {}
-    },
-    {
-      "id": "s15",
-      "title": "The sound of silence",
-      "key": "Dm",
-      "capo": "5",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-sound-of-silence-official-1960213",
-      "attrs": {}
-    },
-    {
-      "id": "s32",
-      "title": "Mrs Robinson",
-      "key": "G#",
-      "capo": "2",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/mrs-robinson-official-2153469",
-      "attrs": {}
-    },
-    {
-      "id": "s33",
-      "title": "The Boxer",
-      "key": "A",
-      "capo": "2",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-boxer-official-2466966",
-      "attrs": {}
-    },
-    {
-      "id": "mobx34z6fdygx",
-      "title": "Homeward Bound",
-      "key": "A",
-      "capo": "3",
-      "harp": "",
-      "tags": "Simon & Garfunkel",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/homeward-bound-official-2461302",
-      "attrs": {}
-    },
-    {
-      "id": "s16",
-      "title": "Don't think twice it's alright",
-      "key": "E",
-      "capo": "",
-      "harp": "E",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/dont-think-twice-its-all-right-official-2089509",
-      "attrs": {}
-    },
-    {
-      "id": "s17",
-      "title": "Masters of War",
-      "key": "C#m",
-      "capo": "4",
-      "harp": "",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/masters-of-war-official-2081537",
-      "attrs": {}
-    },
-    {
-      "id": "s18",
-      "title": "Blowing in the Wind",
-      "key": "C",
-      "capo": "5",
-      "harp": "C",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/blowin-in-the-wind-official-2077645",
-      "attrs": {}
-    },
-    {
-      "id": "s25",
-      "title": "I shall be released",
-      "key": "G",
-      "capo": "5",
-      "harp": "G",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/i-shall-be-released-official-3279212",
-      "attrs": {}
-    },
-    {
-      "id": "s26",
-      "title": "Forever young",
-      "key": "C",
-      "capo": "5",
-      "harp": "",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/forever-young-official-2912006",
-      "attrs": {}
-    },
-    {
-      "id": "s41",
-      "title": "Knockin' on heaven's door",
-      "key": "G",
-      "capo": "3",
-      "harp": "G",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/knockin-on-heavens-door-official-2212929",
-      "attrs": {}
-    },
-    {
-      "id": "mobwnzg39cdvz",
-      "title": "Like a rolling stone",
-      "key": "Bb",
-      "capo": "3",
-      "harp": "Bb",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/like-a-rolling-stone-official-2479228",
-      "attrs": {}
-    },
-    {
-      "id": "mobx3suewssgb",
-      "title": "Tambourine Man",
-      "key": "D",
-      "capo": "",
-      "harp": "D",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/mr-tambourine-man-official-2010709",
-      "attrs": {}
-    },
-    {
-      "id": "mobx4gbien69s",
-      "title": "Simple Twist of Fate",
-      "key": "D",
-      "capo": "",
-      "harp": "D",
-      "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/simple-twist-of-fate-official-2506920",
-      "attrs": {}
-    },
-    {
-      "id": "s19",
-      "title": "Festival",
-      "key": "F#",
-      "capo": "4",
-      "harp": "",
-      "tags": "Francesco De Gregori",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/francesco-de-gregori/festival-chords-4087321",
-      "attrs": {}
-    },
-    {
-      "id": "s20",
-      "title": "Alice",
-      "key": "F",
-      "capo": "5",
-      "harp": "",
-      "tags": "Francesco De Gregori",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/francesco-de-gregori/alice-chords-1459003",
-      "attrs": {}
-    },
-    {
-      "id": "s21",
-      "title": "Leggero",
-      "key": "Bb",
-      "capo": "3",
-      "harp": "",
-      "tags": "Ligabue",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/leggero-chords-1264465",
-      "attrs": {}
-    },
-    {
-      "id": "s22",
-      "title": "Love in vain",
-      "key": "F#",
-      "capo": "5",
-      "harp": "",
-      "tags": "Robert Johnson, The Rolling Stones",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/love-in-vain-official-2981081",
-      "attrs": {}
-    },
-    {
-      "id": "s23",
-      "title": "32-20 Blues",
-      "key": "G",
-      "capo": "",
-      "harp": "",
-      "tags": "Robert Johnson",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212",
-      "attrs": {}
-    },
-    {
-      "id": "s24",
-      "title": "The weight",
-      "key": "F#",
-      "capo": "4",
-      "harp": "",
-      "tags": "The Band",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-band/the-weight-official-2476186",
-      "attrs": {}
-    },
-    {
-      "id": "s31",
-      "title": "Jersey Girl",
-      "key": "Ab",
-      "capo": "4",
-      "harp": "",
-      "tags": "Tom Waits",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/jersey-girl-official-5624274",
-      "attrs": {}
-    },
-    {
-      "id": "s34",
-      "title": "The man who sold the world",
-      "key": "G#",
-      "capo": "4",
-      "harp": "",
-      "tags": "David Bowie",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/the-man-who-sold-the-world-official-2076777",
-      "attrs": {}
-    },
-    {
-      "id": "s35",
-      "title": "Space Oddity",
-      "key": "B",
-      "capo": "5",
-      "harp": "",
-      "tags": "David Bowie",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-official-1960239",
-      "attrs": {}
-    },
-    {
-      "id": "s38",
-      "title": "One",
-      "key": "Gm",
-      "capo": "3",
-      "harp": "",
-      "tags": "U2",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391",
-      "attrs": {}
-    },
-    {
-      "id": "s39",
-      "title": "Wish you were here",
-      "key": "F#",
-      "capo": "6",
-      "harp": "",
-      "tags": "Pink Floyd",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/wish-you-were-here-official-2412207",
-      "attrs": {}
-    },
-    {
-      "id": "mobvrnnwqd8gq",
-      "title": "Comfortably Numb",
-      "key": "Am",
-      "capo": "",
-      "harp": "",
-      "tags": "Pink Floyd",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/pink-floyd/comfortably-numb-official-1939571",
-      "attrs": {}
-    },
-    {
-      "id": "s40",
-      "title": "Hallelujah",
-      "key": "Bb",
-      "capo": "3",
-      "harp": "",
-      "tags": "Leonard Cohen",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/jeff-buckley/hallelujah-official-2143565",
-      "attrs": {}
-    },
-    {
-      "id": "mobwy45ykmxg3",
-      "title": "Purple Rain",
-      "key": "A",
-      "capo": "2",
-      "harp": "",
-      "tags": "Prince",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/prince/purple-rain-official-2421559",
-      "attrs": {}
-    },
-    {
-      "id": "mobxcagv7zvgk",
-      "title": "Cream",
-      "key": "A",
-      "capo": "",
-      "harp": "",
-      "tags": "Prince",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/prince/cream-official-4606757",
-      "attrs": {}
-    },
-    {
-      "id": "mobwz3ketsbt7",
-      "title": "Hotel California",
-      "key": "Gm",
-      "capo": "3",
-      "harp": "",
-      "tags": "Eagles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-official-1910943",
-      "attrs": {}
-    },
-    {
-      "id": "mobwzwj4octlr",
-      "title": "Tequila Sunrise",
-      "key": "G",
-      "capo": "",
-      "harp": "",
-      "tags": "Eagles",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eagles/tequila-sunrise-official-2580984",
-      "attrs": {}
-    },
-    {
-      "id": "mobx10bto98vo",
-      "title": "Love hurts",
-      "key": "F#",
-      "capo": "0",
-      "harp": "",
-      "tags": "Gram Parsons",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/gram-parsons/love-hurts-chords-1905656",
-      "attrs": {}
-    },
-    {
-      "id": "mobx70xqr1njm",
-      "title": "BeppeAnna",
-      "key": "Am",
-      "capo": "",
-      "harp": "",
-      "tags": "Banda Bardot",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/2044469",
-      "attrs": {}
-    },
-    {
-      "id": "e9e7e2b8-920f-4092-815f-45f8f03f42d0",
-      "title": "Already one",
-      "tags": "Neil Young",
-      "key": "D",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/already-one-chords-1962923",
-      "attrs": {}
-    },
-    {
-      "id": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
-      "title": "Kodachrome",
-      "tags": "Simon & Garfunkel",
-      "key": "Eb",
-      "capo": "1",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/paul-simon/kodachrome-official-3012761",
-      "attrs": {}
-    },
-    {
-      "id": "c94a7825-c876-4dfe-be01-468295c75458",
-      "title": "Una Vita Da Mediano",
-      "tags": "Ligabue",
-      "key": "G",
-      "capo": "3",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/una-vita-da-mediano-chords-1765661",
-      "attrs": {}
-    },
-    {
-      "id": "51af4aea-828e-45ad-b215-50dd9f750afe",
-      "title": "Here Comes The Sun",
-      "tags": "The Beatles",
-      "key": "G#",
-      "capo": "7",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/here-comes-the-sun-official-1990437",
-      "attrs": {}
-    },
-    {
-      "id": "e48da248-3058-469a-89c2-52b5de9ae6ee",
-      "title": "I Am A Rock",
-      "tags": "Simon & Garfunkel",
-      "key": "B",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/i-am-a-rock-official-3183473",
-      "attrs": {}
-    },
-    {
-      "id": "61c15a11-1643-472f-8394-a1e50e28d7e6",
-      "title": "A Hazy Shade Of Winter",
-      "tags": "Simon & Garfunkel",
-      "key": "Cm",
-      "capo": "4",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/a-hazy-shade-of-winter-official-3269117",
-      "attrs": {}
-    },
-    {
-      "id": "a5cec934-e00c-4de9-b8d2-cebd2f239df6",
-      "title": "Girl From The North Country",
-      "tags": "Bob Dylan",
-      "key": "Bb",
-      "capo": "",
-      "harp": "Bb",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/girl-from-the-north-country-official-2076165",
-      "attrs": {}
-    },
-    {
-      "id": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
-      "title": "Sweet Home Chicago",
-      "tags": "Robert Johnson",
-      "key": "F",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/sweet-home-chicago-official-2185005",
-      "attrs": {}
-    },
-    {
-      "id": "12836013-3483-4122-a342-218470148f7d",
-      "title": "Brain Damage / Eclipse",
-      "tags": "Pink Floyd",
-      "key": "D",
-      "capo": "1",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=KUa6P3BrGtydxflzIN8eGo0V&tab_id=30461633",
-      "attrs": {}
-    },
-    {
-      "id": "6dec3f02-828c-43d7-916f-825d825a2bac",
-      "title": "C’è una strana espressione nei tuoi occhi",
-      "tags": "The Rokes",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rokes/ce-una-strana-chords-82189",
-      "attrs": {}
-    },
-    {
-      "id": "115ff934-ff2d-4102-b150-0ca7d303f124",
-      "title": "No Surprises",
-      "tags": "Radiohead",
-      "key": "F",
-      "capo": "4",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/no-surprises-official-1910937",
-      "attrs": {}
-    },
-    {
-      "id": "86b59268-5f33-4c3a-be96-a3099959ca4e",
-      "title": "With Or Without You",
-      "tags": "U2",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/with-or-without-you-official-1955543",
-      "attrs": {}
-    },
-    {
-      "id": "babba8c0-8d5b-4895-aaa1-82ea835874bf",
-      "title": "Si Viaggiare",
-      "tags": "Lucio Battisti",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/lucio-battisti/si-viaggiare-chords-1900826",
-      "attrs": {}
-    },
-    {
-      "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
-      "title": "Heroes",
-      "tags": "David Bowie",
-      "key": "D",
-      "capo": "1",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/heroes-official-2457982",
-      "attrs": {}
-    },
-    {
-      "id": "86da8e3a-0412-4612-acf2-ac53ee65a491",
-      "title": "Starman",
-      "tags": "David Bowie",
-      "key": "F#m",
-      "capo": "2",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/starman-official-2085341",
-      "attrs": {}
-    },
-    {
-      "id": "b5f5de41-59b0-4fec-aedd-5014761404c5",
-      "title": "Fragile",
-      "tags": "Sting",
-      "key": "Ebm",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/sting/fragile-official-2463044",
-      "attrs": {}
-    },
-    {
-      "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
-      "title": "39",
-      "tags": "Queen",
-      "key": "",
-      "capo": "-1",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497",
-      "attrs": {}
-    },
-    {
-      "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
-      "title": "All My Loving",
-      "tags": "The Beatles",
-      "key": "C#",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855",
-      "attrs": {}
-    },
-    {
-      "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
-      "title": "And I Love Her",
-      "tags": "The Beatles",
-      "key": "D",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/and-i-love-her-official-2042407",
-      "attrs": {}
-    },
-    {
-      "id": "8b195afc-2191-4028-976a-b77044a54478",
-      "title": "Something",
-      "tags": "The Beatles",
-      "key": "B",
-      "capo": "3",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/something-official-1997363",
-      "attrs": {}
-    },
-    {
-      "id": "b79c9194-0cd6-4314-a72e-ceb4a5ddc064",
-      "title": "Che colpa abbiamo noi",
-      "tags": "The Rokes",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=vO9omnicDw0VN4PWuCUBRQUr&tab_id=30458183",
-      "attrs": {}
-    },
-    {
-      "id": "fde76324-becf-4df7-8c8b-17e03d8c8c1e",
-      "title": "Everybody Hurts",
-      "tags": "R.E.M.",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/r-e-m-/everybody-hurts-official-1979985",
-      "attrs": {}
-    },
-    {
-      "id": "bd2920c9-b948-4788-a1f4-15268bab1e2e",
-      "title": "Paint It Black",
-      "tags": "The Rolling Stones",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/paint-it-black-official-2137031",
-      "attrs": {}
-    },
-    {
-      "id": "5e051375-d77f-4dab-b610-9dba96aaa638",
-      "title": "(I Can’t Get No) Satisfaction",
-      "tags": "The Rolling Stones",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667",
-      "attrs": {}
-    },
-    {
-      "id": "214bf23d-b10c-4475-b93c-8608d81ca91d",
-      "title": "Sympathy For The Devil",
-      "tags": "The Rolling Stones",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/sympathy-for-the-devil-official-2383129",
-      "attrs": {}
-    },
-    {
-      "id": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9",
-      "title": "Wild Horses",
-      "tags": "The Rolling Stones",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/wild-horses-official-2469000",
-      "attrs": {}
-    },
-    {
-      "id": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc",
-      "title": "Karma Police",
-      "tags": "Radiohead",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/karma-police-official-1911473",
-      "attrs": {}
-    },
-    {
-      "id": "7093eab3-255f-4300-ba1e-df0efc6d1059",
-      "title": "How Deep Is Your Love",
-      "tags": "Bee Gees",
-      "key": "E",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bee-gees/how-deep-is-your-love-official-1950233",
-      "attrs": {}
-    },
-    {
-      "id": "c19b1ae6-5c2f-41be-b369-04efabfb5210",
-      "title": "Day tripper / jumpin jack flash",
-      "tags": "The Beatles, The Rolling Stones,",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "",
-      "attrs": {}
-    },
-    {
-      "id": "fde7f81b-696b-4eb6-975f-18463905e07a",
-      "title": "Hey Jude",
-      "tags": "The Beatles",
-      "key": "C#",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/hey-jude-official-1910973",
-      "attrs": {}
-    },
-    {
-      "id": "48059d27-3a58-415f-8814-1199e07162e4",
-      "title": "Creep",
-      "tags": "Radiohead",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/creep-official-1911339",
-      "attrs": {}
-    },
-    {
-      "id": "fccb7d11-ae07-4874-aec2-17c29e060147",
-      "title": "Slip Slidin Away",
-      "tags": "Paul Simon",
-      "key": "G",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/paul-simon/slip-slidin-away-official-4606982",
-      "attrs": {}
-    },
-    {
-      "id": "55d7c441-336e-4f1e-98ff-d58eeda0811b",
-      "title": "Il Rock Di Capitano Uncino",
-      "tags": "Edoardo Bennato",
-      "key": "G#",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/edoardo-bennato/il-rock-di-capitano-uncino-chords-2237641",
-      "attrs": {}
-    },
-    {
-      "id": "48e897b1-75e4-401a-9c7f-970839204058",
-      "title": "Yesterday",
-      "tags": "The Beatles",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/yesterday-official-1981167",
-      "attrs": {}
-    },
-    {
-      "id": "72855055-6f25-4472-baaf-df56e543fdda",
-      "title": "Ive Just Seen A Face",
-      "tags": "The Beatles",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/ive-just-seen-a-face-official-2049777",
-      "attrs": {}
-    },
-    {
-      "id": "7bd19725-c158-4cfd-a661-dc3a1c5f9349",
-      "title": "Fiume Sand Creek",
-      "tags": "De Andre",
-      "key": "",
-      "capo": "",
-      "harp": "",
-      "ugLink": "",
-      "attrs": {}
-    },
-    {
-      "id": "96b1f45b-00fd-4dad-b7e7-f625e28ddbed",
-      "title": "A Horse With No Name",
-      "tags": "America,",
-      "key": "Em",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-official-2238415",
-      "attrs": {}
-    },
-    {
-      "id": "7f2dfdcf-5ca1-47a7-b4f3-7871da1d90b1",
-      "title": "At The Zoo",
-      "tags": "Simon & Garfunkel,",
-      "key": "G",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/at-the-zoo-official-6196298",
-      "attrs": {}
-    },
-    {
-      "id": "c085662b-6fe7-455d-a0f0-5c7e0c0f34d1",
-      "title": "Death Is Not The End",
-      "tags": "Nick Cave The Bad Seeds,",
-      "key": "A",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/death-is-not-the-end-chords-2891969",
-      "attrs": {}
-    },
-    {
-      "id": "c4b351d2-de69-494d-a274-e7dcec1aa131",
-      "title": "Into My Arms",
-      "tags": "Nick Cave The Bad Seeds,",
-      "key": "C",
-      "capo": "",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/into-my-arms-official-2106795",
-      "attrs": {}
+  "songs": [],
+  "setlists": [],
+  "tagMeta": {},
+  "attrGroups": [
+    {
+      "id": "ag1",
+      "name": "Arrangement",
+      "options": [
+        {
+          "id": "ao1",
+          "name": "Special"
+        },
+        {
+          "id": "ao2",
+          "name": "Cover"
+        },
+        {
+          "id": "ao3",
+          "name": "Unplugged"
+        }
+      ]
+    },
+    {
+      "id": "ag2",
+      "name": "Result",
+      "options": [
+        {
+          "id": "ao4",
+          "name": "Always great"
+        },
+        {
+          "id": "ao5",
+          "name": "Always good"
+        },
+        {
+          "id": "ao6",
+          "name": "Da migliorare"
+        }
+      ]
+    },
+    {
+      "id": "ag3",
+      "name": "Rehearsed",
+      "options": [
+        {
+          "id": "ao7",
+          "name": "Always"
+        },
+        {
+          "id": "ao8",
+          "name": "Enough"
+        },
+        {
+          "id": "ao9",
+          "name": "Too little"
+        },
+        {
+          "id": "ao10",
+          "name": "New"
+        }
+      ]
     }
   ],
-  "tagMeta": {
-    "Banda Bardot": {
-      "artist": true
+  "autoSetTypes": [
+    {
+      "id": "st1",
+      "name": "Gig"
     },
-    "Bob Dylan": {
-      "artist": true
+    {
+      "id": "st2",
+      "name": "Pre-Gig Rehearsal"
     },
-    "Bruce Springsteen": {
-      "artist": true
+    {
+      "id": "st3",
+      "name": "Rehearsal"
+    }
+  ],
+  "points": {
+    "ag1": {
+      "__none__": {
+        "st1": 0,
+        "st2": 0,
+        "st3": 0
+      },
+      "ao1": {
+        "st1": 5,
+        "st2": 3,
+        "st3": 3
+      },
+      "ao2": {
+        "st1": 4,
+        "st2": 3,
+        "st3": 2
+      },
+      "ao3": {
+        "st1": 3,
+        "st2": 2,
+        "st3": 2
+      }
     },
-    "David Bowie": {
-      "artist": true
+    "ag2": {
+      "__none__": {
+        "st1": 0,
+        "st2": 0,
+        "st3": 0
+      },
+      "ao4": {
+        "st1": 5,
+        "st2": 3,
+        "st3": 1
+      },
+      "ao5": {
+        "st1": 3,
+        "st2": 3,
+        "st3": 1
+      },
+      "ao6": {
+        "st1": 2,
+        "st2": 2,
+        "st3": 5
+      }
     },
-    "Eagles": {
-      "artist": true
-    },
-    "Eddie Vedder": {
-      "artist": true
-    },
-    "Eric Clapton": {
-      "artist": true
-    },
-    "Francesco De Gregori": {
-      "artist": true
-    },
-    "Gram Parsons": {
-      "artist": true
-    },
-    "John Lennon": {
-      "artist": true
-    },
-    "Johnny Cash": {
-      "artist": true
-    },
-    "Leonard Cohen": {
-      "artist": true
-    },
-    "Ligabue": {
-      "artist": true
-    },
-    "Lucio Battisti": {
-      "artist": true
-    },
-    "Neil Young": {
-      "artist": true
-    },
-    "Pink Floyd": {
-      "artist": true
-    },
-    "Prince": {
-      "artist": true
-    },
-    "Queen": {
-      "artist": true
-    },
-    "R E M": {
-      "artist": true
-    },
-    "Radiohead": {
-      "artist": true
-    },
-    "Robert Johnson": {
-      "artist": true
-    },
-    "Simon & Garfunkel": {
-      "artist": true
-    },
-    "Sting": {
-      "artist": true
-    },
-    "The Band": {
-      "artist": true
-    },
-    "The Beatles": {
-      "artist": true
-    },
-    "The Rokes": {
-      "artist": true
-    },
-    "The Rolling Stones": {
-      "artist": true
-    },
-    "Tom Waits": {
-      "artist": true
-    },
-    "U2": {
-      "artist": true
-    },
-    "Edoardo Bennato": {
-      "artist": true
-    },
-    "Paul Simon": {
-      "artist": true
-    },
-    "Bee Gees": {
-      "artist": true
-    },
-    "R.E.M.": {
-      "artist": true
+    "ag3": {
+      "__none__": {
+        "st1": 0,
+        "st2": 0,
+        "st3": 0
+      },
+      "ao7": {
+        "st1": 5,
+        "st2": 2,
+        "st3": 2
+      },
+      "ao8": {
+        "st1": 5,
+        "st2": 2,
+        "st3": 2
+      },
+      "ao9": {
+        "st1": 1,
+        "st2": 2,
+        "st3": 5
+      },
+      "ao10": {
+        "st1": 0,
+        "st2": 0,
+        "st3": 15
+      }
     }
   },
-  "setlists": [
+  "autoSetlists": [
     {
-      "id": "sl1",
-      "name": "Il Nove 29/3/2026",
-      "songIds": [
-        "s01",
-        "s02",
-        "s03",
-        "s04",
-        "s05",
-        "s06",
-        "s07",
-        "s08",
-        "s10",
-        "s11",
-        "s12",
-        "s13",
-        "s14",
-        "s15",
-        "s16",
-        "s17",
-        "s18",
-        "s19",
-        "s20",
-        "s21",
-        "s23",
-        "s24",
-        "s25",
-        "s26",
-        "s28",
-        "s29",
-        "s30",
-        "s31",
-        "s32",
-        "s33",
-        "s34",
-        "s35",
-        "s36",
-        "s37",
-        "s38",
-        "s39",
-        "s41",
-        "mobvrnnwqd8gq"
-      ]
+      "id": "asl1",
+      "name": "Gig",
+      "typeId": "st1"
     },
     {
-      "id": "sl2",
-      "name": "Il Nove 24/4/2026",
-      "songIds": [
-        "s01",
-        "s02",
-        "s03",
-        "s04",
-        "s05",
-        "s06",
-        "s07",
-        "s08",
-        "s10",
-        "s11",
-        "s18",
-        "mobx4gbien69s",
-        "s16",
-        "mobwys0zxdtab",
-        "s12",
-        "s13",
-        "s14",
-        "s15",
-        "mobx10bto98vo",
-        "s19",
-        "s20",
-        "s21",
-        "s23",
-        "mobxcagv7zvgk",
-        "mobwy45ykmxg3",
-        "s22",
-        "mobx3suewssgb",
-        "s17",
-        "s24",
-        "s25",
-        "s26",
-        "s28",
-        "s29",
-        "s30",
-        "s32",
-        "mobx34z6fdygx",
-        "s33",
-        "s34",
-        "s35",
-        "mobwzwj4octlr",
-        "mobwz3ketsbt7",
-        "s37",
-        "s36",
-        "s39",
-        "mobvrnnwqd8gq",
-        "s41",
-        "mobwnzg39cdvz"
-      ]
+      "id": "asl2",
+      "name": "Rehearsal (pre-gig)",
+      "typeId": "st2"
     },
     {
-      "id": "a1b51966-7581-4763-af8c-396452aeb528",
-      "name": "Vaso Bastardo 7/8/2026",
-      "songIds": [
-        "s01",
-        "12836013-3483-4122-a342-218470148f7d",
-        "8b195afc-2191-4028-976a-b77044a54478",
-        "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
-        "61c15a11-1643-472f-8394-a1e50e28d7e6",
-        "s32",
-        "s05",
-        "s15",
-        "115ff934-ff2d-4102-b150-0ca7d303f124",
-        "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
-        "s12",
-        "s19",
-        "s21",
-        "s20",
-        "51af4aea-828e-45ad-b215-50dd9f750afe",
-        "s14",
-        "e48da248-3058-469a-89c2-52b5de9ae6ee",
-        "mobx10bto98vo",
-        "s04",
-        "s11",
-        "s35",
-        "s34",
-        "s37",
-        "7093eab3-255f-4300-ba1e-df0efc6d1059",
-        "s36"
-      ]
-    },
-    {
-      "id": "983913fb-d9e4-4bbc-aa7b-dd798d299bd1",
-      "name": "Scaletta",
-      "songIds": [
-        "61c15a11-1643-472f-8394-a1e50e28d7e6",
-        "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
-        "8b195afc-2191-4028-976a-b77044a54478",
-        "s35",
-        "s16",
-        "s01",
-        "s32",
-        "s05",
-        "s34",
-        "115ff934-ff2d-4102-b150-0ca7d303f124",
-        "55d7c441-336e-4f1e-98ff-d58eeda0811b",
-        "s21",
-        "s19",
-        "mobxcagv7zvgk",
-        "51af4aea-828e-45ad-b215-50dd9f750afe",
-        "12836013-3483-4122-a342-218470148f7d",
-        "s15",
-        "s12",
-        "s04",
-        "s11"
-      ]
+      "id": "asl3",
+      "name": "Rehearsal",
+      "typeId": "st3"
     }
-  ],
-  "attrGroups": [],
-  "autoSetTypes": [],
-  "points": {},
-  "autoSetlists": []
+  ]
 }
