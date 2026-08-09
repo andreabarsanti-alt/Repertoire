@@ -1103,7 +1103,6 @@
         "s19",
         "s20",
         "s21",
-        "mobx70xqr1njm",
         "s23",
         "mobxcagv7zvgk",
         "mobwy45ykmxg3",
@@ -1160,6 +1159,15 @@
         "s37",
         "7093eab3-255f-4300-ba1e-df0efc6d1059",
         "s36"
+      ]
+    },
+    {
+      "id": "983913fb-d9e4-4bbc-aa7b-dd798d299bd1",
+      "name": "Scaletta",
+      "songIds": [
+        "61c15a11-1643-472f-8394-a1e50e28d7e6",
+        "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
+        "8b195afc-2191-4028-976a-b77044a54478"
       ]
     }
   ],
