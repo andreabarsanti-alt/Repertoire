@@ -16,6 +16,10 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views
 - **Quick UG Import** — paste a Ultimate Guitar URL to auto-detect title and artist
+- **CRD reader** — paste in your own chord/lyric sheet per song (inline `[G]` chords or a chord line above the lyrics, `[Verse]`/`[Chorus]` section labels); if present, the title opens it in a full-screen in-app reader instead of Ultimate Guitar, with a UG link, edit, and delete still one tap away
+  - **Transpose** on the fly, with a **Store transposed** button to bake the shift into the saved sheet
+  - Auto-transposes for **Capo** (shows the shapes to play with the capo on) and for the global **Half-step down tuning** toggle
+  - Tap-to-hide header for a distraction-free view; a full-page editor for comfortable long-sheet editing; keyboard scrolling (arrow keys / Page Up/Down)
 - Tag autocomplete when editing — suggests existing tags as you type
 
 ### Setlists
@@ -27,6 +31,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar
 
 ### Data
+- **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match
 - All data stored in `localStorage` (persists across sessions on the same device)
 - On first load, seeds from `repertoire.json` if no saved data exists
 - Detects when the repo file differs from local data and offers to sync

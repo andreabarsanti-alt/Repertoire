@@ -83,6 +83,10 @@ nav { display: flex; gap: 3px; flex: 1; }
 .tab-btn.active { background: var(--accent); color: #e8f8f5; font-weight: 600; }
 .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
 .hdr-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.tune-toggle {
+  font-size: 0.78rem; color: var(--text-dim); display: flex; align-items: center;
+  gap: 5px; cursor: pointer; white-space: nowrap;
+}
 
 /* ── BUTTONS ─────────────────────────────── */
 .btn {
@@ -482,6 +486,9 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
 }
 a.sl-title, a.tbl-title { text-decoration: underline; text-underline-offset: 3px; color: inherit; }
 a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
+a.crd-open { text-decoration-style: dotted; }
+a.crd-open::after { content: ' ♪'; font-size: 0.78em; opacity: .7; }
+a.crd-open:hover, a.crd-open:hover::after { color: var(--accent3); }
 .sl-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; font-family: var(--fm); }
 .sl-btns { display: flex; gap: 3px; flex-shrink: 0; }
 
@@ -573,6 +580,84 @@ a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 .fi:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(61,158,140,.12); }
 .fg-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
+
+/* ══════════════════════════════════════════
+   CRD READER (full-screen)
+══════════════════════════════════════════ */
+#crd-reader {
+  align-items: stretch; justify-content: stretch;
+  padding: 0; flex-direction: column;
+  background: #020408; z-index: 1500;
+}
+#crd-inner { display: flex; flex-direction: column; height: 100%; width: 100%; max-width: 900px; margin: 0 auto; }
+.crd-chrome {
+  flex-shrink: 0; max-height: 480px; overflow: hidden;
+  background: rgba(0,0,0,.6); border-bottom: 1px solid rgba(255,255,255,.08);
+  transition: max-height .25s ease, opacity .2s ease, padding .25s ease;
+}
+.crd-chrome.crd-hidden { max-height: 0; opacity: 0; }
+.crd-reader-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; padding: 12px 16px; flex-wrap: wrap;
+}
+.crd-back-btn {
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 14px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; flex-shrink: 0; min-height: 40px;
+}
+.crd-back-btn:hover { background: var(--accent); color: #e8f8f5; border-color: var(--accent); }
+.crd-reader-title { flex: 1; min-width: 140px; }
+.crd-reader-title h2 {
+  font-family: var(--fd); font-size: 1.1rem; font-weight: 600;
+  color: var(--accent); margin-bottom: 4px;
+}
+.crd-reader-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.crd-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 0 16px 12px; flex-wrap: wrap;
+}
+.crd-toolbar-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; }
+.crd-transpose, .crd-toolbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.crd-transpose-val { font-family: var(--fm); font-size: 0.85rem; min-width: 28px; text-align: center; color: var(--text); }
+#crd-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.crd-body {
+  font-family: var(--fm); white-space: pre-wrap; word-break: break-word;
+  color: var(--text); padding: 20px 20px 40vh;
+  line-height: 1.7; font-size: 24px; max-width: 900px; margin: 0 auto;
+}
+.crd-chord { color: var(--accent); font-weight: 700; }
+.crd-section {
+  display: block; color: var(--accent3); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; margin: 14px 0 2px; font-size: 0.85em;
+}
+.crd-edit-label {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 0.68rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .09em; margin: 2px 0 5px;
+}
+.editing-row-crd td { padding-top: 0; }
+.crd-expand-btn {
+  background: var(--surface2); color: var(--accent); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 9px; font-size: 0.7rem; font-weight: 600;
+  text-transform: none; letter-spacing: normal; cursor: pointer; flex-shrink: 0;
+}
+.crd-expand-btn:hover { background: var(--accent); color: #e8f8f5; border-color: var(--accent); }
+
+/* CRD full-page editor */
+#crd-editor { align-items: stretch; justify-content: stretch; padding: 0; flex-direction: column; background: #020408; z-index: 1600; }
+#crd-editor-inner { display: flex; flex-direction: column; height: 100%; width: 100%; max-width: 900px; margin: 0 auto; }
+#crd-editor-header {
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px; flex-wrap: wrap; flex-shrink: 0;
+  background: rgba(0,0,0,.6); border-bottom: 1px solid rgba(255,255,255,.08);
+}
+#crd-editor-title { font-family: var(--fd); font-size: 1rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+#crd-editor-hint { font-size: 0.72rem; color: var(--text-dim); flex: 1; min-width: 200px; }
+.crd-editor-textarea {
+  flex: 1; width: 100%; border: none; outline: none; resize: none;
+  background: #020408; color: var(--text); font-family: var(--fm);
+  font-size: 20px; line-height: 1.6; padding: 20px 20px 40vh;
+}
 
 /* Add songs list */
 .song-pick-list {
@@ -775,6 +860,9 @@ select.fi { cursor: pointer; }
     <button class="tab-btn" data-tab="scoring">Scoring</button>
   </nav>
   <div class="hdr-actions">
+    <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
+      <input type="checkbox" id="global-tune-toggle" onchange="toggleGlobalTune()"> Half-step down tuning
+    </label>
     <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
     <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer">
@@ -850,6 +938,10 @@ select.fi { cursor: pointer; }
     </div>
     <div id="f-attrs-row" class="fg-row"></div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <textarea class="fi" id="f-crd" rows="8" placeholder="Paste or type a chord/lyric sheet — if filled in, the song opens this in-app instead of Ultimate Guitar"></textarea>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('song-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveSong()">Save</button>
@@ -950,6 +1042,55 @@ select.fi { cursor: pointer; }
       <button class="close-x" onclick="closePlay()">×</button>
     </div>
     <div id="play-list"></div>
+  </div>
+</div>
+
+<!-- ══ CRD READER ══ -->
+<div class="overlay hidden" id="crd-reader">
+  <div id="crd-inner">
+    <div class="crd-chrome" id="crd-chrome">
+      <div class="crd-reader-header">
+        <button class="crd-back-btn" onclick="closeCrdReader()" title="Back to setlist / songs">← Back</button>
+        <div class="crd-reader-title">
+          <h2 id="crd-title"></h2>
+          <div id="crd-meta"></div>
+        </div>
+        <div class="crd-reader-actions">
+          <a class="btn btn-secondary btn-sm" id="crd-ug-link" href="#" target="_blank" title="Open on Ultimate Guitar">↗ UG</a>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditSong()" title="Edit song">✎</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="crdDeleteSong()" title="Delete song">✕</button>
+        </div>
+      </div>
+      <div class="crd-toolbar">
+        <div class="crd-transpose">
+          <span class="crd-toolbar-label">Transpose</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeStep(-1)" title="Down a semitone">−</button>
+          <span id="crd-transpose-label" class="crd-transpose-val">±0</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeStep(1)" title="Up a semitone">+</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeReset()" title="Reset transpose">↺</button>
+          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdStoreTransposed()" title="Rewrite the saved chord sheet at this transpose (Key/Capo fields are left untouched)" disabled>💾 Store transposed</button>
+        </div>
+        <div class="crd-toolbar-right">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdFontStep(-1)" title="Smaller text">A−</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdFontStep(1)" title="Larger text">A+</button>
+        </div>
+      </div>
+    </div>
+    <div id="crd-scroll" onclick="toggleCrdChrome(event)">
+      <pre id="crd-body" class="crd-body"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CRD EDITOR (full-page) ══ -->
+<div class="overlay hidden" id="crd-editor">
+  <div id="crd-editor-inner">
+    <div id="crd-editor-header">
+      <button class="crd-back-btn" onclick="closeCrdEditor()">← Done</button>
+      <div id="crd-editor-title">Chord Sheet Editor</div>
+      <span id="crd-editor-hint">Chords inline like [G], or on their own line above the lyrics · [Verse]/[Chorus] for section labels</span>
+    </div>
+    <textarea id="crd-editor-textarea" class="crd-editor-textarea" placeholder="Paste or type a chord/lyric sheet…" spellcheck="false"></textarea>
   </div>
 </div>
 
@@ -1102,7 +1243,8 @@ function migrateScoring() {
 }
 
 let db = { songs:[], setlists:[], tagMeta:{}, attrGroups:deepCopy(DEFAULT_ATTR_GROUPS),
-           autoSetTypes:deepCopy(DEFAULT_AUTO_SET_TYPES), points:defaultPoints(), autoSetlists:defaultAutoSetlists() };
+           autoSetTypes:deepCopy(DEFAULT_AUTO_SET_TYPES), points:defaultPoints(), autoSetlists:defaultAutoSetlists(),
+           tuneUp:false };
 let activeBubble  = null;
 let inlineEditId  = null;
 let editSetId    = null;
@@ -1111,6 +1253,10 @@ let sortCol = 'title', sortDir = 'asc';
 let dragIdx = null;
 let selectedItemIdx = null;
 let _playOverrideSongs = null;
+let crdSongId       = null;
+let crdTranspose     = 0;
+let crdBaseTranspose = 0; // auto capo offset (-capo semitones) applied when the reader opens
+let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -1254,7 +1400,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
 }));
 
-function renderAll() { renderBubbles(); renderSongs(); renderSets(); renderScoring(); if (activeSetId) renderSetDetail(); }
+function renderAll() { renderBubbles(); renderSongs(); renderSets(); renderScoring(); if (activeSetId) renderSetDetail(); syncTuneToggles(); }
 
 // ─────────────────────────────────────────
 // BUBBLE COLOURS — warm, semi-transparent for glass
@@ -1429,10 +1575,12 @@ function clickBubble(key) {
 function showDetail(name, songs) {
   document.getElementById('detail-title').textContent = name;
   document.getElementById('detail-pills').innerHTML = songs.map(s => {
-    const tag    = s.ugLink ? 'a' : 'div';
-    const href   = s.ugLink ? `href="${esc(s.ugLink)}" target="_blank"` : '';
+    const tag    = s.crd ? 'a' : (s.ugLink ? 'a' : 'div');
+    const href   = s.crd
+      ? `href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')" class="pill crd-open"`
+      : s.ugLink ? `href="${esc(s.ugLink)}" target="_blank" class="pill"` : `class="pill"`;
     const badges = kchBadges(s);
-    return `<${tag} class="pill" ${href}>
+    return `<${tag} ${href}>
       <span>${esc(s.title)}</span>
       ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </${tag}>`;
@@ -1739,9 +1887,11 @@ function songDisplayRow(s) {
     ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank">↗ UG</a>`
     : '<span style="color:var(--text-dim)">—</span>';
   const badges = kchBadges(s);
-  const titleEl = s.ugLink
-    ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
-    : `<strong>${esc(s.title)}</strong>`;
+  const titleEl = s.crd
+    ? `<a class="tbl-title crd-open" href="javascript:void(0)" onclick="openCrdReader('${s.id}')"><strong>${esc(s.title)}</strong></a>`
+    : s.ugLink
+      ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
+      : `<strong>${esc(s.title)}</strong>`;
   const CHIP_CLS = ['arr','res','reh'];
   const attrTds = (db.attrGroups||[]).map((grp, gi) => {
     const optId = (s.attrs||{})[grp.id];
@@ -1786,6 +1936,12 @@ function songEditRow(s) {
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="cancelInlineEdit()"        title="Cancel">✕</button>
     </div></td>
+  </tr>
+  <tr class="editing-row editing-row-crd">
+    <td colspan="${4 + (db.attrGroups||[]).length}">
+      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <textarea class="inline-fi fi" id="ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
+    </td>
   </tr>`;
 }
 
@@ -1816,6 +1972,7 @@ function saveInlineEdit(id) {
   s.capo        = document.getElementById('ie-capo')?.value.trim()        || '';
   s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
   s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
+  s.crd    = document.getElementById('ie-crd')?.value || '';
   s.attrs  = {};
   document.querySelectorAll('.editing-row select[data-grp]').forEach(sel => {
     if (sel.value) s.attrs[sel.dataset.grp] = sel.value;
@@ -1837,6 +1994,7 @@ function openSongModal() {
   document.getElementById('f-capo').value   = '';
   document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = '';
+  document.getElementById('f-crd').value    = '';
   renderSongModalAttrs({});
   openModal('song-modal');
   document.getElementById('f-title').focus();
@@ -1853,6 +2011,7 @@ function saveSong() {
     capo:        document.getElementById('f-capo').value.trim(),
     harp:        document.getElementById('f-harp').value.trim(),
     ugLink: normalizeUG(document.getElementById('f-uglink').value),
+    crd:    document.getElementById('f-crd').value || '',
     attrs:  readModalAttrs(),
   });
   save(); renderAll(); closeModal('song-modal');
@@ -1886,6 +2045,308 @@ function deleteSong(id) {
   });
   save(); renderAll(); toast('Song deleted');
 }
+
+// ─────────────────────────────────────────
+// CRD READER
+// ─────────────────────────────────────────
+
+// ── Chord parsing / transposing ──
+const NOTE_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const NOTE_CANON = ['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
+const CHORD_QUAL = '(?:maj7|maj9|maj13|maj|m7b5|m7#5|mM7|m6|m7|m9|m11|m13|min7|min|m|dim7|dim|aug|\\+|sus2|sus4|sus|add9|add11|add2|6\\/9|6|7b5|7#5|7b9|7#9|7|9|11|13|2|4|5)';
+const CHORD_RE = new RegExp('^[A-G](#|b)?' + CHORD_QUAL + '?(\\/[A-G](#|b)?)?$');
+const CHORD_DECOR_RE = /^(\|{1,2}:?|:?\|{1,2}|%{1,2}|N\.?C\.?)$/i;
+const SECTION_RE = /^(chorus|verse|pre-chorus|prechorus|bridge|intro|outro|hook|solo|interlude|tag|refrain|coda|instrumental)\s*\d*\.?$/i;
+
+// Collapses spaced-out slash chords ("G / D" → "G/D") anywhere in the text so they're
+// recognized as a single chord token instead of breaking on whitespace.
+function normalizeChordSpacing(text) {
+  return text.replace(/([A-G][#b]?[A-Za-z0-9+]*)\s*\/\s*([A-G][#b]?)(?=[\s)\]|,.;:]|$)/g, '$1/$2');
+}
+
+// Splits a token into wrapping punctuation (parens/brackets/trailing comma etc.) and its core,
+// so "(G/D)" or "Bb/D," are still recognized as chords with their punctuation preserved.
+function tokenParts(tok) {
+  const m = tok.match(/^([(\[]*)(.*?)([)\],.;:]*)$/);
+  return { pre: m[1] || '', core: m[2] || '', post: m[3] || '' };
+}
+
+function noteIndex(note) {
+  let i = NOTE_SHARP.indexOf(note);
+  if (i !== -1) return i;
+  return NOTE_FLAT.indexOf(note);
+}
+function transposeNote(note, semis) {
+  const i = noteIndex(note);
+  if (i === -1) return note;
+  if (!semis) return note;
+  const ni = ((i + semis) % 12 + 12) % 12;
+  return NOTE_CANON[ni];
+}
+function transposeToken(tok, semis) {
+  if (!semis) return tok;
+  const m = tok.match(/^([A-G])([#b]?)(.*)$/);
+  if (!m) return tok;
+  let [, root, acc, rest] = m;
+  let bass = '';
+  const slash = rest.indexOf('/');
+  if (slash !== -1) {
+    const bassPart = rest.slice(slash + 1);
+    const bm = bassPart.match(/^([A-G])([#b]?)(.*)$/);
+    if (bm) {
+      bass = '/' + transposeNote(bm[1] + bm[2], semis) + bm[3];
+      rest = rest.slice(0, slash);
+    } else {
+      bass = '/' + bassPart;
+      rest = rest.slice(0, slash);
+    }
+  }
+  return transposeNote(root + acc, semis) + rest + bass;
+}
+
+// ── Chord line / inline-bracket detection + HTML rendering ──
+function isChordLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  const tokens = trimmed.split(/\s+/);
+  let hasChord = false;
+  const ok = tokens.every(t => {
+    const { core } = tokenParts(t);
+    if (!core) return true;
+    if (CHORD_RE.test(core)) { hasChord = true; return true; }
+    return CHORD_DECOR_RE.test(core);
+  });
+  return ok && hasChord;
+}
+function renderChordLineHTML(line, semis) {
+  const parts = line.split(/(\s+)/);
+  let out = '';
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (p === '') continue;
+    if (/^\s+$/.test(p)) { out += esc(p); continue; }
+    const { pre, core, post } = tokenParts(p);
+    if (!CHORD_RE.test(core)) { out += esc(p); continue; }
+    const t = transposeToken(core, semis);
+    const newTok = pre + t + post;
+    const delta = p.length - newTok.length;
+    if (delta !== 0 && i + 1 < parts.length && /^\s+$/.test(parts[i + 1])) {
+      parts[i + 1] = ' '.repeat(Math.max(1, parts[i + 1].length + delta));
+    }
+    out += esc(pre) + `<span class="crd-chord">${esc(t)}</span>` + esc(post);
+  }
+  return out;
+}
+function renderInlineLineHTML(line, semis) {
+  let out = '', last = 0, m;
+  const re = /\[([^\]]*)\]/g;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const raw = m[1].trim();
+    if (SECTION_RE.test(raw)) {
+      out += `<span class="crd-section">${esc(raw)}</span>`;
+    } else if (CHORD_RE.test(raw)) {
+      const t = transposeToken(raw, semis);
+      out += `<span class="crd-chord">${esc(t)}</span>`;
+    } else {
+      out += esc(m[0]);
+    }
+    last = re.lastIndex;
+  }
+  out += esc(line.slice(last));
+  return out;
+}
+function renderCrdHTML(text, semis) {
+  return normalizeChordSpacing(text).split('\n').map(line => {
+    if (/\[[^\]]*\]/.test(line)) return renderInlineLineHTML(line, semis);
+    if (isChordLine(line)) return renderChordLineHTML(line, semis);
+    return esc(line);
+  }).join('\n');
+}
+
+// ── Reader UI ──
+function openCrdReader(id) {
+  const s = db.songs.find(x => x.id === id);
+  if (!s || !s.crd) return;
+  crdSongId = id;
+  crdBaseTranspose = -(parseInt(s.capo, 10) || 0);
+  crdTranspose = crdBaseTranspose;
+  document.getElementById('crd-chrome').classList.remove('crd-hidden');
+  renderCrdBody();
+  document.getElementById('crd-body').style.fontSize = crdFontSize + 'px';
+  openModal('crd-reader');
+  document.getElementById('crd-scroll').scrollTop = 0;
+}
+
+function renderCrdBody() {
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+  document.getElementById('crd-title').textContent = s.title;
+  const badges = kchBadges(s);
+  document.getElementById('crd-meta').innerHTML = badges ? `<div class="kch-wrap">${badges}</div>` : '';
+  const eff = crdEffectiveTranspose();
+  document.getElementById('crd-transpose-label').textContent = eff === 0 ? '±0' : (eff > 0 ? '+' : '') + eff;
+  document.getElementById('crd-store-btn').disabled = eff === crdBaseTranspose;
+
+  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, eff);
+
+  const ugBtn = document.getElementById('crd-ug-link');
+  if (s.ugLink) { ugBtn.href = s.ugLink; ugBtn.style.display = ''; }
+  else { ugBtn.style.display = 'none'; }
+}
+
+function closeCrdReader() {
+  closeModal('crd-reader');
+  crdSongId = null;
+}
+
+function toggleCrdChrome() {
+  document.getElementById('crd-chrome').classList.toggle('crd-hidden');
+}
+
+function crdTransposeStep(dir) {
+  crdTranspose = Math.max(-11, Math.min(11, crdTranspose + dir));
+  renderCrdBody();
+}
+function crdTransposeReset() { crdTranspose = crdBaseTranspose; renderCrdBody(); }
+
+// Total semitones actually applied to the displayed sheet: manual/capo transpose + the extra
+// half-step-down-tuning bump.
+function crdEffectiveTranspose() { return crdTranspose + (db.tuneUp ? 1 : 0); }
+
+// "Half-step down tuning" is a global, JSON-persisted setting (db.tuneUp). Toggling it both bumps
+// every song's Capo by ±1 fret AND adds ±1 semitone on top in the CRD viewer's transpose display —
+// reversible by toggling back off.
+function syncTuneToggles() {
+  const a = document.getElementById('global-tune-toggle');
+  if (a) a.checked = !!db.tuneUp;
+}
+function toggleGlobalTune() {
+  const cb = document.getElementById('global-tune-toggle');
+  const turningOn = cb.checked;
+  const verb = turningOn ? 'increase' : 'decrease';
+  if (!confirm(`This will ${verb} every song's Capo by 1 fret. Continue?`)) {
+    cb.checked = !turningOn;
+    return;
+  }
+  const delta = turningOn ? 1 : -1;
+  db.songs.forEach(s => {
+    const next = Math.max(0, (parseInt(s.capo, 10) || 0) + delta);
+    s.capo = next ? String(next) : '';
+  });
+  db.tuneUp = turningOn;
+  save(); renderAll();
+  if (crdSongId) renderCrdBody();
+}
+
+// Rewrites the plain chord/lyric text (not HTML) at the given transpose — used by "Store transposed".
+function transposeChordLineText(line, semis) {
+  const parts = line.split(/(\s+)/);
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (p === '' || /^\s+$/.test(p)) continue;
+    const { pre, core, post } = tokenParts(p);
+    if (!CHORD_RE.test(core)) continue;
+    const t = transposeToken(core, semis);
+    const newTok = pre + t + post;
+    const delta = p.length - newTok.length;
+    parts[i] = newTok;
+    if (delta !== 0 && i + 1 < parts.length && /^\s+$/.test(parts[i + 1])) {
+      parts[i + 1] = ' '.repeat(Math.max(1, parts[i + 1].length + delta));
+    }
+  }
+  return parts.join('');
+}
+function transposeInlineLineText(line, semis) {
+  return line.replace(/\[([^\]]*)\]/g, (whole, raw) => {
+    const trimmed = raw.trim();
+    if (SECTION_RE.test(trimmed)) return whole;
+    if (CHORD_RE.test(trimmed)) return '[' + transposeToken(trimmed, semis) + ']';
+    return whole;
+  });
+}
+function transposeCrdText(text, semis) {
+  if (!semis) return text;
+  return normalizeChordSpacing(text).split('\n').map(line => {
+    if (/\[[^\]]*\]/.test(line)) return transposeInlineLineText(line, semis);
+    if (isChordLine(line)) return transposeChordLineText(line, semis);
+    return line;
+  }).join('\n');
+}
+
+function crdStoreTransposed() {
+  const eff = crdEffectiveTranspose();
+  if (!crdSongId || eff === crdBaseTranspose) return;
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+  const label = (eff > 0 ? '+' : '') + eff;
+  if (!confirm(`Rewrite the saved chord sheet transposed ${label} semitones? Key and capo are left as-is.`)) return;
+  s.crd = transposeCrdText(s.crd, eff);
+  crdTranspose = crdBaseTranspose;
+  save(); renderAll();
+  renderCrdBody();
+  toast('Chord sheet stored in new key');
+}
+
+function crdFontStep(dir) {
+  crdFontSize = Math.max(11, Math.min(32, crdFontSize + dir));
+  document.getElementById('crd-body').style.fontSize = crdFontSize + 'px';
+  localStorage.setItem('rep_crd_font', crdFontSize);
+}
+
+function crdEditSong() {
+  if (!crdSongId) return;
+  const id = crdSongId;
+  closeCrdReader();
+  document.querySelector('.tab-btn[data-tab="songs"]')?.click();
+  startInlineEdit(id);
+  setTimeout(() => document.getElementById('ie-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+}
+
+function crdDeleteSong() {
+  if (!crdSongId) return;
+  const id = crdSongId;
+  closeCrdReader();
+  deleteSong(id);
+}
+
+// ── Full-page CRD editor (pops out whichever textarea it was opened from) ──
+let crdEditorTargetId = null;
+function openCrdEditor(targetId) {
+  const src = document.getElementById(targetId);
+  if (!src) return;
+  crdEditorTargetId = targetId;
+  document.getElementById('crd-editor-textarea').value = src.value;
+  openModal('crd-editor');
+  setTimeout(() => document.getElementById('crd-editor-textarea').focus(), 60);
+}
+function closeCrdEditor() {
+  const src = crdEditorTargetId && document.getElementById(crdEditorTargetId);
+  if (src) {
+    src.value = document.getElementById('crd-editor-textarea').value;
+    src.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  closeModal('crd-editor');
+  crdEditorTargetId = null;
+}
+
+// Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
+document.addEventListener('keydown', (e) => {
+  const reader = document.getElementById('crd-reader');
+  if (!reader || reader.classList.contains('hidden')) return;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+    e.preventDefault();
+    document.getElementById('crd-scroll').scrollBy({ top: 140, behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+    e.preventDefault();
+    document.getElementById('crd-scroll').scrollBy({ top: -140, behavior: 'smooth' });
+  } else if (e.key === 'Escape') {
+    closeCrdReader();
+  }
+});
 
 // ─────────────────────────────────────────
 // SETLISTS
@@ -2045,9 +2506,11 @@ function altRow(item, i) {
 function slRow(item, i, total) {
   const s = resolveItemSong(item);
   if (!s) return '';
-  const titleEl = s.ugLink
-    ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank" onclick="event.stopPropagation()">${esc(s.title)}</a>`
-    : `<span class="sl-title">${esc(s.title)}</span>`;
+  const titleEl = s.crd
+    ? `<a class="sl-title crd-open" href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')">${esc(s.title)}</a>`
+    : s.ugLink
+      ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank" onclick="event.stopPropagation()">${esc(s.title)}</a>`
+      : `<span class="sl-title">${esc(s.title)}</span>`;
   const badges = kchBadges(s);
   const altHtml = item.altSongId
     ? altRow(item, i)
@@ -2099,9 +2562,11 @@ function subsetBlock(item, i, total) {
 }
 
 function autoSlRow(s, i, typeId) {
-  const titleEl = s.ugLink
-    ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
-    : `<span class="sl-title">${esc(s.title)}</span>`;
+  const titleEl = s.crd
+    ? `<a class="sl-title crd-open" href="javascript:void(0)" onclick="openCrdReader('${s.id}')">${esc(s.title)}</a>`
+    : s.ugLink
+      ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
+      : `<span class="sl-title">${esc(s.title)}</span>`;
   const badges = kchBadges(s);
   const attrMeta = (db.attrGroups||[]).map(grp => {
     const optId = (s.attrs||{})[grp.id];
@@ -2490,9 +2955,11 @@ function renderPlayList(autoScroll = true) {
   list.innerHTML = songs.map((s, i) => {
     const cur    = i === playIdx;
     const badges = cur ? kchBadges(s) : '';
-    const title  = cur && s.ugLink
-      ? `<a href="${esc(s.ugLink)}" target="_blank" onclick="playOpenedUG=true">${esc(s.title)}</a>`
-      : esc(s.title);
+    const title  = cur && s.crd
+      ? `<a href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')" class="crd-open">${esc(s.title)}</a>`
+      : cur && s.ugLink
+        ? `<a href="${esc(s.ugLink)}" target="_blank" onclick="playOpenedUG=true">${esc(s.title)}</a>`
+        : esc(s.title);
     const titleEl = cur
       ? `<div class="play-title-row">
           <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(-1)" title="Previous" ${i===0?'disabled':''}>↑</button>
