@@ -37,11 +37,19 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
     {
       "id": "unique-id",
       "name": "Setlist Name",
-      "songIds": ["id1", "id2"]
+      "items": [
+        { "type": "song", "songId": "id1" },
+        { "type": "song", "songId": "id2", "altSongId": "id5", "useAlt": false },
+        { "type": "subset", "setlistId": "other-setlist-id", "optional": true, "included": false }
+      ]
     }
   ]
 }
 ```
+
+- `song` items resolve to `altSongId` instead of `songId` when `useAlt` is true — lets a slot's live song be swapped without reordering.
+- `subset` items pull another setlist's songs in live (not duplicated); they only count toward playback/print/totals when `included` is true.
+- Legacy setlists with a flat `songIds: [id, ...]` array are migrated to `items` on load (`migrateSetlists()`).
 
 ## Key Implementation Details
 
@@ -51,6 +59,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - **Quick UG Import**: Parses title and artist from a UG URL slug — no network request needed. Pattern: `/tab/{artist}/{title}-{type}-{id}`
 - **Ultimate Guitar links**: Normalized to `tabs.ultimate-guitar.com` Universal Link domain for iOS app compatibility
 - **Setlists**: Drag-and-drop reordering via HTML5 drag API; touch-friendly ↑↓ buttons
+- **Alternate songs**: A song slot can carry an `altSongId`; the ⇄ button flips which one (`useAlt`) is live, for last-minute swaps without reordering
+- **Sub-setlists**: A setlist can embed another setlist as an optional, collapsible block (`type:'subset'`); toggling `included` pulls its songs into playback/print/counts live, no duplication. `resolvePlayableSongs()` flattens items recursively with a cycle guard
 - **Play mode**: Scroll-snap drum-roll UX — fixed 100px items, CSS `scroll-snap-type: y mandatory`, centered item detected via `scrollend` + debounced `scroll`. Auto-advances on return from UG via `visibilitychange`
 - **GitHub push**: Uses GitHub Contents API (PUT) to commit `repertoire.json` directly; config stored in `localStorage`
 - **Repo sync**: On boot, fetches `repertoire.json` and compares fingerprints; shows banner if remote differs

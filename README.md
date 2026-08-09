@@ -22,6 +22,8 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Create and manage multiple setlists
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
+- **Alternate songs** — give any song slot a backup; swap which one is live with one tap
+- **Sub-setlists** — embed another setlist as an optional block (e.g. an encore) and toggle it in or out per show
 - **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar
 
 ### Data

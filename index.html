@@ -384,13 +384,18 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
 }
 @media (max-width: 600px) {
   #tab-sets { flex-direction: column; gap: 12px; }
-  .sets-sidebar { width: 100% !important; }
+  .sets-sidebar {
+    width: 100% !important; position: static !important;
+    max-height: none !important; overflow-y: visible !important;
+  }
   .sets-resize { display: none; }
 }
 .sets-sidebar {
   width: max-content; min-width: 200px; max-width: 340px;
   flex-shrink: 0;
   display: flex; flex-direction: column; gap: 5px;
+  position: sticky; top: 76px; align-self: flex-start;
+  max-height: calc(100dvh - 94px); overflow-y: auto;
 }
 .sets-resize {
   width: 20px; flex-shrink: 0; cursor: col-resize;
@@ -436,8 +441,11 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
 }
 .set-detail-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
-  border-bottom: 1px solid var(--border); padding-bottom: 14px;
+  flex-wrap: wrap; gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin: -18px -18px 16px; padding: 18px 18px 14px;
+  position: sticky; top: 76px; z-index: 5;
+  background: var(--surface); border-radius: 14px 14px 0 0;
 }
 .set-detail-header h2 {
   font-family: var(--fd); font-size: 1.1rem; font-weight: 600;
@@ -451,8 +459,10 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   border: 1px solid transparent; transition: border-color .15s, background .15s;
 }
 .sl-row:hover { border-color: rgba(61,158,140,.2); }
-.sl-row.drag-over { border-color: var(--accent); background: rgba(61,158,140,.07); }
-.sl-row.dragging { opacity: .35; }
+.drag-item { cursor: pointer; }
+.drag-item.drag-over { border-color: var(--accent); background: rgba(61,158,140,.07); }
+.drag-item.dragging { opacity: .35; }
+.drag-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .drag-handle {
   color: var(--text-dim); cursor: grab; font-size: 1.1rem;
   padding: 0 3px; flex-shrink: 0; touch-action: none;
@@ -474,6 +484,51 @@ a.sl-title, a.tbl-title { text-decoration: underline; text-underline-offset: 3px
 a.sl-title:hover, a.tbl-title:hover { color: var(--accent); }
 .sl-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; font-family: var(--fm); }
 .sl-btns { display: flex; gap: 3px; flex-shrink: 0; }
+
+/* Alternate song (per setlist slot) — sits inline to the right of the main title */
+.sl-alt-add {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim); font-size: 0.7rem;
+  font-family: var(--fm); opacity: .7;
+}
+.sl-alt-add:hover { opacity: 1; color: var(--accent); }
+.sl-alt {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; color: var(--text); font-family: var(--fm);
+}
+.sl-alt-swap, .sl-alt-clear {
+  background: none; border: none; cursor: pointer; color: var(--text-dim);
+  padding: 0; font-size: 0.78rem; line-height: 1; flex-shrink: 0;
+}
+.sl-alt-swap:hover { color: var(--accent); }
+.sl-alt-clear:hover { color: var(--danger, #c0524a); }
+
+/* Optional sub-setlist block */
+.subset-block {
+  border-radius: 8px; background: var(--surface2); margin-bottom: 5px;
+  border: 1px solid rgba(61,158,140,.18); overflow: hidden;
+  transition: border-color .15s, background .15s;
+}
+.subset-block:hover { border-color: rgba(61,158,140,.35); }
+.subset-header {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+}
+.subset-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; min-width: 0; }
+.subset-toggle input[type=checkbox] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+.subset-toggle span {
+  font-weight: 500; font-size: 0.875rem; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.subset-block.expanded .subset-toggle span { font-style: italic; }
+.subset-badge {
+  flex-shrink: 0; font-size: 0.65rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--accent); background: rgba(61,158,140,.1); border: 1px solid rgba(61,158,140,.22);
+  border-radius: 6px; padding: 2px 7px; font-family: var(--fm);
+}
+.subset-body {
+  padding: 2px 12px 10px 38px; display: flex; flex-direction: column; gap: 2px;
+}
+.subset-song { font-size: 0.78rem; color: var(--text-dim); font-family: var(--fm); }
 
 /* ══════════════════════════════════════════
    MODALS
@@ -827,10 +882,38 @@ select.fi { cursor: pointer; }
   </div>
 </div>
 
+<!-- ══ ALTERNATE SONG MODAL ══ -->
+<div class="overlay hidden" id="alt-modal">
+  <div class="modal">
+    <h2>Set Alternate</h2>
+    <input class="fi" type="search" placeholder="Search…" oninput="renderAltPickList(this.value)" style="margin-bottom:12px">
+    <div class="song-pick-list" id="alt-pick-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('alt-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="confirmAltPick()">Set</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD SUB-SETLIST MODAL ══ -->
+<div class="overlay hidden" id="add-subset-modal">
+  <div class="modal">
+    <h2>Add Sub-setlist</h2>
+    <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
+      Adds another setlist as an optional block — toggle it in or out per performance without duplicating songs.
+    </p>
+    <div class="song-pick-list" id="subset-pick-list"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('add-subset-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="confirmAddSubset()">Add</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ GITHUB CONFIG MODAL ══ -->
 <div class="overlay hidden" id="github-modal">
   <div class="modal">
-    <h2>Push to GitHub</h2>
+    <h2 id="github-modal-title">Push to GitHub</h2>
     <div class="fg">
       <label>Personal Access Token</label>
       <input class="fi" id="gh-token" type="password" placeholder="ghp_…" autocomplete="off">
@@ -853,7 +936,7 @@ select.fi { cursor: pointer; }
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" onclick="clearGithubConfig()" style="margin-right:auto">Clear settings</button>
       <button class="btn btn-secondary" onclick="closeModal('github-modal')">Cancel</button>
-      <button class="btn btn-primary"   onclick="saveGithubConfig()">Save &amp; Push</button>
+      <button class="btn btn-primary"   onclick="saveGithubConfig()" id="gh-save-btn">Save &amp; Push</button>
     </div>
   </div>
 </div>
@@ -985,6 +1068,20 @@ const OLD_ATTR_MAP = {
   ag2:{'Always great':'ao4','Always good':'ao5','Da migliorare':'ao6'},
   ag3:{Always:'ao7',Enough:'ao8','Too little':'ao9',New:'ao10'},
 };
+// Migrate legacy setlist.songIds (array of ids) into setlist.items
+// (array of {type:'song',songId,altSongId?,useAlt?} | {type:'subset',setlistId,optional,included}).
+function migrateSetlists() {
+  let dirty = false;
+  (db.setlists || []).forEach(sl => {
+    if (!sl.items) {
+      sl.items = (sl.songIds || []).map(id => ({ type: 'song', songId: id }));
+      delete sl.songIds;
+      dirty = true;
+    }
+  });
+  return dirty;
+}
+
 function migrateScoring() {
   if (db.attrGroups) return false;
   db.attrGroups    = deepCopy(DEFAULT_ATTR_GROUPS);
@@ -1012,6 +1109,7 @@ let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let dragIdx = null;
+let selectedItemIdx = null;
 let _playOverrideSongs = null;
 
 // ─────────────────────────────────────────
@@ -1043,13 +1141,14 @@ async function boot() {
           dirty = true;
         }
       });
+      if (migrateSetlists()) dirty = true;
       if (dirty) save();
     } catch {}
     checkRepoSync();
   } else {
     try {
       const r = await fetch(SEED_FILE);
-      if (r.ok) { db = await r.json(); save(); }
+      if (r.ok) { db = await r.json(); migrateSetlists(); save(); }
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
@@ -1108,6 +1207,7 @@ function acceptSync() {
   db = banner._repoData;
   if (!db.tagMeta) db.tagMeta = localTagMeta;
   migrateScoring();
+  migrateSetlists();
   if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
   save(); renderAll();
   banner.classList.add('hidden');
@@ -1135,7 +1235,7 @@ function importJSON(e) {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-        db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
+        db = d; migrateScoring(); migrateSetlists(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
         ensureNonePoints(); save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
@@ -1550,7 +1650,7 @@ function clearAllSongAttrs() {
 function duplicateAutoSetlist(autoId) {
   const autoSet = (db.autoSetlists||[]).find(a => a.id === autoId); if (!autoSet) return;
   const ranked = getAutoSetlist(autoSet.typeId);
-  const sl = { id: uid(), name: autoSet.name + ' (copy)', songIds: ranked.map(s => s.id) };
+  const sl = { id: uid(), name: autoSet.name + ' (copy)', items: ranked.map(s => ({ type: 'song', songId: s.id })) };
   db.setlists.push(sl);
   activeSetId = sl.id;
   save(); renderSets(); renderSetDetail();
@@ -1778,7 +1878,12 @@ function readModalAttrs() {
 function deleteSong(id) {
   if (!confirm('Delete this song?')) return;
   db.songs = db.songs.filter(s => s.id !== id);
-  db.setlists.forEach(sl => { sl.songIds = sl.songIds.filter(i => i !== id); });
+  db.setlists.forEach(sl => {
+    sl.items = (sl.items||[]).filter(it => it.type !== 'song' || it.songId !== id);
+    sl.items.forEach(it => {
+      if (it.type === 'song' && it.altSongId === id) { delete it.altSongId; delete it.useAlt; }
+    });
+  });
   save(); renderAll(); toast('Song deleted');
 }
 
@@ -1812,7 +1917,13 @@ function renderSets() {
 
 function selectSet(id) {
   activeSetId = id;
+  selectedItemIdx = null;
   renderSets();
+  renderSetDetail();
+}
+
+function selectItem(idx) {
+  selectedItemIdx = (selectedItemIdx === idx) ? null : idx;
   renderSetDetail();
 }
 
@@ -1833,6 +1944,33 @@ function getAutoSetlist(typeId) {
     .map(s => ({ ...s, _score: songScore(s, typeId) }))
     .filter(s => s._score > 0)
     .sort((a, b) => b._score - a._score);
+}
+
+// Resolve a 'song' item to its currently-live song (the alternate, if toggled on).
+function resolveItemSong(item) {
+  const id = (item.useAlt && item.altSongId) ? item.altSongId : item.songId;
+  return db.songs.find(s => s.id === id) || null;
+}
+
+// Flatten a setlist's items into the actual song list that will be played/printed/counted:
+// song items resolve to their live song; subset items only contribute when included, and
+// pull live from the referenced setlist (so edits there propagate). `seen` guards cycles.
+function resolvePlayableSongs(sl, seen) {
+  seen = seen || new Set();
+  if (!sl || seen.has(sl.id)) return [];
+  seen.add(sl.id);
+  const out = [];
+  (sl.items || []).forEach(item => {
+    if (item.type === 'subset') {
+      if (!item.included) return;
+      const sub = db.setlists.find(s => s.id === item.setlistId);
+      if (sub) out.push(...resolvePlayableSongs(sub, seen));
+    } else {
+      const song = resolveItemSong(item);
+      if (song) out.push(song);
+    }
+  });
+  return out;
 }
 
 function renderSetDetail() {
@@ -1860,46 +1998,103 @@ function renderSetDetail() {
   const sl = db.setlists.find(s => s.id === activeSetId);
   if (!sl) { el.innerHTML = '<div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>'; return; }
 
-  const songs = sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean);
+  const items = sl.items || [];
+  const playCount = resolvePlayableSongs(sl).length;
+  const hasSubsets = items.some(it => it.type === 'subset');
+  if (selectedItemIdx !== null && (selectedItemIdx < 0 || selectedItemIdx >= items.length)) selectedItemIdx = null;
 
   el.innerHTML = `
     <div class="set-detail-header">
-      <h2>${esc(sl.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${songs.length} songs</span></h2>
-      <div style="display:flex;gap:6px">
+      <h2>${esc(sl.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${playCount} songs</span></h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
+        ${hasSubsets ? `
+        <button class="btn btn-secondary btn-sm" onclick="expandAllSubsets(true)">⤢ Expand all</button>
+        <button class="btn btn-secondary btn-sm" onclick="expandAllSubsets(false)">⤡ Collapse all</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="openAddSubsetModal()">+ Add Sub-setlist</button>
         <button class="btn btn-primary   btn-sm" onclick="openAddSongsModal()">+ Add Songs</button>
       </div>
     </div>
     <div id="sl-list">
-      ${!songs.length
+      ${!items.length
         ? '<div class="empty" style="padding:20px">No songs yet</div>'
-        : songs.map((s,i) => slRow(s,i,songs.length)).join('')}
+        : items.map((it,i) => it.type === 'subset' ? subsetBlock(it,i,items.length) : slRow(it,i,items.length)).join('')}
     </div>`;
 
   initDrag();
 }
 
-function slRow(s, i, total) {
+function expandAllSubsets(state) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  (sl.items||[]).forEach(it => { if (it.type === 'subset') it.included = state; });
+  save(); renderSetDetail(); renderBubbles();
+}
+
+function altRow(item, i) {
+  const inactiveId = item.useAlt ? item.songId : item.altSongId;
+  const inactive = db.songs.find(s => s.id === inactiveId);
+  if (!inactive) return '';
+  return `<div class="sl-alt">
+    <button class="sl-alt-swap" onclick="event.stopPropagation();toggleAltUse(${i})" title="Swap to ${esc(inactive.title)}">⇄</button>
+    <span>alt: ${esc(inactive.title)}</span>
+    <button class="sl-alt-clear" onclick="event.stopPropagation();clearAlt(${i})" title="Remove alternate">✕</button>
+  </div>`;
+}
+
+function slRow(item, i, total) {
+  const s = resolveItemSong(item);
+  if (!s) return '';
   const titleEl = s.ugLink
-    ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
+    ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank" onclick="event.stopPropagation()">${esc(s.title)}</a>`
     : `<span class="sl-title">${esc(s.title)}</span>`;
   const badges = kchBadges(s);
-  return `<div class="sl-row" draggable="true" data-idx="${i}">
+  const altHtml = item.altSongId
+    ? altRow(item, i)
+    : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
+  const selected = i === selectedItemIdx;
+  return `<div class="sl-row drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sub-setlists are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
         ${titleEl}
         ${badges ? `<div class="kch-wrap" style="margin-top:0">${badges}</div>` : ''}
+        ${altHtml}
       </div>
       <div class="sl-meta">${esc(s.tags)}</div>
     </div>
     <div class="sl-btns">
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="removeSlSong('${s.id}')" title="Remove">✕</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove">✕</button>
     </div>
+  </div>`;
+}
+
+function subsetBlock(item, i, total) {
+  const sub   = db.setlists.find(s => s.id === item.setlistId);
+  const name  = sub ? sub.name : '(deleted setlist)';
+  const songs = sub ? resolvePlayableSongs(sub) : [];
+  const selected = i === selectedItemIdx;
+  return `<div class="subset-block drag-item${item.included?' expanded':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sub-setlists are inserted right after the selected item">
+    <div class="subset-header">
+      <label class="subset-toggle" onclick="event.stopPropagation()">
+        <input type="checkbox" ${item.included?'checked':''} onchange="toggleSubsetIncluded(${i})">
+        <span>${esc(name)}</span>
+      </label>
+      <span class="subset-badge">optional · ${songs.length} song${songs.length!==1?'s':''}</span>
+      <div class="sl-btns">
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove">✕</button>
+      </div>
+    </div>
+    ${item.included ? `<div class="subset-body">${
+      songs.length
+        ? songs.map(s => `<div class="subset-song">${esc(s.title)}</div>`).join('')
+        : '<div class="empty" style="padding:8px 0">No songs</div>'
+    }</div>` : ''}
   </div>`;
 }
 
@@ -1926,22 +2121,136 @@ function autoSlRow(s, i, typeId) {
   </div>`;
 }
 
+// Keeps selectedItemIdx pointing at the same logical item after items move around
+// (single-position swap, or an arbitrary drag from `from` to `to`).
+function adjustSelectionForMove(from, to) {
+  if (selectedItemIdx === null) return;
+  if (selectedItemIdx === from) { selectedItemIdx = to; return; }
+  if (from < to) {
+    if (selectedItemIdx > from && selectedItemIdx <= to) selectedItemIdx--;
+  } else {
+    if (selectedItemIdx >= to && selectedItemIdx < from) selectedItemIdx++;
+  }
+}
+
 function moveSlSong(idx, dir) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  const ni = idx + dir; if (ni < 0 || ni >= sl.songIds.length) return;
-  [sl.songIds[idx], sl.songIds[ni]] = [sl.songIds[ni], sl.songIds[idx]];
+  const ni = idx + dir; if (ni < 0 || ni >= sl.items.length) return;
+  [sl.items[idx], sl.items[ni]] = [sl.items[ni], sl.items[idx]];
+  adjustSelectionForMove(idx, ni);
   save(); renderSetDetail(); renderBubbles();
 }
 
-function removeSlSong(songId) {
+function removeSlItem(idx) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  sl.songIds = sl.songIds.filter(id => id !== songId);
+  sl.items.splice(idx, 1);
+  if (selectedItemIdx !== null) {
+    if (selectedItemIdx === idx) selectedItemIdx = null;
+    else if (selectedItemIdx > idx) selectedItemIdx--;
+  }
+  save(); renderSetDetail(); renderBubbles();
+}
+
+function toggleAltUse(idx) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const item = sl.items[idx]; if (!item || !item.altSongId) return;
+  item.useAlt = !item.useAlt;
+  save(); renderSetDetail();
+}
+
+function clearAlt(idx) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const item = sl.items[idx]; if (!item) return;
+  delete item.altSongId; delete item.useAlt;
+  save(); renderSetDetail();
+}
+
+let altItemIdx = null;
+function openAltModal(idx) {
+  altItemIdx = idx;
+  renderAltPickList('');
+  openModal('alt-modal');
+}
+
+function renderAltPickList(q) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const item = sl.items[altItemIdx]; if (!item) return;
+  const ql = q.toLowerCase();
+  const list = db.songs.filter(s => s.id !== item.songId &&
+    (!ql || s.title.toLowerCase().includes(ql) || (s.tags||'').toLowerCase().includes(ql)));
+
+  const el = document.getElementById('alt-pick-list');
+  if (!list.length) { el.innerHTML = '<div class="empty" style="padding:16px">No songs</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <label class="song-pick-item">
+      <input type="radio" name="alt-pick" value="${s.id}">
+      <div>
+        <div class="pick-title">${esc(s.title)}</div>
+        <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
+      </div>
+    </label>`).join('');
+}
+
+function confirmAltPick() {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const item = sl.items[altItemIdx]; if (!item) return;
+  const checked = document.querySelector('#alt-pick-list input:checked');
+  if (!checked) { toast('Pick a song'); return; }
+  item.altSongId = checked.value;
+  item.useAlt = false;
+  save(); renderSetDetail();
+  closeModal('alt-modal');
+  toast('Alternate set');
+}
+
+function openAddSubsetModal() {
+  renderSubsetPickList();
+  openModal('add-subset-modal');
+}
+
+function renderSubsetPickList() {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const already = new Set((sl.items||[]).filter(i => i.type === 'subset').map(i => i.setlistId));
+  const list = db.setlists.filter(s => s.id !== activeSetId && !already.has(s.id));
+
+  const el = document.getElementById('subset-pick-list');
+  if (!list.length) { el.innerHTML = '<div class="empty" style="padding:16px">No other setlists available</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <label class="song-pick-item">
+      <input type="radio" name="subset-pick" value="${s.id}">
+      <div>
+        <div class="pick-title">${esc(s.name)}</div>
+        <div class="pick-sub">${(s.items||[]).length} item${(s.items||[]).length!==1?'s':''}</div>
+      </div>
+    </label>`).join('');
+}
+
+function confirmAddSubset() {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const checked = document.querySelector('#subset-pick-list input:checked');
+  if (!checked) { toast('Pick a setlist'); return; }
+  sl.items = sl.items || [];
+  const newItem = { type: 'subset', setlistId: checked.value, optional: true, included: false };
+  if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
+    sl.items.splice(selectedItemIdx + 1, 0, newItem);
+  } else {
+    sl.items.push(newItem);
+  }
+  save(); renderSetDetail(); renderBubbles();
+  closeModal('add-subset-modal');
+  toast('Sub-setlist added');
+}
+
+function toggleSubsetIncluded(idx) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const item = sl.items[idx]; if (!item || item.type !== 'subset') return;
+  item.included = !item.included;
   save(); renderSetDetail(); renderBubbles();
 }
 
 function initDrag() {
   const list = document.getElementById('sl-list'); if (!list) return;
-  list.querySelectorAll('.sl-row').forEach(row => {
+  list.querySelectorAll('.drag-item').forEach(row => {
     row.addEventListener('dragstart', e => {
       dragIdx = +row.dataset.idx;
       row.classList.add('dragging');
@@ -1949,19 +2258,20 @@ function initDrag() {
     });
     row.addEventListener('dragend', () => {
       row.classList.remove('dragging');
-      list.querySelectorAll('.sl-row').forEach(r => r.classList.remove('drag-over'));
+      list.querySelectorAll('.drag-item').forEach(r => r.classList.remove('drag-over'));
     });
     row.addEventListener('dragover', e => {
       e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-      list.querySelectorAll('.sl-row').forEach(r => r.classList.remove('drag-over'));
+      list.querySelectorAll('.drag-item').forEach(r => r.classList.remove('drag-over'));
       row.classList.add('drag-over');
     });
     row.addEventListener('drop', e => {
       e.preventDefault();
       const di = +row.dataset.idx; if (dragIdx === di) return;
       const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-      const [m] = sl.songIds.splice(dragIdx, 1);
-      sl.songIds.splice(di, 0, m);
+      const [m] = sl.items.splice(dragIdx, 1);
+      sl.items.splice(di, 0, m);
+      adjustSelectionForMove(dragIdx, di);
       save(); renderSetDetail(); renderBubbles();
     });
   });
@@ -1982,7 +2292,7 @@ function saveSetlist() {
   if (editSetId) {
     const sl = db.setlists.find(s => s.id === editSetId); if (sl) sl.name = name;
   } else {
-    const sl = { id: uid(), name, songIds: [] };
+    const sl = { id: uid(), name, items: [] };
     db.setlists.push(sl);
     activeSetId = sl.id;
   }
@@ -1994,6 +2304,9 @@ function saveSetlist() {
 function deleteSetlist(id) {
   if (!confirm('Delete this setlist?')) return;
   db.setlists = db.setlists.filter(s => s.id !== id);
+  db.setlists.forEach(sl => {
+    sl.items = (sl.items||[]).filter(it => it.type !== 'subset' || it.setlistId !== id);
+  });
   if (activeSetId === id) activeSetId = null;
   save(); renderSets(); renderSetDetail(); renderBubbles();
   toast('Setlist deleted');
@@ -2006,7 +2319,7 @@ function openAddSongsModal() {
 
 function renderPickList(q) {
   const sl   = db.setlists.find(s => s.id === activeSetId);
-  const have = new Set(sl?.songIds || []);
+  const have = new Set((sl?.items||[]).filter(i => i.type === 'song').map(i => i.songId));
   const ql   = q.toLowerCase();
   const list = db.songs
     .filter(s => !have.has(s.id) && (!ql || s.title.toLowerCase().includes(ql) || (s.tags||'').toLowerCase().includes(ql)));
@@ -2025,11 +2338,18 @@ function renderPickList(q) {
 
 function confirmAddSongs() {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  sl.items = sl.items || [];
+  const have = new Set(sl.items.filter(i => i.type === 'song').map(i => i.songId));
   const checked = [...document.querySelectorAll('#pick-list input:checked')];
-  checked.forEach(cb => { if (!sl.songIds.includes(cb.value)) sl.songIds.push(cb.value); });
+  const toAdd = checked.filter(cb => !have.has(cb.value)).map(cb => ({ type: 'song', songId: cb.value }));
+  if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
+    sl.items.splice(selectedItemIdx + 1, 0, ...toAdd);
+  } else {
+    sl.items.push(...toAdd);
+  }
   save(); renderSetDetail(); renderBubbles();
   closeModal('add-songs-modal');
-  toast(`${checked.length} song${checked.length!==1?'s':''} added`);
+  toast(`${toAdd.length} song${toAdd.length!==1?'s':''} added`);
 }
 
 // ─────────────────────────────────────────
@@ -2053,7 +2373,7 @@ function doPrint() {
   if (_printTarget === 'setlist') {
     const sl = db.setlists.find(s => s.id === activeSetId);
     if (!sl) return;
-    songs = sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean);
+    songs = resolvePlayableSongs(sl);
     title = sl.name;
   } else {
     songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
@@ -2148,7 +2468,7 @@ function closePlay() {
 function getPlaySongs() {
   if (_playOverrideSongs) return _playOverrideSongs;
   const sl = db.setlists.find(s => s.id === playSetId);
-  return sl ? sl.songIds.map(id => db.songs.find(s => s.id === id)).filter(Boolean) : [];
+  return sl ? resolvePlayableSongs(sl) : [];
 }
 
 function stepPlay(dir) {
@@ -2309,13 +2629,21 @@ function autoDetectGithub() {
   return { owner: '', repo: '', branch: 'main', path: SEED_FILE, token: '' };
 }
 
-function openGithubConfigModal() {
+// Which action to run after the config modal is saved — set by whichever
+// button (Push / Pull) opened it, so saving a first-time token doesn't
+// always fall through to a push.
+let ghConfigIntent = 'push';
+
+function openGithubConfigModal(intent) {
+  ghConfigIntent = intent || 'push';
   const cfg = getGithubConfig() || autoDetectGithub();
   document.getElementById('gh-token').value  = cfg.token  || '';
   document.getElementById('gh-owner').value  = cfg.owner  || '';
   document.getElementById('gh-repo').value   = cfg.repo   || '';
   document.getElementById('gh-branch').value = cfg.branch || 'main';
   document.getElementById('gh-path').value   = cfg.path   || SEED_FILE;
+  document.getElementById('github-modal-title').textContent = ghConfigIntent === 'pull' ? 'Pull from GitHub' : 'Push to GitHub';
+  document.getElementById('gh-save-btn').textContent = ghConfigIntent === 'pull' ? 'Save & Pull' : 'Save & Push';
   openModal('github-modal');
   document.getElementById('gh-token').focus();
 }
@@ -2331,11 +2659,11 @@ function saveGithubConfig() {
   if (!cfg.token || !cfg.owner || !cfg.repo) { toast('Token, Owner and Repo are required'); return; }
   localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg));
   closeModal('github-modal');
-  doPush(cfg);
+  if (ghConfigIntent === 'pull') doPull(cfg); else doPush(cfg);
 }
 
 async function pushToGithub() {
-  openGithubConfigModal();
+  openGithubConfigModal('push');
 }
 
 async function doPush(cfg) {
@@ -2386,7 +2714,11 @@ async function doPush(cfg) {
 
 async function pullFromGithub() {
   const cfg = getGithubConfig();
-  if (!cfg) { openGithubConfigModal(); return; }
+  if (!cfg) { openGithubConfigModal('pull'); return; }
+  doPull(cfg);
+}
+
+async function doPull(cfg) {
   const btn = document.getElementById('btn-pull');
   btn.disabled = true; btn.textContent = '⬇…';
   try {
@@ -2409,7 +2741,7 @@ async function pullFromGithub() {
     const d = JSON.parse(json);
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-    db = d; migrateScoring(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
+    db = d; migrateScoring(); migrateSetlists(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
     ensureNonePoints(); save(); renderAll();
     document.getElementById('sync-banner').classList.add('hidden');
     toast('Pulled from GitHub!');
