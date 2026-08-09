@@ -1071,6 +1071,10 @@ select.fi { cursor: pointer; }
           <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdStoreTransposed()" title="Rewrite the saved chord sheet at this transpose (Key/Capo fields are left untouched)" disabled>💾 Store transposed</button>
         </div>
         <div class="crd-toolbar-right">
+          <span class="crd-toolbar-label">Scroll</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdScrollPctStep(-5)" title="Less scroll per key press">−</button>
+          <span id="crd-scroll-pct-label" class="crd-transpose-val">35%</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdScrollPctStep(5)" title="More scroll per key press">+</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdFontStep(-1)" title="Smaller text">A−</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdFontStep(1)" title="Larger text">A+</button>
         </div>
@@ -1255,6 +1259,7 @@ let selectedItemIdx = null;
 let _playOverrideSongs = null;
 let crdSongId       = null;
 let crdTranspose     = 0;
+let crdScrollPct = Math.max(5, Math.min(100, parseInt(localStorage.getItem('rep_crd_scroll_pct') || '35', 10)));
 let crdBaseTranspose = 0; // auto capo offset (-capo semitones) applied when the reader opens
 let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
 
@@ -2174,6 +2179,7 @@ function openCrdReader(id) {
   crdTranspose = crdBaseTranspose;
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
   renderCrdBody();
+  crdUpdateScrollPctLabel();
   openModal('crd-reader');
   document.getElementById('crd-scroll').scrollTop = 0;
 }
@@ -2347,7 +2353,18 @@ function closeCrdEditor() {
 // matter how tall or short the reading pane is.
 function crdScrollStep() {
   const el = document.getElementById('crd-scroll');
-  return el ? el.clientHeight * 0.35 : 250;
+  const h = el ? el.clientHeight : 700;
+  return h * (crdScrollPct / 100);
+}
+
+function crdScrollPctStep(delta) {
+  crdScrollPct = Math.max(5, Math.min(100, crdScrollPct + delta));
+  localStorage.setItem('rep_crd_scroll_pct', crdScrollPct);
+  crdUpdateScrollPctLabel();
+}
+function crdUpdateScrollPctLabel() {
+  const el = document.getElementById('crd-scroll-pct-label');
+  if (el) el.textContent = crdScrollPct + '%';
 }
 
 // Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
