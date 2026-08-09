@@ -257,7 +257,7 @@
       "capo": "",
       "harp": "E",
       "tags": "Bob Dylan",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/dont-think-twice-its-all-right-official-2089509",
+      "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=w_-QChlnDhk-PV8K7r88Ttqa&tab_id=31365665",
       "attrs": {}
     },
     {
@@ -1036,155 +1036,545 @@
     {
       "id": "sl1",
       "name": "Il Nove 29/3/2026",
-      "songIds": [
-        "s01",
-        "s02",
-        "s03",
-        "s04",
-        "s05",
-        "s06",
-        "s07",
-        "s08",
-        "s10",
-        "s11",
-        "s12",
-        "s13",
-        "s14",
-        "s15",
-        "s16",
-        "s17",
-        "s18",
-        "s19",
-        "s20",
-        "s21",
-        "s23",
-        "s24",
-        "s25",
-        "s26",
-        "s28",
-        "s29",
-        "s30",
-        "s31",
-        "s32",
-        "s33",
-        "s34",
-        "s35",
-        "s36",
-        "s37",
-        "s38",
-        "s39",
-        "s41",
-        "mobvrnnwqd8gq"
+      "items": [
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "s02"
+        },
+        {
+          "type": "song",
+          "songId": "s03"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s06"
+        },
+        {
+          "type": "song",
+          "songId": "s07"
+        },
+        {
+          "type": "song",
+          "songId": "s08"
+        },
+        {
+          "type": "song",
+          "songId": "s10"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "s13"
+        },
+        {
+          "type": "song",
+          "songId": "s14"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
+        },
+        {
+          "type": "song",
+          "songId": "s17"
+        },
+        {
+          "type": "song",
+          "songId": "s18"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s23"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "s26"
+        },
+        {
+          "type": "song",
+          "songId": "s28"
+        },
+        {
+          "type": "song",
+          "songId": "s29"
+        },
+        {
+          "type": "song",
+          "songId": "s30"
+        },
+        {
+          "type": "song",
+          "songId": "s31"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "s33"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "s38"
+        },
+        {
+          "type": "song",
+          "songId": "s39"
+        },
+        {
+          "type": "song",
+          "songId": "s41"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        }
       ]
     },
     {
       "id": "sl2",
       "name": "Il Nove 24/4/2026",
-      "songIds": [
-        "s01",
-        "s02",
-        "s03",
-        "s04",
-        "s05",
-        "s06",
-        "s07",
-        "s08",
-        "s10",
-        "s11",
-        "s18",
-        "mobx4gbien69s",
-        "s16",
-        "mobwys0zxdtab",
-        "s12",
-        "s13",
-        "s14",
-        "s15",
-        "mobx10bto98vo",
-        "s19",
-        "s20",
-        "s21",
-        "s23",
-        "mobxcagv7zvgk",
-        "mobwy45ykmxg3",
-        "s22",
-        "mobx3suewssgb",
-        "s17",
-        "s24",
-        "s25",
-        "s26",
-        "s28",
-        "s29",
-        "s30",
-        "s32",
-        "mobx34z6fdygx",
-        "s33",
-        "s34",
-        "s35",
-        "mobwzwj4octlr",
-        "mobwz3ketsbt7",
-        "s37",
-        "s36",
-        "s39",
-        "mobvrnnwqd8gq",
-        "s41",
-        "mobwnzg39cdvz"
+      "items": [
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "s02"
+        },
+        {
+          "type": "song",
+          "songId": "s03"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s06"
+        },
+        {
+          "type": "song",
+          "songId": "s07"
+        },
+        {
+          "type": "song",
+          "songId": "s08"
+        },
+        {
+          "type": "song",
+          "songId": "s10"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "s18"
+        },
+        {
+          "type": "song",
+          "songId": "mobx4gbien69s"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
+        },
+        {
+          "type": "song",
+          "songId": "mobwys0zxdtab"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "s13"
+        },
+        {
+          "type": "song",
+          "songId": "s14"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s23"
+        },
+        {
+          "type": "song",
+          "songId": "mobxcagv7zvgk"
+        },
+        {
+          "type": "song",
+          "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "song",
+          "songId": "s22"
+        },
+        {
+          "type": "song",
+          "songId": "mobx3suewssgb"
+        },
+        {
+          "type": "song",
+          "songId": "s17"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "s26"
+        },
+        {
+          "type": "song",
+          "songId": "s28"
+        },
+        {
+          "type": "song",
+          "songId": "s29"
+        },
+        {
+          "type": "song",
+          "songId": "s30"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "mobx34z6fdygx"
+        },
+        {
+          "type": "song",
+          "songId": "s33"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "mobwzwj4octlr"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
+          "songId": "s39"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "s41"
+        },
+        {
+          "type": "song",
+          "songId": "mobwnzg39cdvz"
+        }
       ]
     },
     {
       "id": "a1b51966-7581-4763-af8c-396452aeb528",
       "name": "Vaso Bastardo 7/8/2026",
-      "songIds": [
-        "s01",
-        "12836013-3483-4122-a342-218470148f7d",
-        "8b195afc-2191-4028-976a-b77044a54478",
-        "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
-        "61c15a11-1643-472f-8394-a1e50e28d7e6",
-        "s32",
-        "s05",
-        "s15",
-        "115ff934-ff2d-4102-b150-0ca7d303f124",
-        "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
-        "s12",
-        "s19",
-        "s21",
-        "s20",
-        "51af4aea-828e-45ad-b215-50dd9f750afe",
-        "s14",
-        "e48da248-3058-469a-89c2-52b5de9ae6ee",
-        "mobx10bto98vo",
-        "s04",
-        "s11",
-        "s35",
-        "s34",
-        "s37",
-        "7093eab3-255f-4300-ba1e-df0efc6d1059",
-        "s36"
+      "items": [
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
+        },
+        {
+          "type": "song",
+          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "s14"
+        },
+        {
+          "type": "song",
+          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        }
       ]
     },
     {
       "id": "983913fb-d9e4-4bbc-aa7b-dd798d299bd1",
       "name": "Scaletta",
-      "songIds": [
-        "61c15a11-1643-472f-8394-a1e50e28d7e6",
-        "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
-        "8b195afc-2191-4028-976a-b77044a54478",
-        "s35",
-        "s16",
-        "s01",
-        "s32",
-        "s05",
-        "s34",
-        "115ff934-ff2d-4102-b150-0ca7d303f124",
-        "55d7c441-336e-4f1e-98ff-d58eeda0811b",
-        "s21",
-        "s19",
-        "mobxcagv7zvgk",
-        "51af4aea-828e-45ad-b215-50dd9f750afe",
-        "12836013-3483-4122-a342-218470148f7d",
-        "s15",
-        "s12",
-        "s04",
-        "s11"
+      "items": [
+        {
+          "type": "song",
+          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
+        },
+        {
+          "type": "song",
+          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
+        },
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "mobxcagv7zvgk"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        }
       ]
     }
   ],
