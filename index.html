@@ -2308,7 +2308,7 @@ function crdApplyFontSize() {
   const title = document.getElementById('crd-title');
   if (title) title.style.fontSize = (crdFontSize * 1.3) + 'px';
   document.querySelectorAll('#crd-meta .kch').forEach(el => {
-    el.style.fontSize = (crdFontSize * 0.55) + 'px';
+    el.style.fontSize = crdFontSize + 'px';
   });
 }
 
