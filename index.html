@@ -2331,9 +2331,15 @@ function closeCrdEditor() {
   crdEditorTargetId = null;
 }
 
-// Scroll distance per key press — scales with the current font size (and its 1.7 line-height,
-// matching .crd-body) so a press always jumps a consistent number of lines, not a fixed pixel count.
-function crdScrollStep() { return crdFontSize * 1.7 * 15; }
+// Scroll distance per key press — the larger of "most of the visible pane" (like Page Down) or
+// a hard floor of 10 lines at the current font size, so it's always a big, page-like jump no
+// matter how tall or short the reading pane is.
+function crdScrollStep() {
+  const el = document.getElementById('crd-scroll');
+  const byViewport = el ? el.clientHeight * 0.85 : 0;
+  const byLines = crdFontSize * 1.7 * 10;
+  return Math.max(byViewport, byLines);
+}
 
 // Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
 document.addEventListener('keydown', (e) => {
