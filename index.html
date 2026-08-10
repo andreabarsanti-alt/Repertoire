@@ -2188,40 +2188,46 @@ function renderCrdHTML(text, semis) {
 }
 
 // ── Reader UI ──
-// Reads just the root-note letter (+ accidental) off the front of a key string like "Am",
-// "F#", "Bb", "C" and returns its semitone index 0..11, or -1 if it doesn't start with a
-// recognizable note name (blank, mid-typing, garbage).
-function keyRootIndex(str) {
-  const m = String(str || '').trim().match(/^([A-G])([#b]?)/);
-  return m ? noteIndex(m[1] + m[2]) : -1;
+// Parses a key/playing-key string as a root note plus an optional minor marker — the only two
+// qualities a "key" (as opposed to a chord) can have, e.g. "Am", "F#", "Bb", "C", "Ebm". Returns
+// {idx, minor} or null if it's not exactly a root note (+ optional accidental + optional "m") —
+// blank, mid-typing, or a full chord like "Am7"/"Csus4" all correctly fail to parse.
+function parseKeyName(str) {
+  const m = String(str || '').trim().match(/^([A-G])([#b]?)(m?)$/);
+  return m ? { idx: noteIndex(m[1] + m[2]), minor: !!m[3] } : null;
+}
+function formatKeyName(idx, minor) {
+  return NOTE_CANON[((idx % 12) + 12) % 12] + (minor ? 'm' : '');
 }
 
 // The key the chords are being displayed in right now, relative to the song's *actual saved*
 // key (crd text is always stored written in s.key) — independent of any pending root edit,
 // so editing the root alone never re-transposes the sheet on screen. Falls back to 0 (no
-// transpose) while either side is unparsed/mid-typing.
+// transpose) while either side is unparsed/mid-typing. Only the pitch matters here — major vs.
+// minor doesn't change how far apart two keys are.
 function crdChordsEff(s) {
-  const si = keyRootIndex(s.key), ti = keyRootIndex(crdEditTKey);
-  if (si === -1 || ti === -1) return 0;
-  return ((ti - si) % 12 + 12) % 12;
+  const sk = parseKeyName(s.key), tk = parseKeyName(crdEditTKey);
+  if (!sk || !tk) return 0;
+  return ((tk.idx - sk.idx) % 12 + 12) % 12;
 }
 
 // Capo implied by playing `tkeyStr` shapes over a song whose root is `rootStr`, plus the
-// half-step-down tuning bump. Null while either key is unparsed.
+// half-step-down tuning bump. Null while either key is unparsed. Major/minor doesn't affect it.
 function computeCapo(rootStr, tkeyStr) {
-  const ri = keyRootIndex(rootStr), ti = keyRootIndex(tkeyStr);
-  if (ri === -1 || ti === -1) return null;
-  const base = ((ri - ti) % 12 + 12) % 12;
+  const rk = parseKeyName(rootStr), tk = parseKeyName(tkeyStr);
+  if (!rk || !tk) return null;
+  const base = ((rk.idx - tk.idx) % 12 + 12) % 12;
   return base + (db.tuneUp ? 1 : 0);
 }
 
 // The playing key implied by a song's *saved* key/capo/tuning — i.e. what the reader defaults
-// to on open, before any pending edits.
+// to on open, before any pending edits. Carries the root key's major/minor-ness through, so an
+// "Am" song defaults to a minor playing key too, instead of silently turning major.
 function deriveDefaultTKey(s) {
-  const si = keyRootIndex(s.key);
-  if (si === -1) return '';
+  const sk = parseKeyName(s.key);
+  if (!sk) return '';
   const baseCapo = Math.max(0, (parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0));
-  return NOTE_CANON[((si - baseCapo) % 12 + 12) % 12];
+  return formatKeyName(sk.idx - baseCapo, sk.minor);
 }
 
 function openCrdReader(id) {
@@ -2314,10 +2320,9 @@ function toggleCrdChrome() {
 function crdTKeyStep(dir) {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
-  let ti = keyRootIndex(crdEditTKey);
-  if (ti === -1) ti = keyRootIndex(deriveDefaultTKey(s));
-  if (ti === -1) return;
-  crdEditTKey = NOTE_CANON[((ti + dir) % 12 + 12) % 12];
+  let tk = parseKeyName(crdEditTKey) || parseKeyName(deriveDefaultTKey(s));
+  if (!tk) return;
+  crdEditTKey = formatKeyName(tk.idx + dir, tk.minor);
   renderCrdBody();
 }
 function crdTKeyReset() {
@@ -2394,7 +2399,7 @@ function crdCommit() {
   if (!s) return;
 
   const rootChanged = crdEditKey !== (s.key || '');
-  if (rootChanged && keyRootIndex(crdEditKey) === -1) { toast('Enter a valid root key'); return; }
+  if (rootChanged && !parseKeyName(crdEditKey)) { toast('Enter a valid root key'); return; }
 
   const pendingCapo = computeCapo(crdEditKey, crdEditTKey);
   if (pendingCapo === null) { toast('Enter a valid playing key'); return; }
@@ -2409,8 +2414,8 @@ function crdCommit() {
   if (rootChanged) {
     // s.crd is always written in the song's current root — shift it by the exact interval
     // between the old and new root so the sheet's chords match the new key name.
-    const oldIdx = keyRootIndex(s.key), newIdx = keyRootIndex(crdEditKey);
-    if (oldIdx !== -1) s.crd = transposeCrdText(s.crd, newIdx - oldIdx);
+    const oldKey = parseKeyName(s.key);
+    if (oldKey) s.crd = transposeCrdText(s.crd, parseKeyName(crdEditKey).idx - oldKey.idx);
     s.key = crdEditKey;
   }
   s.capo = pendingCapo ? String(pendingCapo) : '';
