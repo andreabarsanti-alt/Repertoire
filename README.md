@@ -25,9 +25,10 @@ A single-page web app for managing a musical repertoire — built to run on an i
 
 ### Setlists
 - Create and manage multiple setlists
+- **Live vs. Generic** — the left pane splits setlists into two groups: **Live** (an actual gig, with a date — sorted soonest-first, e.g. "7 Aug 2026") and **Generic** (a working/rehearsal list, sorted alphabetically). Mark a setlist Live and give it a date from the same modal you name it in
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
-- **✎ Edit right from the row** — same full edit form as the Songs tab (Title, Key, Capo, Harp, Artists, UG link, CRD, custom attributes), just without leaving the setlist
+- **✎ Edit right from the row** — same full edit form as the Songs tab (Title, Key, Capo, Harp, Artists, UG link, CRD), just without leaving the setlist
 - **Alternate songs** — give any song slot a backup; swap which one is live with one tap
 - **Sections** — collapsible chapter headings within a setlist (e.g. "Set 1", "Encore"); add songs directly under a section, collapse it to a single row, expand/collapse all with one tap. Adding a section always starts it empty — songs already after your selection stay right where they were, they don't get swallowed into the new section
 - **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar

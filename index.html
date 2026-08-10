@@ -525,9 +525,6 @@ a.crd-open:hover, a.crd-open:hover::after { color: var(--accent3); }
 .sl-edit-row.sl-nested { margin-left: 20px; border-left: 2px solid rgba(61,158,140,.18); padding-left: 10px; }
 .sl-edit-top { display: flex; align-items: center; gap: 8px; }
 .sl-edit-top .inline-fi { flex: 1; }
-.sl-edit-attrs { display: flex; gap: 8px; flex-wrap: wrap; }
-.sl-edit-attr { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 120px; }
-.sl-edit-attr label { font-size: 0.68rem; color: var(--text-dim); }
 
 /* ══════════════════════════════════════════
    MODALS
@@ -792,61 +789,24 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .play-nav-btn:hover { color: rgba(255,255,255,.9); }
 .play-nav-btn:disabled { opacity: 0.2; cursor: default; }
 
-/* ══ SCORING TAB ══════════════════════════ */
-#tab-scoring { padding: 18px; }
-.sc-section { margin-bottom: 28px; }
-.sc-section-title {
-  font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: .08em; color: var(--accent); margin-bottom: 10px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--border);
-}
-.sc-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.sc-table th {
-  padding: 7px 14px; text-align: center; color: var(--text-dim);
-  font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: .05em;
-  background: var(--surface2); border-bottom: 1px solid var(--border);
-}
-.sc-table th:first-child { text-align: left; min-width: 130px; }
-.sc-table td { padding: 6px 10px; border-top: 1px solid rgba(30,42,58,.5); }
-.sc-input {
-  width: 62px; text-align: center; padding: 5px 8px;
-  min-height: 32px; font-size: 0.82rem; font-family: var(--fm);
-}
-/* Attribute chips in songs table */
-.attr-chip {
-  display: inline-block; padding: 2px 7px; border-radius: 8px;
-  font-size: 0.67rem; font-family: var(--fm); margin: 1px 1px 0 0;
-  white-space: nowrap;
-}
-.attr-chip.arr { background: rgba(70,130,180,.14); border: 1px solid rgba(70,130,180,.28); color: #7ab8e8; }
-.attr-chip.res { background: rgba(196,148,50,.14); border: 1px solid rgba(196,148,50,.28); color: #d4aa50; }
-.attr-chip.reh { background: rgba(58,170,126,.14); border: 1px solid rgba(58,170,126,.28); color: #3aaa7e; }
-/* Score badge in auto-setlist */
-.score-badge {
-  flex-shrink: 0; min-width: 34px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(61,158,140,.1); border: 1px solid rgba(61,158,140,.22);
-  border-radius: 8px; font-family: var(--fm); font-size: 0.82rem;
-  color: var(--accent); font-weight: 600; padding: 0 8px;
-}
-/* Auto-setlist item */
-.set-item.auto-set {
+/* Live setlist item (has a gig date) */
+.set-item.live-set {
   border-left: 2px solid rgba(61,158,140,.35);
   background: rgba(61,158,140,.03);
 }
-.set-item.auto-set.active {
+.set-item.live-set.active {
   background: rgba(61,158,140,.1); border-color: rgba(61,158,140,.35);
   border-left-color: var(--accent);
 }
-.auto-sets-divider {
+.set-name-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.set-name-col .set-name { flex: none; white-space: nowrap; }
+.set-date { font-size: 0.68rem; color: var(--text-dim); }
+.sets-divider {
   font-size: 0.65rem; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text-dim); padding: 4px 6px 2px; margin-top: 4px;
 }
 select.inline-fi { cursor: pointer; }
 select.fi { cursor: pointer; }
-.sc-group-row td { background: var(--surface2); padding: 8px 10px; border-top: 2px solid var(--border); }
-.sc-type-input { text-align: center; min-width: 90px; font-size: 0.78rem; padding: 5px 8px; min-height: 32px; }
-.sc-opt-input  { min-width: 110px; font-size: 0.78rem; padding: 5px 8px; min-height: 32px; }
 
 </style>
 </head>
@@ -861,7 +821,6 @@ select.fi { cursor: pointer; }
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
     <button class="tab-btn" data-tab="sets">Setlists</button>
-    <button class="tab-btn" data-tab="scoring">Scoring</button>
   </nav>
   <div class="hdr-actions">
     <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
@@ -940,7 +899,6 @@ select.fi { cursor: pointer; }
       <div class="fg"><label>Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
     </div>
-    <div id="f-attrs-row" class="fg-row"></div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></label>
@@ -958,6 +916,14 @@ select.fi { cursor: pointer; }
   <div class="modal">
     <h2 id="setlist-modal-title">New Setlist</h2>
     <div class="fg"><label>Name *</label><input class="fi" id="f-set-name" type="text" placeholder="Setlist name"></div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="f-set-live" onchange="toggleSetLiveField()"> Live (has a gig date)
+      </label>
+    </div>
+    <div class="fg" id="f-set-date-row" style="display:none">
+      <label>Gig date</label><input class="fi" id="f-set-date" type="date">
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('setlist-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveSetlist()">Save</button>
@@ -1139,18 +1105,6 @@ select.fi { cursor: pointer; }
   </div>
 </div>
 
-<!-- ══ SCORING ══ -->
-<div id="tab-scoring" class="tab">
-  <div style="padding:0;max-width:680px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
-      <h2 style="font-size:1.05rem;font-weight:600;color:var(--accent)">Auto-Setlist Point Values</h2>
-      <button class="btn btn-danger btn-sm" onclick="clearAllSongAttrs()">Clear all song scorings</button>
-    </div>
-    <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5">Points per attribute value for each auto-generated setlist type. Songs are ranked by total score.</p>
-    <div id="scoring-table"></div>
-  </div>
-</div>
-
 <div id="tag-ac"></div>
 <div id="toast"></div>
 
@@ -1170,53 +1124,19 @@ const GH_CFG_KEY  = 'rep_github_config' + (PROFILE ? '_' + PROFILE : '');
 // ─────────────────────────────────────────
 function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
 
-const DEFAULT_ATTR_GROUPS = [
-  { id:'ag1', name:'Arrangement', options:[
-    {id:'ao1',name:'Special'},{id:'ao2',name:'Cover'},{id:'ao3',name:'Unplugged'}
-  ]},
-  { id:'ag2', name:'Result', options:[
-    {id:'ao4',name:'Always great'},{id:'ao5',name:'Always good'},{id:'ao6',name:'Da migliorare'}
-  ]},
-  { id:'ag3', name:'Rehearsed', options:[
-    {id:'ao7',name:'Always'},{id:'ao8',name:'Enough'},{id:'ao9',name:'Too little'},{id:'ao10',name:'New'}
-  ]},
+// Known historical setlists, matched by name, backfilled once with a live gig date the
+// first time an old save (from before setlists carried a type/date) is loaded — see
+// migrateSetlists(). New setlists always get an explicit type going forward.
+const LEGACY_LIVE_DATES = [
+  { test: /^il nove\b.*?(\d{1,2})\/(\d{1,2})\/(\d{4})/i,
+    date: (m) => `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` },
+  { test: /vaso bastardo/i, date: () => '2026-08-07' },
 ];
-const DEFAULT_AUTO_SET_TYPES = [
-  {id:'st1',name:'Gig'},{id:'st2',name:'Pre-Gig Rehearsal'},{id:'st3',name:'Rehearsal'}
-];
-function defaultPoints() {
-  const z = {st1:0,st2:0,st3:0};
-  return {
-    ag1:{__none__:deepCopy(z),ao1:{st1:5,st2:3,st3:3},ao2:{st1:4,st2:3,st3:2},ao3:{st1:3,st2:2,st3:2}},
-    ag2:{__none__:deepCopy(z),ao4:{st1:5,st2:3,st3:1},ao5:{st1:3,st2:3,st3:1},ao6:{st1:2,st2:2,st3:5}},
-    ag3:{__none__:deepCopy(z),ao7:{st1:5,st2:2,st3:2},ao8:{st1:5,st2:2,st3:2},ao9:{st1:1,st2:2,st3:5},ao10:{st1:0,st2:0,st3:15}},
-  };
-}
-function ensureNonePoints() {
-  (db.attrGroups||[]).forEach(grp => {
-    if (!db.points[grp.id]) db.points[grp.id] = {};
-    if (!db.points[grp.id]['__none__']) db.points[grp.id]['__none__'] = {};
-    (db.autoSetTypes||[]).forEach(t => {
-      if (db.points[grp.id]['__none__'][t.id] === undefined)
-        db.points[grp.id]['__none__'][t.id] = 0;
-    });
-  });
-}
-function defaultAutoSetlists() {
-  return [
-    {id:'asl1',name:'Gig',typeId:'st1'},
-    {id:'asl2',name:'Rehearsal (pre-gig)',typeId:'st2'},
-    {id:'asl3',name:'Rehearsal',typeId:'st3'},
-  ];
-}
 
-const OLD_ATTR_MAP = {
-  ag1:{Special:'ao1',Cover:'ao2',Unplugged:'ao3'},
-  ag2:{'Always great':'ao4','Always good':'ao5','Da migliorare':'ao6'},
-  ag3:{Always:'ao7',Enough:'ao8','Too little':'ao9',New:'ao10'},
-};
 // Migrate legacy setlist.songIds (array of ids) into setlist.items
 // (array of {type:'song',songId,altSongId?,useAlt?} | {type:'section',name,collapsed}).
+// Also ensures every setlist has an explicit type ('live'|'generic') — the left pane groups
+// on it (see renderSets) — backfilling known pre-existing gigs by name, one time only.
 function migrateSetlists() {
   let dirty = false;
   (db.setlists || []).forEach(sl => {
@@ -1230,32 +1150,18 @@ function migrateSetlists() {
     const before = sl.items.length;
     sl.items = sl.items.filter(it => it.type !== 'subset');
     if (sl.items.length !== before) dirty = true;
+
+    if (!sl.type) {
+      const known = LEGACY_LIVE_DATES.map(l => ({ l, m: sl.name.match(l.test) })).find(x => x.m);
+      if (known) { sl.type = 'live'; sl.date = known.l.date(known.m); }
+      else sl.type = 'generic';
+      dirty = true;
+    }
   });
   return dirty;
 }
 
-function migrateScoring() {
-  if (db.attrGroups) return false;
-  db.attrGroups    = deepCopy(DEFAULT_ATTR_GROUPS);
-  db.autoSetTypes  = deepCopy(DEFAULT_AUTO_SET_TYPES);
-  db.points        = defaultPoints();
-  db.autoSetlists  = defaultAutoSetlists();
-  db.songs.forEach(s => {
-    if (!s.attrs) {
-      s.attrs = {};
-      if (s.arrangement) s.attrs.ag1 = OLD_ATTR_MAP.ag1[s.arrangement] || '';
-      if (s.result)      s.attrs.ag2 = OLD_ATTR_MAP.ag2[s.result]      || '';
-      if (s.rehearsed)   s.attrs.ag3 = OLD_ATTR_MAP.ag3[s.rehearsed]   || '';
-    }
-    delete s.arrangement; delete s.result; delete s.rehearsed;
-  });
-  delete db.attributePoints;
-  return true;
-}
-
-let db = { songs:[], setlists:[], tagMeta:{}, attrGroups:deepCopy(DEFAULT_ATTR_GROUPS),
-           autoSetTypes:deepCopy(DEFAULT_AUTO_SET_TYPES), points:defaultPoints(), autoSetlists:defaultAutoSetlists(),
-           tuneUp:false };
+let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false };
 let activeBubble  = null;
 let inlineEditId  = null;
 let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
@@ -1264,7 +1170,6 @@ let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let dragIdx = null;
 let selectedItemIdx = null;
-let _playOverrideSongs = null;
 let crdSongId       = null;
 let crdScrollPct = Math.max(5, Math.min(100, parseInt(localStorage.getItem('rep_crd_scroll_pct') || '35', 10)));
 let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
@@ -1316,9 +1221,6 @@ async function boot() {
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
-  if (migrateScoring()) save();
-  if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
-  ensureNonePoints();
   document.getElementById('profile-label').textContent = ' · ' + PROFILE.replace(/_/g, ' ');
   renderAll();
 }
@@ -1370,9 +1272,7 @@ function acceptSync() {
   const localTagMeta = db.tagMeta || {};
   db = banner._repoData;
   if (!db.tagMeta) db.tagMeta = localTagMeta;
-  migrateScoring();
   migrateSetlists();
-  if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
   save(); renderAll();
   banner.classList.add('hidden');
   toast('Loaded from repo');
@@ -1399,8 +1299,8 @@ function importJSON(e) {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-        db = d; migrateScoring(); migrateSetlists(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
-        ensureNonePoints(); save(); renderAll(); toast('Imported!');
+        db = d; migrateSetlists();
+        save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
   };
@@ -1418,7 +1318,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
 }));
 
-function renderAll() { renderBubbles(); renderSongs(); renderSets(); renderScoring(); if (activeSetId) renderSetDetail(); syncTuneToggles(); }
+function renderAll() { renderBubbles(); renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); }
 
 // ─────────────────────────────────────────
 // BUBBLE COLOURS — warm, semi-transparent for glass
@@ -1609,221 +1509,6 @@ function showDetail(name, songs) {
 function closeDetail() { activeBubble = null; renderBubbles(); }
 
 // ─────────────────────────────────────────
-// SCORING TAB
-// ─────────────────────────────────────────
-function renderScoring() {
-  const el = document.getElementById('scoring-table');
-  if (!el) return;
-  const types   = db.autoSetTypes  || [];
-  const groups  = db.attrGroups    || [];
-  const autoSls = db.autoSetlists  || [];
-
-  const typeHeaders = types.map(t => `
-    <th style="min-width:100px">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0">
-        <input class="fi sc-type-input" value="${esc(t.name)}" data-typeid="${t.id}" oninput="scSaveTypeName(this)">
-        <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 8px" onclick="scDeleteType('${t.id}')" title="Delete type">✕</button>
-      </div>
-    </th>`).join('');
-
-  const groupBodies = groups.map(grp => {
-    const noneRow = (() => {
-      const ptCells = types.map(t => {
-        const v = db.points?.[grp.id]?.['__none__']?.[t.id] ?? 0;
-        return `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="999" value="${v}" data-grp="${grp.id}" data-opt="__none__" data-type="${t.id}" oninput="scSavePoint(this)"></td>`;
-      }).join('');
-      return `<tr>
-        <td><span style="display:inline-block;min-width:110px;font-size:0.78rem;color:var(--text-dim);padding:5px 8px;font-style:italic">(no ${esc(grp.name.toLowerCase())})</span></td>
-        ${ptCells}</tr>`;
-    })();
-    const optRows = grp.options.map((opt, oi) => {
-      const ptCells = types.map(t => {
-        const v = db.points?.[grp.id]?.[opt.id]?.[t.id] ?? 1;
-        return `<td style="text-align:center"><input class="fi sc-input" type="number" min="0" max="999" value="${v}" data-grp="${grp.id}" data-opt="${opt.id}" data-type="${t.id}" oninput="scSavePoint(this)"></td>`;
-      }).join('');
-      const last = oi === grp.options.length - 1;
-      return `<tr>
-        <td><div style="display:flex;align-items:center;gap:5px">
-          <input class="fi sc-opt-input" value="${esc(opt.name)}" data-grpid="${grp.id}" data-optid="${opt.id}" oninput="scSaveOptName(this)">
-          <button class="btn btn-secondary btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 7px" onclick="scMoveOpt('${grp.id}','${opt.id}',-1)" ${oi===0?'disabled':''} title="Move up">↑</button>
-          <button class="btn btn-secondary btn-sm btn-icon" style="font-size:0.7rem;min-height:28px;padding:4px 7px" onclick="scMoveOpt('${grp.id}','${opt.id}',1)"  ${last?'disabled':''} title="Move down">↓</button>
-          <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteOpt('${grp.id}','${opt.id}')" title="Delete">✕</button>
-        </div></td>${ptCells}</tr>`;
-    }).join('');
-
-    return `<tbody>
-      <tr class="sc-group-row">
-        <td colspan="${types.length + 1}">
-          <div style="display:flex;align-items:center;gap:8px">
-            <input class="fi" value="${esc(grp.name)}" data-grpid="${grp.id}" oninput="scSaveGroupName(this)" style="font-weight:600;min-width:120px;font-size:0.82rem;padding:5px 8px;min-height:32px">
-            <button class="btn btn-secondary btn-sm" onclick="scAddOpt('${grp.id}')">+ Option</button>
-            <button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteGroup('${grp.id}')" title="Delete group">✕</button>
-          </div>
-        </td>
-      </tr>
-      ${noneRow}
-      ${optRows}
-    </tbody>`;
-  }).join('');
-
-  const aslRows = autoSls.map(asl => {
-    const typeOpts = types.map(t => `<option value="${t.id}"${asl.typeId===t.id?' selected':''}>${esc(t.name)}</option>`).join('');
-    return `<tr>
-      <td><input class="fi" value="${esc(asl.name)}" data-aslid="${asl.id}" oninput="scSaveAslName(this)" style="min-width:140px;font-size:0.82rem;padding:5px 8px;min-height:32px"></td>
-      <td><select class="fi" data-aslid="${asl.id}" onchange="scSaveAslType(this)" style="min-width:160px"><option value="">—</option>${typeOpts}</select></td>
-      <td><button class="btn btn-danger btn-sm btn-icon" style="font-size:0.7rem;min-height:28px" onclick="scDeleteAsl('${asl.id}')">✕</button></td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div style="overflow-x:auto;margin-bottom:32px">
-      <table class="sc-table">
-        <thead><tr>
-          <th style="text-align:left;min-width:160px">
-            <button class="btn btn-secondary btn-sm" onclick="scAddGroup()">+ Add Group</button>
-          </th>
-          ${typeHeaders}
-          <th><button class="btn btn-secondary btn-sm" onclick="scAddType()">+ Add Type</button></th>
-        </tr></thead>
-        ${groupBodies}
-      </table>
-    </div>
-    <div class="sc-section-title">Auto-Setlists</div>
-    <table class="sc-table" style="margin-bottom:16px">
-      <thead><tr><th style="text-align:left">Name</th><th>Setlist Type</th><th></th></tr></thead>
-      <tbody>
-        ${aslRows}
-        <tr><td colspan="3" style="padding-top:8px">
-          <button class="btn btn-secondary btn-sm" onclick="scAddAsl()">+ New Auto-Setlist</button>
-        </td></tr>
-      </tbody>
-    </table>`;
-}
-
-// ── Scoring live-edit handlers ──
-function scSavePoint(inp) {
-  const {grp,opt,type} = inp.dataset;
-  if (!db.points[grp]) db.points[grp] = {};
-  if (!db.points[grp][opt]) db.points[grp][opt] = {};
-  db.points[grp][opt][type] = Math.max(0, parseInt(inp.value) || 0);
-  save();
-  if ((db.autoSetlists||[]).find(a => a.id === activeSetId)) renderSetDetail();
-}
-function scSaveGroupName(inp) {
-  const g = db.attrGroups.find(g => g.id === inp.dataset.grpid);
-  if (g) { g.name = inp.value; save(); }
-}
-function scSaveOptName(inp) {
-  const g = db.attrGroups.find(g => g.id === inp.dataset.grpid);
-  const o = g?.options.find(o => o.id === inp.dataset.optid);
-  if (o) { o.name = inp.value; save(); renderSongs(); }
-}
-function scSaveTypeName(inp) {
-  const t = db.autoSetTypes.find(t => t.id === inp.dataset.typeid);
-  if (t) { t.name = inp.value; save(); renderSets(); }
-}
-function scSaveAslName(inp) {
-  const a = db.autoSetlists.find(a => a.id === inp.dataset.aslid);
-  if (a) { a.name = inp.value; save(); renderSets(); }
-}
-function scSaveAslType(sel) {
-  const a = db.autoSetlists.find(a => a.id === sel.dataset.aslid);
-  if (a) { a.typeId = sel.value; save(); if (activeSetId === a.id) renderSetDetail(); }
-}
-function scAddGroup() {
-  const id = uid();
-  db.attrGroups.push({id, name:'New Group', options:[]});
-  db.points[id] = {'__none__':{}};
-  (db.autoSetTypes||[]).forEach(t => { db.points[id]['__none__'][t.id] = 0; });
-  save(); renderScoring(); renderSongs();
-}
-function scDeleteGroup(grpId) {
-  if (!confirm('Delete this group and all its options?')) return;
-  db.attrGroups = db.attrGroups.filter(g => g.id !== grpId);
-  delete db.points[grpId];
-  db.songs.forEach(s => { if (s.attrs) delete s.attrs[grpId]; });
-  save(); renderScoring(); renderSongs(); renderSets();
-}
-function scAddOpt(grpId) {
-  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
-  const optId = uid();
-  grp.options.push({id:optId, name:'New Option'});
-  if (!db.points[grpId]) db.points[grpId] = {};
-  db.points[grpId][optId] = {};
-  (db.autoSetTypes||[]).forEach(t => { db.points[grpId][optId][t.id] = 1; });
-  save(); renderScoring();
-}
-function scMoveOpt(grpId, optId, dir) {
-  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
-  const i = grp.options.findIndex(o => o.id === optId);
-  const j = i + dir;
-  if (j < 0 || j >= grp.options.length) return;
-  [grp.options[i], grp.options[j]] = [grp.options[j], grp.options[i]];
-  save(); renderScoring(); renderSongs();
-}
-function scDeleteOpt(grpId, optId) {
-  const grp = db.attrGroups.find(g => g.id === grpId); if (!grp) return;
-  grp.options = grp.options.filter(o => o.id !== optId);
-  if (db.points[grpId]) delete db.points[grpId][optId];
-  db.songs.forEach(s => { if (s.attrs?.[grpId] === optId) delete s.attrs[grpId]; });
-  save(); renderScoring(); renderSongs();
-}
-function scAddType() {
-  const id = uid();
-  db.autoSetTypes.push({id, name:'New Type'});
-  (db.attrGroups||[]).forEach(grp => {
-    if (!db.points[grp.id]) db.points[grp.id] = {};
-    if (!db.points[grp.id]['__none__']) db.points[grp.id]['__none__'] = {};
-    db.points[grp.id]['__none__'][id] = 0;
-    (grp.options||[]).forEach(opt => {
-      if (!db.points[grp.id][opt.id]) db.points[grp.id][opt.id] = {};
-      db.points[grp.id][opt.id][id] = 1;
-    });
-  });
-  save(); renderScoring();
-}
-function scDeleteType(typeId) {
-  if (!confirm('Delete this type? Auto-setlists of this type will also be removed.')) return;
-  db.autoSetTypes = db.autoSetTypes.filter(t => t.id !== typeId);
-  db.autoSetlists = (db.autoSetlists||[]).filter(a => a.typeId !== typeId);
-  (db.attrGroups||[]).forEach(grp => {
-    (grp.options||[]).forEach(opt => {
-      if (db.points?.[grp.id]?.[opt.id]) delete db.points[grp.id][opt.id][typeId];
-    });
-  });
-  if (!(db.autoSetlists||[]).find(a => a.id === activeSetId)) activeSetId = null;
-  save(); renderScoring(); renderSets(); renderSetDetail();
-}
-function scAddAsl() {
-  const id = uid();
-  const firstType = db.autoSetTypes?.[0]?.id || '';
-  db.autoSetlists.push({id, name:'New Setlist', typeId: firstType});
-  save(); renderScoring(); renderSets();
-}
-function scDeleteAsl(id) {
-  db.autoSetlists = db.autoSetlists.filter(a => a.id !== id);
-  if (activeSetId === id) { activeSetId = null; renderSetDetail(); }
-  save(); renderScoring(); renderSets();
-}
-
-function clearAllSongAttrs() {
-  if (!confirm('Clear all scoring attributes from every song? This cannot be undone.')) return;
-  db.songs.forEach(s => { s.attrs = {}; });
-  save(); renderSongs(); renderScoring();
-  toast('All song scorings cleared');
-}
-
-function duplicateAutoSetlist(autoId) {
-  const autoSet = (db.autoSetlists||[]).find(a => a.id === autoId); if (!autoSet) return;
-  const ranked = getAutoSetlist(autoSet.typeId);
-  const sl = { id: uid(), name: autoSet.name + ' (copy)', items: ranked.map(s => ({ type: 'song', songId: s.id })) };
-  db.setlists.push(sl);
-  activeSetId = sl.id;
-  save(); renderSets(); renderSetDetail();
-  toast('Saved as manual setlist');
-}
-
-// ─────────────────────────────────────────
 // KEY / CAPO / HARP BADGES
 // ─────────────────────────────────────────
 function kchBadges(s) {
@@ -1865,27 +1550,11 @@ function sortBy(col) {
   renderSongs();
 }
 
-function attrSortVal(s, col) {
-  if (!col.startsWith('attr_')) return String(s[col] || '').toLowerCase();
-  const grpId = col.slice(5);
-  const grp = (db.attrGroups || []).find(g => g.id === grpId);
-  if (!grp) return '';
-  const optId = (s.attrs || {})[grpId];
-  const opt = optId ? grp.options.find(o => o.id === optId) : null;
-  return opt ? opt.name.toLowerCase() : '';
-}
-
 function renderSongsHeader() {
-  const attrCols = (db.attrGroups || []).map(grp => {
-    const col = `attr_${grp.id}`;
-    const cls = sortCol === col ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
-    return `<th class="${cls}" data-col="${esc(col)}" onclick="sortBy('${col}')">${esc(grp.name)}</th>`;
-  }).join('');
   const cls = c => sortCol === c ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
   document.getElementById('songs-thead').innerHTML = `<tr>
     <th class="${cls('title')}"  data-col="title"  onclick="sortBy('title')">Title</th>
     <th class="${cls('tags')}"   data-col="tags"   onclick="sortBy('tags')">Artists</th>
-    ${attrCols}
     <th class="${cls('ugLink')}" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
     <th></th>
   </tr>`;
@@ -1901,14 +1570,14 @@ function renderSongs() {
   );
 
   rows.sort((a, b) => {
-    const av = attrSortVal(a, sortCol);
-    const bv = attrSortVal(b, sortCol);
+    const av = String(a[sortCol] || '').toLowerCase();
+    const bv = String(b[sortCol] || '').toLowerCase();
     return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
   renderSongsHeader();
 
-  const colCount = 4 + (db.attrGroups || []).length;
+  const colCount = 4;
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
@@ -1928,19 +1597,12 @@ function songDisplayRow(s) {
     : '<span style="color:var(--text-dim)">—</span>';
   const badges = kchBadges(s);
   const titleEl = songTitleLink(s, { cls: 'tbl-title', wrap: 'strong' });
-  const CHIP_CLS = ['arr','res','reh'];
-  const attrTds = (db.attrGroups||[]).map((grp, gi) => {
-    const optId = (s.attrs||{})[grp.id];
-    const opt = optId ? grp.options.find(o => o.id === optId) : null;
-    return `<td>${opt ? `<span class="attr-chip ${CHIP_CLS[gi % 3]}">${esc(opt.name)}</span>` : '<span style="color:var(--text-dim)">—</span>'}</td>`;
-  }).join('');
   return `<tr style="cursor:pointer" onclick="handleRowClick(event,'${s.id}')">
     <td>
       ${titleEl}
       ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </td>
     <td>${artists}</td>
-    ${attrTds}
     <td>${ug}</td>
     <td><div class="row-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
@@ -1949,17 +1611,8 @@ function songDisplayRow(s) {
   </tr>`;
 }
 
-// A single attribute-group <select> for an inline edit form (Songs table or setlist rows) —
-// shared so both stay in lockstep on how options/selection are built.
-function attrSelectHTML(s, grp) {
-  const curOptId = (s.attrs||{})[grp.id] || '';
-  const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-  return `<select class="inline-fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select>`;
-}
-
 function songEditRow(s) {
   const k = `onkeydown="handleInlineKey(event,'${s.id}')"`;
-  const attrEditTds = (db.attrGroups||[]).map(grp => `<td>${attrSelectHTML(s, grp)}</td>`).join('');
   return `<tr class="editing-row">
     <td>
       <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
@@ -1970,7 +1623,6 @@ function songEditRow(s) {
       </div>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
-    ${attrEditTds}
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
@@ -1978,7 +1630,7 @@ function songEditRow(s) {
     </div></td>
   </tr>
   <tr class="editing-row editing-row-crd">
-    <td colspan="${4 + (db.attrGroups||[]).length}">
+    <td colspan="4">
       <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
       <textarea class="inline-fi fi" id="ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
     </td>
@@ -2013,10 +1665,6 @@ function saveInlineEdit(id) {
   s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
   s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
   s.crd    = document.getElementById('ie-crd')?.value || '';
-  s.attrs  = {};
-  document.querySelectorAll('.editing-row select[data-grp]').forEach(sel => {
-    if (sel.value) s.attrs[sel.dataset.grp] = sel.value;
-  });
   inlineEditId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -2035,7 +1683,6 @@ function openSongModal() {
   document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = '';
   document.getElementById('f-crd').value    = '';
-  renderSongModalAttrs({});
   openModal('song-modal');
   document.getElementById('f-title').focus();
 }
@@ -2052,26 +1699,9 @@ function saveSong() {
     harp:        document.getElementById('f-harp').value.trim(),
     ugLink: normalizeUG(document.getElementById('f-uglink').value),
     crd:    document.getElementById('f-crd').value || '',
-    attrs:  readModalAttrs(),
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
-}
-
-function renderSongModalAttrs(attrsVal) {
-  const row = document.getElementById('f-attrs-row'); if (!row) return;
-  row.innerHTML = (db.attrGroups||[]).map(grp => {
-    const cur = attrsVal[grp.id] || '';
-    const opts = grp.options.map(o => `<option value="${esc(o.id)}"${cur===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-    return `<div class="fg"><label>${esc(grp.name)}</label><select class="fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select></div>`;
-  }).join('');
-}
-function readModalAttrs() {
-  const attrs = {};
-  document.querySelectorAll('#f-attrs-row select[data-grp]').forEach(sel => {
-    if (sel.value) attrs[sel.dataset.grp] = sel.value;
-  });
-  return attrs;
 }
 
 function deleteSong(id) {
@@ -2572,29 +2202,44 @@ document.addEventListener('keydown', (e) => {
 // ─────────────────────────────────────────
 // SETLISTS
 // ─────────────────────────────────────────
+// 'YYYY-MM-DD' -> e.g. "29 Mar 2026". Parsed as local (not UTC) so the date can't drift a
+// day depending on timezone.
+function formatSetDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function setItemRow(sl) {
+  const dateHtml = sl.type === 'live' ? `<span class="set-date">${formatSetDate(sl.date)}</span>` : '';
+  return `<div class="set-item${sl.type==='live'?' live-set':''}${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
+    <div class="set-name-col">
+      <span class="set-name">${esc(sl.name)}</span>
+      ${dateHtml}
+    </div>
+    <div class="set-actions">
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Edit">✎</button>
+      <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
+    </div>
+  </div>`;
+}
+
 function renderSets() {
   const el = document.getElementById('sets-list');
-  const autoSets = db.autoSetlists || [];
-  const autoHtml = `<div class="auto-sets-divider">Auto-generated</div>` +
-    (autoSets.length
-      ? autoSets.map(a => `
-          <div class="set-item auto-set${activeSetId===a.id?' active':''}" onclick="selectSet('${a.id}')">
-            <span class="set-name">⚡ ${esc(a.name)}</span>
-          </div>`).join('')
-      : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None — create in Scoring tab</div>');
-  const userHtml = db.setlists.length
-    ? db.setlists.map(sl => `
-      <div class="set-item${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
-        <span class="set-name">${esc(sl.name)}</span>
-        <div class="set-actions">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Rename">✎</button>
-          <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
-        </div>
-      </div>`).join('')
-    : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No manual setlists yet</div>';
-  el.innerHTML = autoHtml +
-    `<div class="auto-sets-divider" style="margin-top:10px">Manual</div>` +
-    userHtml;
+  const live = db.setlists.filter(sl => sl.type === 'live')
+    .sort((a, b) => (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99'));
+  const generic = db.setlists.filter(sl => sl.type !== 'live')
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+  const liveHtml = `<div class="sets-divider">Live</div>` +
+    (live.length ? live.map(setItemRow).join('')
+      : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None yet</div>');
+  const genericHtml = `<div class="sets-divider" style="margin-top:10px">Generic</div>` +
+    (generic.length ? generic.map(setItemRow).join('')
+      : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No setlists yet</div>');
+
+  el.innerHTML = liveHtml + genericHtml;
 }
 
 function selectSet(id) {
@@ -2607,25 +2252,6 @@ function selectSet(id) {
 function selectItem(idx) {
   selectedItemIdx = (selectedItemIdx === idx) ? null : idx;
   renderSetDetail();
-}
-
-function songScore(s, typeId) {
-  const groups = db.attrGroups || [];
-  if (!groups.length) return 0;
-  let score = 1;
-  for (const grp of groups) {
-    const optId = (s.attrs||{})[grp.id] || '__none__';
-    const pts = db.points?.[grp.id]?.[optId]?.[typeId] ?? 0;
-    score *= pts;
-  }
-  return score;
-}
-
-function getAutoSetlist(typeId) {
-  return [...db.songs]
-    .map(s => ({ ...s, _score: songScore(s, typeId) }))
-    .filter(s => s._score > 0)
-    .sort((a, b) => b._score - a._score);
 }
 
 // Resolve a 'song' item to its currently-live song (the alternate, if toggled on).
@@ -2644,25 +2270,6 @@ function resolvePlayableSongs(sl) {
 
 function renderSetDetail() {
   const el = document.getElementById('set-detail');
-
-  const autoSet = (db.autoSetlists||[]).find(a => a.id === activeSetId);
-  if (autoSet) {
-    const ranked = getAutoSetlist(autoSet.typeId);
-    el.innerHTML = `
-      <div class="set-detail-header">
-        <h2>⚡ ${esc(autoSet.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${ranked.length} songs</span></h2>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="duplicateAutoSetlist('${autoSet.id}')">⎘ Save as Manual</button>
-          <button class="btn btn-secondary btn-sm" onclick="openPlay('${autoSet.id}')">▶ Play</button>
-        </div>
-      </div>
-      <div id="sl-list">
-        ${!ranked.length
-          ? '<div class="empty" style="padding:20px">No songs yet — add songs and set their attributes</div>'
-          : ranked.map((s, i) => autoSlRow(s, i, autoSet.typeId)).join('')}
-      </div>`;
-    return;
-  }
 
   const sl = db.setlists.find(s => s.id === activeSetId);
   if (!sl) { el.innerHTML = '<div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>'; return; }
@@ -2687,9 +2294,10 @@ function renderSetDetail() {
         return slRow(it, i, items.length, nested);
       }).join('');
 
+  const dateSuffix = sl.type === 'live' && sl.date ? ` <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">· ${formatSetDate(sl.date)}</span>` : '';
   el.innerHTML = `
     <div class="set-detail-header">
-      <h2>${esc(sl.name)} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${playCount} songs</span></h2>
+      <h2>${esc(sl.name)}${dateSuffix} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${playCount} songs</span></h2>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
@@ -2744,7 +2352,7 @@ function slRow(item, i, total, nested) {
     ? altRow(item, i)
     : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
   const selected = i === selectedItemIdx;
-  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs are inserted right after the selected item; new sections are always added at the end">
+  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
@@ -2764,16 +2372,13 @@ function slRow(item, i, total, nested) {
   </div>`;
 }
 
-// Edits the underlying song itself (title/key/capo/harp/tags/attrs/UG link/CRD) right from
+// Edits the underlying song itself (title/key/capo/harp/tags/UG link/CRD) right from
 // within the setlist row — same fields and semantics as the Songs tab's inline edit
 // (songEditRow/saveInlineEdit), just laid out for a setlist row instead of a table row, and
 // tracked separately (slEditSongId, not inlineEditId) so the two never fight over the same
 // input ids if the same song happens to be visible in both places at once.
 function slEditRow(s, i, nested) {
   const k = `onkeydown="handleSlEditKey(event,'${s.id}')"`;
-  const attrFields = (db.attrGroups||[]).map(grp =>
-    `<div class="sl-edit-attr"><label>${esc(grp.name)}</label>${attrSelectHTML(s, grp)}</div>`
-  ).join('');
   return `<div class="sl-edit-row${nested?' sl-nested':''}" data-idx="${i}">
     <div class="sl-edit-top">
       <input class="inline-fi" id="sl-ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
@@ -2788,7 +2393,6 @@ function slEditRow(s, i, nested) {
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}>
-    ${attrFields ? `<div class="sl-edit-attrs">${attrFields}</div>` : ''}
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
     <div>
       <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('sl-ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
@@ -2820,10 +2424,6 @@ function saveSlEdit(id) {
   s.harp   = document.getElementById('sl-ie-harp')?.value.trim()  || '';
   s.ugLink = normalizeUG(document.getElementById('sl-ie-uglink')?.value || '');
   s.crd    = document.getElementById('sl-ie-crd')?.value || '';
-  s.attrs  = {};
-  document.querySelectorAll('.sl-edit-row select[data-grp]').forEach(sel => {
-    if (sel.value) s.attrs[sel.dataset.grp] = sel.value;
-  });
   slEditSongId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -2839,7 +2439,7 @@ function cancelSlEdit() {
 function sectionBlock(item, i, total, items) {
   const count = sectionSongCount(items, i);
   const selected = i === selectedItemIdx;
-  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs are inserted right after the selected item; new sections are always added at the end">
+  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
     <button class="section-collapse" onclick="event.stopPropagation();toggleSectionCollapsed(${i})" title="${item.collapsed?'Expand':'Collapse'}">${item.collapsed?'▸':'▾'}</button>
     <span class="section-name">${esc(item.name || 'Section')}</span>
     <span class="section-badge">${count} song${count!==1?'s':''}</span>
@@ -2849,27 +2449,6 @@ function sectionBlock(item, i, total, items) {
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove section heading (songs stay, and join the section above)">✕</button>
     </div>
-  </div>`;
-}
-
-function autoSlRow(s, i, typeId) {
-  const titleEl = songTitleLink(s, { cls: 'sl-title', plainTag: 'span' });
-  const badges = kchBadges(s);
-  const attrMeta = (db.attrGroups||[]).map(grp => {
-    const optId = (s.attrs||{})[grp.id];
-    const opt = optId ? grp.options.find(o => o.id === optId) : null;
-    return opt ? opt.name : null;
-  }).filter(Boolean).join(' · ') || '—';
-  return `<div class="sl-row" data-idx="${i}">
-    <span class="sl-num">${i+1}.</span>
-    <div class="sl-info">
-      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-        ${titleEl}
-        ${badges ? `<div class="kch-wrap" style="margin-top:0">${badges}</div>` : ''}
-      </div>
-      <div class="sl-meta">${esc(s.tags||'')}${s.tags?' · ':''}${esc(attrMeta)}</div>
-    </div>
-    <span class="score-badge">${s._score !== undefined ? s._score : songScore(s, typeId)}</span>
   </div>`;
 }
 
@@ -3038,11 +2617,19 @@ function initDrag() {
   });
 }
 
+function toggleSetLiveField() {
+  const live = document.getElementById('f-set-live').checked;
+  document.getElementById('f-set-date-row').style.display = live ? '' : 'none';
+}
+
 function openSetlistModal(id) {
   editSetId = id || null;
   const sl  = id ? db.setlists.find(s => s.id === id) : null;
-  document.getElementById('setlist-modal-title').textContent = id ? 'Rename Setlist' : 'New Setlist';
+  document.getElementById('setlist-modal-title').textContent = id ? 'Edit Setlist' : 'New Setlist';
   document.getElementById('f-set-name').value = sl?.name || '';
+  document.getElementById('f-set-live').checked = sl?.type === 'live';
+  document.getElementById('f-set-date').value = sl?.date || '';
+  toggleSetLiveField();
   openModal('setlist-modal');
   document.getElementById('f-set-name').focus();
 }
@@ -3050,16 +2637,22 @@ function openSetlistModal(id) {
 function saveSetlist() {
   const name = document.getElementById('f-set-name').value.trim();
   if (!name) { toast('Name is required'); return; }
+  const live = document.getElementById('f-set-live').checked;
+  const date = document.getElementById('f-set-date').value;
+  if (live && !date) { toast('Enter a gig date'); return; }
+  const type = live ? 'live' : 'generic';
   if (editSetId) {
-    const sl = db.setlists.find(s => s.id === editSetId); if (sl) sl.name = name;
+    const sl = db.setlists.find(s => s.id === editSetId);
+    if (sl) { sl.name = name; sl.type = type; if (live) sl.date = date; else delete sl.date; }
   } else {
-    const sl = { id: uid(), name, items: [] };
+    const sl = { id: uid(), name, type, items: [] };
+    if (live) sl.date = date;
     db.setlists.push(sl);
     activeSetId = sl.id;
   }
   save(); renderSets(); renderSetDetail(); renderBubbles();
   closeModal('setlist-modal');
-  toast(editSetId ? 'Setlist renamed' : 'Setlist created');
+  toast(editSetId ? 'Setlist updated' : 'Setlist created');
 }
 
 function deleteSetlist(id) {
@@ -3201,17 +2794,7 @@ let playOpenedUG = false;
 const PLAY_ITEM_H = 120;
 
 function openPlay(setId) {
-  const autoSet = (db.autoSetlists||[]).find(a => a.id === setId);
-  if (autoSet) {
-    _playOverrideSongs = getAutoSetlist(autoSet.typeId);
-    playSetId = setId; playIdx = 0; playOpenedUG = false;
-    document.getElementById('play-set-title').textContent = '⚡ ' + autoSet.name;
-    document.getElementById('play-view').classList.remove('hidden');
-    requestAnimationFrame(() => renderPlayList('instant'));
-    return;
-  }
   const sl = db.setlists.find(s => s.id === setId); if (!sl) return;
-  _playOverrideSongs = null;
   playSetId = setId; playIdx = 0; playOpenedUG = false;
   document.getElementById('play-set-title').textContent = sl.name;
   document.getElementById('play-view').classList.remove('hidden');
@@ -3220,11 +2803,10 @@ function openPlay(setId) {
 
 function closePlay() {
   document.getElementById('play-view').classList.add('hidden');
-  playSetId = null; playOpenedUG = false; _playOverrideSongs = null;
+  playSetId = null; playOpenedUG = false;
 }
 
 function getPlaySongs() {
-  if (_playOverrideSongs) return _playOverrideSongs;
   const sl = db.setlists.find(s => s.id === playSetId);
   return sl ? resolvePlayableSongs(sl) : [];
 }
@@ -3499,8 +3081,8 @@ async function doPull(cfg) {
     const d = JSON.parse(json);
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-    db = d; migrateScoring(); migrateSetlists(); if (!db.autoSetlists) db.autoSetlists = defaultAutoSetlists();
-    ensureNonePoints(); save(); renderAll();
+    db = d; migrateSetlists();
+    save(); renderAll();
     document.getElementById('sync-banner').classList.add('hidden');
     toast('Pulled from GitHub!');
   } catch (err) {
@@ -3598,7 +3180,6 @@ function confirmUGImport() {
   document.getElementById('f-capo').value   = '';
   document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = parsed?.ugLink || url;
-  renderSongModalAttrs({});
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
 }

@@ -8,15 +8,18 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 
 - **Single-file app**: Everything (HTML, CSS, JavaScript) is in `index.html`
 - **No build step**: Plain vanilla JS, no frameworks or transpilation
-- **Storage**: Uses `localStorage` for persistence; seeds from `repertoire.json` on first load
+- **Storage**: Uses `localStorage` for persistence; seeds from a per-profile JSON file on first load
 - **Hosting**: Static files served via GitHub Pages
+- **Profiles**: `?profile=<name>` in the URL (default `two_of_us`) namespaces both the `localStorage` key and the seed filename — `repertoire_<name>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`). Since `PROFILE` always falls back to `two_of_us` when unset, the *bare* `repertoire.json` is never actually fetched by the app — it's a pre-multi-profile leftover, kept in sync manually rather than something to seed real data through.
 
 ## Files
 
 | File | Description |
 |------|-------------|
 | `index.html` | Entire app — HTML, CSS, JavaScript in one file |
-| `repertoire.json` | Seed data loaded on first visit |
+| `repertoire_two_of_us.json` | Seed data for the default (`two_of_us`) profile — the one actually loaded day to day |
+| `repertoire_loose_ends.json` | Seed data for the `loose_ends` profile (`?profile=loose_ends`) |
+| `repertoire.json` | Unused by the app (see Profiles above) — historical/orphaned |
 
 ## Data Format
 
@@ -38,6 +41,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
     {
       "id": "unique-id",
       "name": "Setlist Name",
+      "type": "live",
+      "date": "2026-08-07",
       "items": [
         { "type": "section", "name": "Set 1", "collapsed": false },
         { "type": "song", "songId": "id1" },
@@ -53,16 +58,17 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 ```
 
 - `tuneUp` (top-level, global): tracks whether the "Half-step down tuning" header toggle is currently on. Flipping it bumps (or restores) every song's `capo` field by 1 fret across the whole library (a confirmed bulk edit, `toggleGlobalTune`); the CRD reader's own Capo readout folds that bump back in on top of the root/playing-key distance (`computeCapo`).
+- `setlist.type` is `'live'` (a real gig, has a `date`) or `'generic'` (a working/rehearsal list, no date). Drives the left-pane split — see "Setlists" below.
 
 - `song` items resolve to `altSongId` instead of `songId` when `useAlt` is true — lets a slot's live song be swapped without reordering.
 - `section` items are collapsible chapter headings that live inline in the same flat `items` array — every `song` item after one belongs to it by position (not by any nested/reference structure) up to the next boundary: another `section`, an explicit `section-end`, or the end of the list. `collapsed` just controls whether those rows are rendered; it never changes what plays, prints, or counts.
 - `section-end` items are an invisible boundary marker with no other fields — they close a section early instead of letting it run to the next header. See "Sections" below.
-- Legacy setlists with a flat `songIds: [id, ...]` array are migrated to `items` on load (`migrateSetlists()`), which also silently drops any leftover `subset` items from the retired embed-another-setlist feature (replaced by `section`).
+- Legacy setlists with a flat `songIds: [id, ...]` array are migrated to `items` on load (`migrateSetlists()`), which also silently drops any leftover `subset` items from the retired embed-another-setlist feature (replaced by `section`). The same pass backfills a missing `setlist.type` — `'generic'` by default, except a handful of known pre-existing gigs matched by name (`LEGACY_LIVE_DATES`) that get `'live'` plus their date, so setlists saved before the live/generic split still land in the right list.
 
 ## Key Implementation Details
 
 - **Theme**: Deep blue-black / muted teal (`#3d9e8c`) studio/DAW aesthetic
-- **Song title links**: `songTitleLink(s, opts)` is the one shared fallback chain — CRD reader link (if `s.crd`) → Ultimate Guitar link (if `s.ugLink`) → plain text — used everywhere a title appears (Songs table, setlist rows, auto-setlists, Play mode). `opts` covers each call site's own markup: `cls`, `plainTag` (wrap the plain-text fallback too, or leave it bare), `wrap` (additionally wrap the title text itself, e.g. `'strong'`), `crdStop` (stopPropagation before opening the reader), `ugOnclick` (raw onclick for the UG link, e.g. stopPropagation or Play mode's `playOpenedUG` flag). The visualizer's bubble-detail pills (`showDetail`) build their own markup instead — there the whole pill is the link, with badges alongside the title inside it, not just the title text, so it didn't fit the same shape.
+- **Song title links**: `songTitleLink(s, opts)` is the one shared fallback chain — CRD reader link (if `s.crd`) → Ultimate Guitar link (if `s.ugLink`) → plain text — used everywhere a title appears (Songs table, setlist rows, Play mode). `opts` covers each call site's own markup: `cls`, `plainTag` (wrap the plain-text fallback too, or leave it bare), `wrap` (additionally wrap the title text itself, e.g. `'strong'`), `crdStop` (stopPropagation before opening the reader), `ugOnclick` (raw onclick for the UG link, e.g. stopPropagation or Play mode's `playOpenedUG` flag). The visualizer's bubble-detail pills (`showDetail`) build their own markup instead — there the whole pill is the link, with badges alongside the title inside it, not just the title text, so it didn't fit the same shape.
 - **Visualizer**: Animated glass bubbles packed with a circle-packing algorithm, grouped by tag; bubble size proportional to song count
 - **Songs table**: Inline editing (click row or ✎ button); sortable columns; tag autocomplete dropdown on tags fields
 - **Quick UG Import**: Parses title and artist from a UG URL slug — no network request needed. Pattern: `/tab/{artist}/{title}-{type}-{id}`
@@ -80,6 +86,7 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
   - **Keyboard**: Up/Down/PageUp/PageDown scroll the sheet, Escape closes the reader (ignored while typing in a text field).
   - No chord/fretboard diagrams — removed after trying a diagrams-strip and a tap-to-popup version; the reader is text-only now.
 - **Setlists**: Drag-and-drop reordering via HTML5 drag API; touch-friendly ↑↓ buttons
+  - **Live vs. Generic**: the left pane (`renderSets`) splits `db.setlists` into two groups by `sl.type` — **Live** (`type:'live'`, has a `date`), sorted soonest-first (`formatSetDate` renders it e.g. "7 Aug 2026"), and **Generic** (anything else), sorted alphabetically. The setlist modal's "Live (has a gig date)" checkbox (`toggleSetLiveField`) reveals/hides the date input; marking a setlist Live without a date is rejected (`saveSetlist`). Un-checking it on an existing setlist drops `sl.date` entirely, so it falls back to the alphabetical Generic list with nothing stale left behind.
   - **Inline song editing from a setlist row**: the ✎ button on a `slRow` opens the exact same fields as the Songs tab's inline edit (title/Key/Capo/Harp/Artists/attrs/UG link/CRD) — it edits the underlying song, not anything setlist-specific. Tracked via a separate `slEditSongId` (not `inlineEditId`), with its own `sl-ie-*` input ids and `slEditRow`/`startSlEdit`/`saveSlEdit`/`cancelSlEdit`, so it can never collide on DOM ids with the Songs tab's `songEditRow`/`inlineEditId` if the same song is (at least technically) in an editing state in both places at once. `attrSelectHTML(s, grp)` builds the one `<select>` shared by both forms so they can't drift apart.
 - **Alternate songs**: A song slot can carry an `altSongId`; the ⇄ button flips which one (`useAlt`) is live, for last-minute swaps without reordering
 - **Sections**: A setlist can carry `type:'section'` header items to group its songs into collapsible chapters (Set 1, Encore, …) — purely a display grouping over the same flat `items` array, not a separate structure. A section runs open-ended — everything after it belongs to it — until the next boundary: another `section` header, an explicit `type:'section-end'` marker, or the end of the list. `section-end` is purely structural: it renders nothing (`renderSetDetail`'s grouping loop just resets `nested`/`collapsed` on hitting one) and only exists to let a section close *before* the next header, instead of running on to it. Collapsing a section (`collapsed`) just hides the song rows under it; it never affects `resolvePlayableSongs()`, which is a plain `map`+`filter` over all items (section/section-end items resolve to no song via `resolveItemSong` and are skipped automatically). New songs are inserted right after whichever row is currently selected (`selectedItemIdx`), so selecting a row inside (or the header of) a section adds to that section. New sections (`saveSection`) are inserted right after the selection too, but a real song immediately following the insertion point (i.e. not already another boundary) gets an auto-inserted `section-end` spliced in right after the new header — so it starts empty and that song stays exactly where it was — matching how a real chapter break works: open-ended is fine for a trailing section like "Encore" with nothing after it, but a section inserted mid-list needs an explicit end so it doesn't swallow what was already there. No UI removes a `section-end` directly (there's no visible row for one) — deleting the section header that precedes one just leaves it in place as an inert boundary, which is harmless since it isn't reachable/owned by anything else.
