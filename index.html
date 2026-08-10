@@ -223,35 +223,6 @@ nav { display: flex; gap: 3px; flex: 1; }
 }
 .viz-filter-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
 
-/* ── TAG EDITOR ───────────────────────────── */
-#tag-editor-list { max-height: 58dvh; overflow-y: auto; }
-.te-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 0; border-bottom: 1px solid rgba(30,42,58,.7);
-}
-.te-row:last-child { border-bottom: none; }
-.te-input {
-  flex: 1; min-height: 36px; padding: 6px 10px; font-size: 0.82rem;
-}
-.te-artist-btn {
-  flex-shrink: 0; padding: 5px 12px;
-  border-radius: 12px; border: 1px solid var(--border);
-  font-size: 0.72rem; font-weight: 500; cursor: pointer;
-  background: transparent; color: var(--text-dim);
-  transition: all .15s; white-space: nowrap;
-}
-.te-artist-btn.active {
-  background: rgba(196,150,50,.18); border-color: rgba(196,150,50,.55); color: #d4aa50;
-}
-.te-del-btn {
-  flex-shrink: 0; width: 32px; height: 32px;
-  border-radius: 6px; border: none; cursor: pointer;
-  background: transparent; color: var(--text-dim);
-  font-size: 1rem; transition: all .15s;
-  display: flex; align-items: center; justify-content: center;
-}
-.te-del-btn:hover { background: rgba(196,74,74,.18); color: var(--danger); }
-
 /* Detail overlay */
 #bubble-detail {
   position: fixed; inset: 0; z-index: 500;
@@ -363,11 +334,6 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   display: inline-block; padding: 2px 8px; border-radius: 10px;
   background: rgba(61,158,140,.12); color: #4db5a2;
   font-size: 0.7rem; font-family: var(--fm); margin: 1px; border: 1px solid rgba(61,158,140,.2);
-}
-.harp-dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent3); margin-right: 5px; vertical-align: middle;
-  box-shadow: 0 0 5px rgba(109,168,84,.5);
 }
 .ug-link {
   color: var(--text); text-decoration: none; font-size: 0.8rem;
@@ -842,7 +808,6 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 }
 .sc-table th:first-child { text-align: left; min-width: 130px; }
 .sc-table td { padding: 6px 10px; border-top: 1px solid rgba(30,42,58,.5); }
-.sc-name { font-weight: 500; color: var(--text); padding-right: 10px; }
 .sc-input {
   width: 62px; text-align: center; padding: 5px 8px;
   min-height: 32px; font-size: 0.82rem; font-family: var(--fm);
