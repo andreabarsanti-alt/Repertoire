@@ -322,6 +322,16 @@ a.pill > span:first-child { text-decoration: underline; text-underline-offset: 3
 }
 .kch.harp { background: rgba(109,168,84,.18); border-color: rgba(109,168,84,.4); color: #8fd474; }
 
+/* Editable Key/Capo badges in the CRD reader header */
+input.kch-edit {
+  appearance: none; -webkit-appearance: none; box-sizing: content-box;
+  outline: none; cursor: text; text-align: center;
+}
+input.kch-edit::placeholder { color: rgba(255,255,255,.4); }
+input.kch-edit:focus { border-color: var(--accent); background: rgba(61,158,140,.15); }
+input.kch-edit.kch-key  { width: 2.6em; }
+input.kch-edit.kch-capo { width: 4.4em; }
+
 /* ══════════════════════════════════════════
    SONGS TAB
 ══════════════════════════════════════════ */
@@ -1065,7 +1075,7 @@ select.fi { cursor: pointer; }
           <span id="crd-transpose-label" class="crd-transpose-val">±0</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeStep(1)" title="Up a semitone">+</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeReset()" title="Reset transpose">↺</button>
-          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdStoreTransposed()" title="Rewrite the saved chord sheet at this transpose (Key/Capo fields are left untouched)" disabled>💾 Store transposed</button>
+          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdStoreTransposed()" title="Save any transpose here into the chord sheet, and any Key/Capo edit above into the song" disabled>💾 Store transposed</button>
         </div>
         <div class="crd-toolbar-right">
           <span class="crd-toolbar-label">Scroll</span>
@@ -1264,6 +1274,10 @@ let crdTranspose     = 0;
 let crdScrollPct = Math.max(5, Math.min(100, parseInt(localStorage.getItem('rep_crd_scroll_pct') || '35', 10)));
 let crdBaseTranspose = 0; // auto capo offset (-capo semitones) applied when the reader opens
 let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
+// Pending Key/Capo edits made in the reader — held here, not written to the song, until
+// "Store transposed" is clicked (see crdStoreTransposed).
+let crdEditKey  = '';
+let crdEditCapo = '';
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -2179,6 +2193,8 @@ function openCrdReader(id) {
   crdSongId = id;
   crdBaseTranspose = -(parseInt(s.capo, 10) || 0);
   crdTranspose = crdBaseTranspose;
+  crdEditKey  = s.key  || '';
+  crdEditCapo = s.capo || '';
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
   renderCrdBody();
   crdUpdateScrollPctLabel();
@@ -2190,11 +2206,19 @@ function renderCrdBody() {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
   document.getElementById('crd-title').textContent = s.title;
-  const badges = kchBadges(s);
-  document.getElementById('crd-meta').innerHTML = badges ? `<div class="kch-wrap">${badges}</div>` : '';
+  // Key/Capo are editable right here — typing into them only updates crdEditKey/crdEditCapo
+  // (see crdMetaEdited) and is saved to the song, together with any transpose, only on
+  // "Store transposed". Harp stays read-only (unrelated to transpose).
+  document.getElementById('crd-meta').innerHTML = `<div class="kch-wrap">
+    <input class="kch kch-edit kch-key" id="crd-key-input" type="text" placeholder="Key" autocomplete="off"
+      value="${esc(crdEditKey)}" oninput="crdMetaEdited('key', this.value)">
+    <input class="kch kch-edit kch-capo" id="crd-capo-input" type="text" inputmode="numeric" placeholder="Capo" autocomplete="off"
+      value="${esc(crdEditCapo)}" oninput="crdMetaEdited('capo', this.value)">
+    ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
+  </div>`;
   const eff = crdEffectiveTranspose();
   document.getElementById('crd-transpose-label').textContent = eff === 0 ? '±0' : (eff > 0 ? '+' : '') + eff;
-  document.getElementById('crd-store-btn').disabled = eff === crdBaseTranspose;
+  crdUpdateStoreBtn();
 
   document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, eff);
   crdApplyFontSize();
@@ -2202,6 +2226,25 @@ function renderCrdBody() {
   const ugBtn = document.getElementById('crd-ug-link');
   if (s.ugLink) { ugBtn.href = s.ugLink; ugBtn.style.display = ''; }
   else { ugBtn.style.display = 'none'; }
+}
+
+function crdMetaEdited(field, value) {
+  if (field === 'key') crdEditKey = value; else crdEditCapo = value;
+  crdUpdateStoreBtn();
+}
+
+// True while there's something "Store transposed" would actually save: a manual/tuning
+// transpose away from the auto-capo baseline, or a pending Key/Capo edit.
+function crdIsDirty() {
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return false;
+  return crdEffectiveTranspose() !== crdBaseTranspose
+      || crdEditKey  !== (s.key  || '')
+      || crdEditCapo !== (s.capo || '');
+}
+function crdUpdateStoreBtn() {
+  const btn = document.getElementById('crd-store-btn');
+  if (btn) btn.disabled = !crdIsDirty();
 }
 
 function closeCrdReader() {
@@ -2284,17 +2327,36 @@ function transposeCrdText(text, semis) {
 }
 
 function crdStoreTransposed() {
-  const eff = crdEffectiveTranspose();
-  if (!crdSongId || eff === crdBaseTranspose) return;
+  if (!crdSongId) return;
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
+  const eff = crdEffectiveTranspose();
+  const transposeChanged = eff !== crdBaseTranspose;
+  const keyChanged  = crdEditKey  !== (s.key  || '');
+  const capoChanged = crdEditCapo !== (s.capo || '');
+  if (!transposeChanged && !keyChanged && !capoChanged) return;
+
   const label = (eff > 0 ? '+' : '') + eff;
-  if (!confirm(`Rewrite the saved chord sheet transposed ${label} semitones? Key and capo are left as-is.`)) return;
-  s.crd = transposeCrdText(s.crd, eff);
+  let msg;
+  if (transposeChanged && (keyChanged || capoChanged)) {
+    msg = `Rewrite the saved chord sheet transposed ${label} semitones, and update Key/Capo?`;
+  } else if (transposeChanged) {
+    msg = `Rewrite the saved chord sheet transposed ${label} semitones? Key and capo are left as-is.`;
+  } else {
+    msg = 'Update Key/Capo for this song?';
+  }
+  if (!confirm(msg)) return;
+
+  if (transposeChanged) s.crd = transposeCrdText(s.crd, eff);
+  if (keyChanged)  s.key  = crdEditKey;
+  if (capoChanged) s.capo = crdEditCapo;
+
+  // Capo may have just changed — re-baseline from the (now-saved) capo, same as reopening.
+  crdBaseTranspose = -(parseInt(s.capo, 10) || 0);
   crdTranspose = crdBaseTranspose;
   save(); renderAll();
   renderCrdBody();
-  toast('Chord sheet stored in new key');
+  toast('Saved');
 }
 
 function crdFontStep(dir) {

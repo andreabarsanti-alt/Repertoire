@@ -17,7 +17,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Key / Capo / Harp shown as badge chips in all views
 - **Quick UG Import** — paste a Ultimate Guitar URL to auto-detect title and artist
 - **CRD reader** — paste in your own chord/lyric sheet per song (inline `[G]` chords or a chord line above the lyrics, `[Verse]`/`[Chorus]` section labels); if present, the title opens it in a full-screen in-app reader instead of Ultimate Guitar, with a UG link, edit, and delete still one tap away
-  - **Transpose** on the fly, with a **Store transposed** button to bake the shift into the saved sheet
+  - **Transpose** on the fly, and edit **Key**/**Capo** right in the header — a **Store transposed** button bakes the shift (and any Key/Capo edit) into the song in one go
   - Auto-transposes for **Capo** (shows the shapes to play with the capo on) and for the global **Half-step down tuning** toggle
   - Tap-to-hide header for a distraction-free view; a full-page editor for comfortable long-sheet editing; keyboard scrolling (arrow keys / Page Up/Down)
 - Tag autocomplete when editing — suggests existing tags as you type
