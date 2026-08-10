@@ -2689,14 +2689,17 @@ function renderSetDetail() {
   const hasSections = items.some(it => it.type === 'section');
   if (selectedItemIdx !== null && (selectedItemIdx < 0 || selectedItemIdx >= items.length)) selectedItemIdx = null;
 
-  // Render items top to bottom; a section header switches whether the rows that follow
-  // it (until the next header) are shown, so collapsing a section just hides its rows —
-  // the flat `items` array and its indices never change.
+  // Render items top to bottom; a section header switches whether the rows that follow it
+  // (until the next boundary — another header, an explicit section-end, or the list end) are
+  // shown, so collapsing a section just hides its rows — the flat `items` array and its
+  // indices never change. section-end is a purely structural, invisible boundary (renders
+  // nothing) for closing a section early instead of letting it run to the next header.
   let collapsed = false, nested = false;
   const rowsHtml = !items.length
     ? '<div class="empty" style="padding:20px">No songs yet</div>'
     : items.map((it, i) => {
         if (it.type === 'section') { collapsed = !!it.collapsed; nested = true; return sectionBlock(it, i, items.length, items); }
+        if (it.type === 'section-end') { collapsed = false; nested = false; return ''; }
         if (collapsed) return '';
         return slRow(it, i, items.length, nested);
       }).join('');
@@ -2719,12 +2722,13 @@ function renderSetDetail() {
   initDrag();
 }
 
-// Number of resolvable songs that fall under section header at `idx`, i.e. everything
-// after it up to (not including) the next section header or the end of the list.
+// Number of resolvable songs that fall under section header at `idx`, i.e. everything after it
+// up to (not including) the next boundary — another section header, an explicit section-end, or
+// the end of the list.
 function sectionSongCount(items, idx) {
   let n = 0;
   for (let j = idx + 1; j < items.length; j++) {
-    if (items[j].type === 'section') break;
+    if (items[j].type === 'section' || items[j].type === 'section-end') break;
     if (resolveItemSong(items[j])) n++;
   }
   return n;
@@ -3001,11 +3005,22 @@ function saveSection() {
     const item = sl.items[editSectionIdx];
     if (item) item.name = name;
   } else {
-    // Always append, never insert mid-list: a section groups everything positioned after it
-    // (until the next section or the end), so splicing one in after the selected row would
-    // silently absorb whatever pre-existing songs already followed it. Appending is the only
-    // insertion point that's guaranteed to start empty.
-    sl.items.push({ type: 'section', name, collapsed: false });
+    const newItem = { type: 'section', name, collapsed: false };
+    if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
+      const insertAt = selectedItemIdx + 1;
+      // A section otherwise runs open-ended until the next boundary (another section, or the
+      // end of the list) -- fine for a trailing section like "Encore" with nothing after it,
+      // but inserting one here would silently absorb whatever pre-existing songs already
+      // followed the selected row. Give it an explicit end right away so it starts empty and
+      // those songs stay exactly where they were. Not needed if a boundary is already right
+      // there (another section header, or an existing section-end) -- nothing to protect.
+      const next = sl.items[insertAt];
+      const needsEnd = next && next.type !== 'section' && next.type !== 'section-end';
+      sl.items.splice(insertAt, 0, newItem);
+      if (needsEnd) sl.items.splice(insertAt + 1, 0, { type: 'section-end' });
+    } else {
+      sl.items.push(newItem);
+    }
   }
   save(); renderSetDetail(); renderBubbles();
   closeModal('section-modal');
