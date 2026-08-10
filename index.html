@@ -2431,18 +2431,22 @@ function crdReRootToggle(checked) {
     return;
   }
 
-  const newRoot = parseKeyName(crdEditKey);
-  if (!newRoot) { toast('Enter a valid root key'); renderCrdBody(); return; }
+  if (!parseKeyName(crdEditKey)) { toast('Enter a valid root key'); renderCrdBody(); return; }
 
+  // The sheet now IS the new key as written, so the natural reset is "played as" = the key
+  // itself — capo 0 (or just the tuning bump, if half-step tuning is on), not whatever capo
+  // happened to be before. Computed via the normal formula so tuning stays consistent.
+  const newCapo = computeCapo(crdEditKey, crdEditKey);
   const label = (crdReRootDelta > 0 ? '+' : '') + crdReRootDelta;
   const msg = deltaChanged
-    ? `Rewrite the saved chord sheet ${label} semitones and set key to ${crdEditKey}? Capo (${s.capo || '0'}) is left as-is.`
-    : `Set key to ${crdEditKey}? The chord sheet itself is unchanged.`;
+    ? `Rewrite the saved chord sheet ${label} semitones and set key to ${crdEditKey}? Capo resets to ${newCapo}, played as ${crdEditKey}.`
+    : `Set key to ${crdEditKey}? Capo resets to ${newCapo}, played as ${crdEditKey}. The chord sheet itself is unchanged.`;
   if (!confirm(msg)) { renderCrdBody(); return; }
 
   if (deltaChanged) s.crd = transposeCrdText(s.crd, crdReRootDelta);
-  s.key = crdEditKey;
-  crdEditTKey = formatKeyName(newRoot.idx + crdReRootDelta, newRoot.qual);
+  s.key  = crdEditKey;
+  s.capo = newCapo ? String(newCapo) : '';
+  crdEditTKey = crdEditKey;
   crdReRoot = false;
   crdReRootDelta = 0;
   save(); renderAll();
