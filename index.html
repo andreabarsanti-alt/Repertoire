@@ -322,15 +322,16 @@ a.pill > span:first-child { text-decoration: underline; text-underline-offset: 3
 }
 .kch.harp { background: rgba(109,168,84,.18); border-color: rgba(109,168,84,.4); color: #8fd474; }
 
-/* Editable Key/Capo badges in the CRD reader header */
+/* Editable Key / Playing-key badges in the CRD reader header, and the read-only Capo badge
+   derived from them */
 input.kch-edit {
   appearance: none; -webkit-appearance: none; box-sizing: content-box;
   outline: none; cursor: text; text-align: center;
 }
 input.kch-edit::placeholder { color: rgba(255,255,255,.4); }
 input.kch-edit:focus { border-color: var(--accent); background: rgba(61,158,140,.15); }
-input.kch-edit.kch-key  { width: 2.6em; }
-input.kch-edit.kch-capo { width: 4.4em; }
+input.kch-edit.kch-key { width: 3em; }
+.kch-arrow { color: var(--text-dim); font-size: 0.68rem; align-self: center; }
 
 /* ══════════════════════════════════════════
    SONGS TAB
@@ -1070,12 +1071,11 @@ select.fi { cursor: pointer; }
       </div>
       <div class="crd-toolbar">
         <div class="crd-transpose">
-          <span class="crd-toolbar-label">Transpose</span>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeStep(-1)" title="Down a semitone">−</button>
-          <span id="crd-transpose-label" class="crd-transpose-val">±0</span>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeStep(1)" title="Up a semitone">+</button>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTransposeReset()" title="Reset transpose">↺</button>
-          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdStoreTransposed()" title="Save any transpose here into the chord sheet, and any Key/Capo edit above into the song" disabled>💾 Store transposed</button>
+          <span class="crd-toolbar-label">Playing key</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(-1)" title="Down a semitone">−</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(1)" title="Up a semitone">+</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyReset()" title="Reset to this song's saved capo">↺</button>
+          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo, or rewrite the sheet into a new root key" disabled>💾 Save capo</button>
         </div>
         <div class="crd-toolbar-right">
           <span class="crd-toolbar-label">Scroll</span>
@@ -1270,14 +1270,15 @@ let dragIdx = null;
 let selectedItemIdx = null;
 let _playOverrideSongs = null;
 let crdSongId       = null;
-let crdTranspose     = 0;
 let crdScrollPct = Math.max(5, Math.min(100, parseInt(localStorage.getItem('rep_crd_scroll_pct') || '35', 10)));
-let crdBaseTranspose = 0; // auto capo offset (-capo semitones) applied when the reader opens
 let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
-// Pending Key/Capo edits made in the reader — held here, not written to the song, until
-// "Store transposed" is clicked (see crdStoreTransposed).
+// Pending root-key / playing-key edits made in the reader — held here, not written to the song,
+// until "Save capo" / "Update root" is clicked (see crdCommit). crdEditKey is the song's root
+// key as it would be after committing; crdEditTKey is the key the chords are actually being
+// played in right now (the "shape"), which is what drives both the on-screen chords and the
+// read-only Capo badge — see crdChordsEff/computeCapo.
 let crdEditKey  = '';
-let crdEditCapo = '';
+let crdEditTKey = '';
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -2187,14 +2188,48 @@ function renderCrdHTML(text, semis) {
 }
 
 // ── Reader UI ──
+// Reads just the root-note letter (+ accidental) off the front of a key string like "Am",
+// "F#", "Bb", "C" and returns its semitone index 0..11, or -1 if it doesn't start with a
+// recognizable note name (blank, mid-typing, garbage).
+function keyRootIndex(str) {
+  const m = String(str || '').trim().match(/^([A-G])([#b]?)/);
+  return m ? noteIndex(m[1] + m[2]) : -1;
+}
+
+// The key the chords are being displayed in right now, relative to the song's *actual saved*
+// key (crd text is always stored written in s.key) — independent of any pending root edit,
+// so editing the root alone never re-transposes the sheet on screen. Falls back to 0 (no
+// transpose) while either side is unparsed/mid-typing.
+function crdChordsEff(s) {
+  const si = keyRootIndex(s.key), ti = keyRootIndex(crdEditTKey);
+  if (si === -1 || ti === -1) return 0;
+  return ((ti - si) % 12 + 12) % 12;
+}
+
+// Capo implied by playing `tkeyStr` shapes over a song whose root is `rootStr`, plus the
+// half-step-down tuning bump. Null while either key is unparsed.
+function computeCapo(rootStr, tkeyStr) {
+  const ri = keyRootIndex(rootStr), ti = keyRootIndex(tkeyStr);
+  if (ri === -1 || ti === -1) return null;
+  const base = ((ri - ti) % 12 + 12) % 12;
+  return base + (db.tuneUp ? 1 : 0);
+}
+
+// The playing key implied by a song's *saved* key/capo/tuning — i.e. what the reader defaults
+// to on open, before any pending edits.
+function deriveDefaultTKey(s) {
+  const si = keyRootIndex(s.key);
+  if (si === -1) return '';
+  const baseCapo = Math.max(0, (parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0));
+  return NOTE_CANON[((si - baseCapo) % 12 + 12) % 12];
+}
+
 function openCrdReader(id) {
   const s = db.songs.find(x => x.id === id);
   if (!s || !s.crd) return;
   crdSongId = id;
-  crdBaseTranspose = -(parseInt(s.capo, 10) || 0);
-  crdTranspose = crdBaseTranspose;
-  crdEditKey  = s.key  || '';
-  crdEditCapo = s.capo || '';
+  crdEditKey  = s.key || '';
+  crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
   renderCrdBody();
   crdUpdateScrollPctLabel();
@@ -2206,21 +2241,22 @@ function renderCrdBody() {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
   document.getElementById('crd-title').textContent = s.title;
-  // Key/Capo are editable right here — typing into them only updates crdEditKey/crdEditCapo
-  // (see crdMetaEdited) and is saved to the song, together with any transpose, only on
-  // "Store transposed". Harp stays read-only (unrelated to transpose).
+  // Root key and Playing key are both editable right here — typing into them only updates
+  // crdEditKey/crdEditTKey (see crdMetaEdited); nothing is written to the song until
+  // "Save capo" / "Update root" (crdCommit). The Capo badge is read-only, derived from the two.
+  const capo = computeCapo(crdEditKey, crdEditTKey);
   document.getElementById('crd-meta').innerHTML = `<div class="kch-wrap">
     <input class="kch kch-edit kch-key" id="crd-key-input" type="text" placeholder="Key" autocomplete="off"
       value="${esc(crdEditKey)}" oninput="crdMetaEdited('key', this.value)">
-    <input class="kch kch-edit kch-capo" id="crd-capo-input" type="text" inputmode="numeric" placeholder="Capo" autocomplete="off"
-      value="${esc(crdEditCapo)}" oninput="crdMetaEdited('capo', this.value)">
+    <span class="kch-arrow">played as →</span>
+    <input class="kch kch-edit kch-key" id="crd-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
+      value="${esc(crdEditTKey)}" oninput="crdMetaEdited('tkey', this.value)">
+    <span class="kch" id="crd-capo-badge">${capo === null ? 'Capo —' : 'Capo ' + capo}</span>
     ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
   </div>`;
-  const eff = crdEffectiveTranspose();
-  document.getElementById('crd-transpose-label').textContent = eff === 0 ? '±0' : (eff > 0 ? '+' : '') + eff;
   crdUpdateStoreBtn();
 
-  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, eff);
+  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
   crdApplyFontSize();
 
   const ugBtn = document.getElementById('crd-ug-link');
@@ -2228,23 +2264,40 @@ function renderCrdBody() {
   else { ugBtn.style.display = 'none'; }
 }
 
+// Lighter-weight than renderCrdBody(): called on every keystroke in the Key/Playing-key inputs,
+// so it must NOT rebuild #crd-meta (that would blow away focus/cursor mid-typing). Only the
+// chord body (when the playing key changed) and the read-only Capo badge need to react live.
 function crdMetaEdited(field, value) {
-  if (field === 'key') crdEditKey = value; else crdEditCapo = value;
+  if (field === 'key') crdEditKey = value; else crdEditTKey = value;
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+  if (field === 'tkey') {
+    document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
+    crdApplyFontSize();
+  }
+  const badge = document.getElementById('crd-capo-badge');
+  if (badge) {
+    const capo = computeCapo(crdEditKey, crdEditTKey);
+    badge.textContent = capo === null ? 'Capo —' : 'Capo ' + capo;
+  }
   crdUpdateStoreBtn();
 }
 
-// True while there's something "Store transposed" would actually save: a manual/tuning
-// transpose away from the auto-capo baseline, or a pending Key/Capo edit.
-function crdIsDirty() {
-  const s = db.songs.find(x => x.id === crdSongId);
-  if (!s) return false;
-  return crdEffectiveTranspose() !== crdBaseTranspose
-      || crdEditKey  !== (s.key  || '')
-      || crdEditCapo !== (s.capo || '');
-}
+// Keeps the save button's label/enabled-state in sync: it reads "Update root" (rewrites the
+// sheet + capo together) once the root key has actually changed, or "Save capo" (capo only,
+// root and sheet untouched) when just the playing key/capo drifted from what's saved.
 function crdUpdateStoreBtn() {
+  const s = db.songs.find(x => x.id === crdSongId);
   const btn = document.getElementById('crd-store-btn');
-  if (btn) btn.disabled = !crdIsDirty();
+  if (!btn || !s) return;
+  const rootChanged = crdEditKey !== (s.key || '');
+  const capo = computeCapo(crdEditKey, crdEditTKey);
+  const capoChanged = capo !== null && capo !== (parseInt(s.capo, 10) || 0);
+  btn.disabled = !(rootChanged || capoChanged);
+  btn.textContent = rootChanged ? '💾 Update root' : '💾 Save capo';
+  btn.title = rootChanged
+    ? 'Rewrite the chord sheet into the new root key and update capo'
+    : "Save this capo as the song's default";
 }
 
 function closeCrdReader() {
@@ -2256,19 +2309,28 @@ function toggleCrdChrome() {
   document.getElementById('crd-chrome').classList.toggle('crd-hidden');
 }
 
-function crdTransposeStep(dir) {
-  crdTranspose = Math.max(-11, Math.min(11, crdTranspose + dir));
+// −/+ nudge the playing key by a semitone (handy one-handed); ↺ discards any pending playing-key
+// edit and goes back to what's derived from the song's saved key/capo/tuning.
+function crdTKeyStep(dir) {
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+  let ti = keyRootIndex(crdEditTKey);
+  if (ti === -1) ti = keyRootIndex(deriveDefaultTKey(s));
+  if (ti === -1) return;
+  crdEditTKey = NOTE_CANON[((ti + dir) % 12 + 12) % 12];
   renderCrdBody();
 }
-function crdTransposeReset() { crdTranspose = crdBaseTranspose; renderCrdBody(); }
+function crdTKeyReset() {
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+  crdEditTKey = deriveDefaultTKey(s);
+  renderCrdBody();
+}
 
-// Total semitones actually applied to the displayed sheet: manual/capo transpose + the extra
-// half-step-down-tuning bump.
-function crdEffectiveTranspose() { return crdTranspose + (db.tuneUp ? 1 : 0); }
-
-// "Half-step down tuning" is a global, JSON-persisted setting (db.tuneUp). Toggling it both bumps
-// every song's Capo by ±1 fret AND adds ±1 semitone on top in the CRD viewer's transpose display —
-// reversible by toggling back off.
+// "Half-step down tuning" is a global, JSON-persisted setting (db.tuneUp). Toggling it bumps
+// every song's Capo by ±1 fret (reversible by toggling back off). It never touches the chord
+// shapes shown in the CRD reader — those are driven purely by root-key vs playing-key, which
+// don't change with tuning — only the Capo badge, which folds the tuning bump back in.
 function syncTuneToggles() {
   const a = document.getElementById('global-tune-toggle');
   if (a) a.checked = !!db.tuneUp;
@@ -2291,7 +2353,7 @@ function toggleGlobalTune() {
   if (crdSongId) renderCrdBody();
 }
 
-// Rewrites the plain chord/lyric text (not HTML) at the given transpose — used by "Store transposed".
+// Rewrites the plain chord/lyric text (not HTML) at the given transpose — used by "Update root".
 function transposeChordLineText(line, semis) {
   const parts = line.split(/(\s+)/);
   for (let i = 0; i < parts.length; i++) {
@@ -2326,34 +2388,33 @@ function transposeCrdText(text, semis) {
   }).join('\n');
 }
 
-function crdStoreTransposed() {
+function crdCommit() {
   if (!crdSongId) return;
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
-  const eff = crdEffectiveTranspose();
-  const transposeChanged = eff !== crdBaseTranspose;
-  const keyChanged  = crdEditKey  !== (s.key  || '');
-  const capoChanged = crdEditCapo !== (s.capo || '');
-  if (!transposeChanged && !keyChanged && !capoChanged) return;
 
-  const label = (eff > 0 ? '+' : '') + eff;
-  let msg;
-  if (transposeChanged && (keyChanged || capoChanged)) {
-    msg = `Rewrite the saved chord sheet transposed ${label} semitones, and update Key/Capo?`;
-  } else if (transposeChanged) {
-    msg = `Rewrite the saved chord sheet transposed ${label} semitones? Key and capo are left as-is.`;
-  } else {
-    msg = 'Update Key/Capo for this song?';
-  }
+  const rootChanged = crdEditKey !== (s.key || '');
+  if (rootChanged && keyRootIndex(crdEditKey) === -1) { toast('Enter a valid root key'); return; }
+
+  const pendingCapo = computeCapo(crdEditKey, crdEditTKey);
+  if (pendingCapo === null) { toast('Enter a valid playing key'); return; }
+  const capoChanged = pendingCapo !== (parseInt(s.capo, 10) || 0);
+  if (!rootChanged && !capoChanged) return;
+
+  const msg = rootChanged
+    ? `Rewrite the chord sheet from ${s.key || '—'} to ${crdEditKey}, and set capo to ${pendingCapo}?`
+    : `Save capo ${pendingCapo} as this song's default?`;
   if (!confirm(msg)) return;
 
-  if (transposeChanged) s.crd = transposeCrdText(s.crd, eff);
-  if (keyChanged)  s.key  = crdEditKey;
-  if (capoChanged) s.capo = crdEditCapo;
+  if (rootChanged) {
+    // s.crd is always written in the song's current root — shift it by the exact interval
+    // between the old and new root so the sheet's chords match the new key name.
+    const oldIdx = keyRootIndex(s.key), newIdx = keyRootIndex(crdEditKey);
+    if (oldIdx !== -1) s.crd = transposeCrdText(s.crd, newIdx - oldIdx);
+    s.key = crdEditKey;
+  }
+  s.capo = pendingCapo ? String(pendingCapo) : '';
 
-  // Capo may have just changed — re-baseline from the (now-saved) capo, same as reopening.
-  crdBaseTranspose = -(parseInt(s.capo, 10) || 0);
-  crdTranspose = crdBaseTranspose;
   save(); renderAll();
   renderCrdBody();
   toast('Saved');
