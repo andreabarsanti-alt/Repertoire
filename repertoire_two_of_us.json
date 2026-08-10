@@ -934,6 +934,17 @@
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/into-my-arms-official-2106795",
       "attrs": {}
+    },
+    {
+      "id": "9cdfb7ce-5974-4ac1-aca2-12434efbba91",
+      "title": "The Lonesome Death Of Hattie Carroll",
+      "tags": "Bob Dylan,",
+      "key": "E",
+      "capo": "5",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/the-lonesome-death-of-hattie-carroll-official-5907482",
+      "crd": "[Verse 1]\nE          C#m                G#m\nWilliam Zanzinger killed poor Hattie Carroll\n           E               C#m             G#m\nWith a cane that he twirled  around his diamond ring finger\n        E        C#m      G#m\nAt a Baltimore hotel, society gath'rin'\n        E                   C#m       G#m\nAnd the cops were called in,  and his weapon took from him\n        E              C#m       G#m\nAs they rode him in custody down to the station\n           E          C#m             G#m\nAnd booked William Zanzinger for firstdegree murder\n\n\n[Chorus]\nB    A      B     E                C#m   A        B    E\n But you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 2]\nE          C#m             G#m      E          C#m            G#m\nWilliam Zanzinger, who at 24 years, owns a tobacco farm of six  hundred acres\n       E              C#m              G#m\nWith a rich wealthy parents who provide  and protect him\n           E        C#m          G#m\nAnd high office relations in the politics of Maryland\n    E              C#m           G#m\nReacted to his deed  with a shrug  of his shoulders\n    E               C#m                      G#m\nAnd swear words and sneering, and his tongue it was snarling\n         E           C#m           G#m\nAnd in a matter of minutes, on bail  was out walkin'\n\n\n[Chorus]\nB    A   B        E                     A    B        E\n But you who philosophize, disgrace and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 3]\nE        C#m             G#m\nHattie Carroll was a maid  in the kitchen\n           E               C#m             G#m\nShe was fifty one years old  and gave birth  to 10 children\n    E             C#m      G#m\nWho carried the dishes and took out the garbage\n    E             C#m      G#m\nAnd never sat once  at the head of the table\n    E               C#m         G#m\nAnd didn't even talk  to the people at the table\n    E            C#m            G#m\nWho just cleaned up all the food  from the table\n       E           C#m             G#m\nAnd emptied the ashtrays on a whole  other level\n    E                C#m   G#m\nGot killed by a blow,  lay slain by a cane\n        E                  C#m            G#m\nThat sailed through the air  and came down  through the room\nE               C#m             G#m\nDoomed and determined to destroy  all the gentle\n        E            C#m      G#m        B\nAnd she never done nothing to William Zanzinger\n\n\n[Chorus]\n    A      B     E                C#m   A    B        E\nAnd you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Solo]\nE C#m G#m E C#m G#m\nE C#m G#m E C#m G#m\nE C#m G#m B A B E\nA B E A B\nE C#m A B E\n\n\n[Verse 4]\n       E              C#m           G#m\nIn the courtroom of honor, the judge  pounded his gavel\n       E            C#m               G#m\nTo show that all's equal and that the courts are on the level\n              E                  C#m           G#m\nAnd that the strings in the books  ain't pulled  and persuaded\n          E         C#m         G#m\nAnd that even the nobles get properly handled\nE                 C#m           G#m\nOnce that the cops  have chased after and caught 'em\n             E         C#m        G#m\nAnd that the ladder of law has no top and no bottom\n E               C#m           G#m\nStared at the person who killed  for no reason\n         E              C#m             G#m\nWho just happened to be feelin' that way  without warnin'\n       E                       C#m         G#m\nAnd he spoke through his cloak,  most deep and distinguished\n        E      C#m            G#m\nAnd handed out strongly for penalty and repentance\n  E        C#m          G#m\nWilliam Zanzinger with a  sixmonth sentence\n\n\n[Chorus]\nB           A   B     E           C#m       A    B        E\n Ah, but you who philosophize, disgrace and criticize all fears\nA           B    E             E       A           B         E\nTake the rag deep in your face, for now is the time for your tears\n\n\n[Outro]\nA B B7 E",
+      "attrs": {}
     }
   ],
   "tagMeta": {
@@ -1518,11 +1529,35 @@
         },
         {
           "type": "song",
-          "songId": "s16"
+          "songId": "s16",
+          "altSongId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6",
+          "useAlt": false
+        },
+        {
+          "type": "section",
+          "name": "More Folk Dylan",
+          "collapsed": true
         },
         {
           "type": "song",
-          "songId": "s01"
+          "songId": "s18",
+          "altSongId": "mobx3suewssgb",
+          "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "s17",
+          "altSongId": "9cdfb7ce-5974-4ac1-aca2-12434efbba91",
+          "useAlt": false
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "s01",
+          "altSongId": "s02",
+          "useAlt": false
         },
         {
           "type": "song",
