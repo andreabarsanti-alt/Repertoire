@@ -46,9 +46,10 @@
       "tags": "Neil Young",
       "key": "C",
       "capo": "5",
-      "harp": "",
+      "harp": "C",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/pocahontas-official-3639335",
-      "attrs": {}
+      "attrs": {},
+      "crd": ""
     },
     {
       "id": "s30",
@@ -1558,6 +1559,20 @@
           "songId": "s01",
           "altSongId": "s02",
           "useAlt": false
+        },
+        {
+          "type": "section",
+          "name": "More Neil Young",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s29",
+          "altSongId": "s30",
+          "useAlt": false
+        },
+        {
+          "type": "section-end"
         },
         {
           "type": "song",
