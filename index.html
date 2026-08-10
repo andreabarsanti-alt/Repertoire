@@ -510,32 +510,33 @@ a.crd-open:hover, a.crd-open:hover::after { color: var(--accent3); }
 .sl-alt-swap:hover { color: var(--accent); }
 .sl-alt-clear:hover { color: var(--danger, #c0524a); }
 
-/* Optional sub-setlist block */
-.subset-block {
-  border-radius: 8px; background: var(--surface2); margin-bottom: 5px;
-  border: 1px solid rgba(61,158,140,.18); overflow: hidden;
+/* Section header — a collapsible chapter/heading within a setlist */
+.section-block {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border-radius: 8px; background: var(--surface2); margin: 10px 0 5px;
+  border: 1px solid rgba(61,158,140,.22);
   transition: border-color .15s, background .15s;
 }
-.subset-block:hover { border-color: rgba(61,158,140,.35); }
-.subset-header {
-  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+.section-block:first-child { margin-top: 0; }
+.section-block:hover { border-color: rgba(61,158,140,.4); }
+.section-block.selected { border-color: var(--accent); }
+.section-collapse {
+  background: none; border: none; cursor: pointer; color: var(--accent);
+  font-size: 0.75rem; padding: 2px 4px; flex-shrink: 0; line-height: 1;
 }
-.subset-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; min-width: 0; }
-.subset-toggle input[type=checkbox] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
-.subset-toggle span {
-  font-weight: 500; font-size: 0.875rem; color: var(--text);
+.section-name {
+  font-weight: 700; font-size: 0.9rem; color: var(--text);
+  letter-spacing: .02em; flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.subset-block.expanded .subset-toggle span { font-style: italic; }
-.subset-badge {
+.section-badge {
   flex-shrink: 0; font-size: 0.65rem; text-transform: uppercase; letter-spacing: .06em;
   color: var(--accent); background: rgba(61,158,140,.1); border: 1px solid rgba(61,158,140,.22);
   border-radius: 6px; padding: 2px 7px; font-family: var(--fm);
 }
-.subset-body {
-  padding: 2px 12px 10px 38px; display: flex; flex-direction: column; gap: 2px;
-}
-.subset-song { font-size: 0.78rem; color: var(--text-dim); font-family: var(--fm); }
+
+/* Song rows nested under a section header — indented like chapter contents */
+.sl-row.sl-nested { margin-left: 20px; border-left: 2px solid rgba(61,158,140,.18); padding-left: 10px; }
 
 /* ══════════════════════════════════════════
    MODALS
@@ -987,21 +988,17 @@ select.fi { cursor: pointer; }
   </div>
 </div>
 
-<!-- ══ ADD SUB-SETLIST MODAL ══ -->
-<div class="overlay hidden" id="add-subset-modal">
+<!-- ══ SECTION MODAL (add / rename a chapter heading within a setlist) ══ -->
+<div class="overlay hidden" id="section-modal">
   <div class="modal">
-    <h2>Add Sub-setlist</h2>
-    <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
-      Adds another setlist as an optional block — toggle it in or out per performance without duplicating songs.
-    </p>
-    <div class="song-pick-list" id="subset-pick-list"></div>
+    <h2 id="section-modal-title">Add Section</h2>
+    <div class="fg"><label>Name *</label><input class="fi" id="f-section-name" type="text" placeholder="e.g. Set 1, Encore…" onkeydown="if(event.key==='Enter')saveSection()"></div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('add-subset-modal')">Cancel</button>
-      <button class="btn btn-primary"   onclick="confirmAddSubset()">Add</button>
+      <button class="btn btn-secondary" onclick="closeModal('section-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="saveSection()">Save</button>
     </div>
   </div>
 </div>
-
 <!-- ══ GITHUB CONFIG MODAL ══ -->
 <div class="overlay hidden" id="github-modal">
   <div class="modal">
@@ -1214,7 +1211,7 @@ const OLD_ATTR_MAP = {
   ag3:{Always:'ao7',Enough:'ao8','Too little':'ao9',New:'ao10'},
 };
 // Migrate legacy setlist.songIds (array of ids) into setlist.items
-// (array of {type:'song',songId,altSongId?,useAlt?} | {type:'subset',setlistId,optional,included}).
+// (array of {type:'song',songId,altSongId?,useAlt?} | {type:'section',name,collapsed}).
 function migrateSetlists() {
   let dirty = false;
   (db.setlists || []).forEach(sl => {
@@ -1223,6 +1220,11 @@ function migrateSetlists() {
       delete sl.songIds;
       dirty = true;
     }
+    // Drop any leftover 'subset' items from the retired embed-another-setlist feature —
+    // replaced entirely by 'section' headers, which live inline instead of by reference.
+    const before = sl.items.length;
+    sl.items = sl.items.filter(it => it.type !== 'subset');
+    if (sl.items.length !== before) dirty = true;
   });
   return dirty;
 }
@@ -2449,25 +2451,12 @@ function resolveItemSong(item) {
   return db.songs.find(s => s.id === id) || null;
 }
 
-// Flatten a setlist's items into the actual song list that will be played/printed/counted:
-// song items resolve to their live song; subset items only contribute when included, and
-// pull live from the referenced setlist (so edits there propagate). `seen` guards cycles.
-function resolvePlayableSongs(sl, seen) {
-  seen = seen || new Set();
-  if (!sl || seen.has(sl.id)) return [];
-  seen.add(sl.id);
-  const out = [];
-  (sl.items || []).forEach(item => {
-    if (item.type === 'subset') {
-      if (!item.included) return;
-      const sub = db.setlists.find(s => s.id === item.setlistId);
-      if (sub) out.push(...resolvePlayableSongs(sub, seen));
-    } else {
-      const song = resolveItemSong(item);
-      if (song) out.push(song);
-    }
-  });
-  return out;
+// Flatten a setlist's items into the actual song list that will be played/printed/counted.
+// Section headers carry no song themselves (resolveItemSong returns null for them), so a
+// plain map+filter naturally skips them — collapsed or not, every song still counts/plays.
+function resolvePlayableSongs(sl) {
+  if (!sl) return [];
+  return (sl.items || []).map(resolveItemSong).filter(Boolean);
 }
 
 function renderSetDetail() {
@@ -2497,8 +2486,20 @@ function renderSetDetail() {
 
   const items = sl.items || [];
   const playCount = resolvePlayableSongs(sl).length;
-  const hasSubsets = items.some(it => it.type === 'subset');
+  const hasSections = items.some(it => it.type === 'section');
   if (selectedItemIdx !== null && (selectedItemIdx < 0 || selectedItemIdx >= items.length)) selectedItemIdx = null;
+
+  // Render items top to bottom; a section header switches whether the rows that follow
+  // it (until the next header) are shown, so collapsing a section just hides its rows —
+  // the flat `items` array and its indices never change.
+  let collapsed = false, nested = false;
+  const rowsHtml = !items.length
+    ? '<div class="empty" style="padding:20px">No songs yet</div>'
+    : items.map((it, i) => {
+        if (it.type === 'section') { collapsed = !!it.collapsed; nested = true; return sectionBlock(it, i, items.length, items); }
+        if (collapsed) return '';
+        return slRow(it, i, items.length, nested);
+      }).join('');
 
   el.innerHTML = `
     <div class="set-detail-header">
@@ -2506,26 +2507,33 @@ function renderSetDetail() {
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
-        ${hasSubsets ? `
-        <button class="btn btn-secondary btn-sm" onclick="expandAllSubsets(true)">⤢ Expand all</button>
-        <button class="btn btn-secondary btn-sm" onclick="expandAllSubsets(false)">⤡ Collapse all</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="openAddSubsetModal()">+ Add Sub-setlist</button>
+        ${hasSections ? `
+        <button class="btn btn-secondary btn-sm" onclick="expandAllSections(true)">⤢ Expand all</button>
+        <button class="btn btn-secondary btn-sm" onclick="expandAllSections(false)">⤡ Collapse all</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="openAddSectionModal()">+ Add Section</button>
         <button class="btn btn-primary   btn-sm" onclick="openAddSongsModal()">+ Add Songs</button>
       </div>
     </div>
-    <div id="sl-list">
-      ${!items.length
-        ? '<div class="empty" style="padding:20px">No songs yet</div>'
-        : items.map((it,i) => it.type === 'subset' ? subsetBlock(it,i,items.length) : slRow(it,i,items.length)).join('')}
-    </div>`;
+    <div id="sl-list">${rowsHtml}</div>`;
 
   initDrag();
 }
 
-function expandAllSubsets(state) {
+// Number of resolvable songs that fall under section header at `idx`, i.e. everything
+// after it up to (not including) the next section header or the end of the list.
+function sectionSongCount(items, idx) {
+  let n = 0;
+  for (let j = idx + 1; j < items.length; j++) {
+    if (items[j].type === 'section') break;
+    if (resolveItemSong(items[j])) n++;
+  }
+  return n;
+}
+
+function expandAllSections(state) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  (sl.items||[]).forEach(it => { if (it.type === 'subset') it.included = state; });
-  save(); renderSetDetail(); renderBubbles();
+  (sl.items||[]).forEach(it => { if (it.type === 'section') it.collapsed = !state; });
+  save(); renderSetDetail();
 }
 
 function altRow(item, i) {
@@ -2539,7 +2547,7 @@ function altRow(item, i) {
   </div>`;
 }
 
-function slRow(item, i, total) {
+function slRow(item, i, total, nested) {
   const s = resolveItemSong(item);
   if (!s) return '';
   const titleEl = s.crd
@@ -2552,7 +2560,7 @@ function slRow(item, i, total) {
     ? altRow(item, i)
     : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
   const selected = i === selectedItemIdx;
-  return `<div class="sl-row drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sub-setlists are inserted right after the selected item">
+  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sections are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
@@ -2571,29 +2579,22 @@ function slRow(item, i, total) {
   </div>`;
 }
 
-function subsetBlock(item, i, total) {
-  const sub   = db.setlists.find(s => s.id === item.setlistId);
-  const name  = sub ? sub.name : '(deleted setlist)';
-  const songs = sub ? resolvePlayableSongs(sub) : [];
+// A section is a collapsible chapter heading living inline in the same flat `items`
+// array — everything after it (until the next header) belongs to it by position, no
+// nested data structure needed. Collapsing just hides those rows (see renderSetDetail).
+function sectionBlock(item, i, total, items) {
+  const count = sectionSongCount(items, i);
   const selected = i === selectedItemIdx;
-  return `<div class="subset-block drag-item${item.included?' expanded':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sub-setlists are inserted right after the selected item">
-    <div class="subset-header">
-      <label class="subset-toggle" onclick="event.stopPropagation()">
-        <input type="checkbox" ${item.included?'checked':''} onchange="toggleSubsetIncluded(${i})">
-        <span>${esc(name)}</span>
-      </label>
-      <span class="subset-badge">optional · ${songs.length} song${songs.length!==1?'s':''}</span>
-      <div class="sl-btns">
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove">✕</button>
-      </div>
+  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sections are inserted right after the selected item">
+    <button class="section-collapse" onclick="event.stopPropagation();toggleSectionCollapsed(${i})" title="${item.collapsed?'Expand':'Collapse'}">${item.collapsed?'▸':'▾'}</button>
+    <span class="section-name">${esc(item.name || 'Section')}</span>
+    <span class="section-badge">${count} song${count!==1?'s':''}</span>
+    <div class="sl-btns">
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();renameSection(${i})" title="Rename">✎</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove section heading (songs stay, and join the section above)">✕</button>
     </div>
-    ${item.included ? `<div class="subset-body">${
-      songs.length
-        ? songs.map(s => `<div class="subset-song">${esc(s.title)}</div>`).join('')
-        : '<div class="empty" style="padding:8px 0">No songs</div>'
-    }</div>` : ''}
   </div>`;
 }
 
@@ -2704,49 +2705,48 @@ function confirmAltPick() {
   toast('Alternate set');
 }
 
-function openAddSubsetModal() {
-  renderSubsetPickList();
-  openModal('add-subset-modal');
+// Same modal serves both "+ Add Section" (editSectionIdx = null) and the ✎ rename
+// button on an existing header (editSectionIdx = its index in sl.items).
+let editSectionIdx = null;
+function openAddSectionModal() { openSectionModal(null); }
+function renameSection(idx) { openSectionModal(idx); }
+
+function openSectionModal(idx) {
+  editSectionIdx = (typeof idx === 'number') ? idx : null;
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const existing = editSectionIdx !== null ? sl.items[editSectionIdx] : null;
+  document.getElementById('section-modal-title').textContent = existing ? 'Rename Section' : 'Add Section';
+  document.getElementById('f-section-name').value = existing?.name || '';
+  openModal('section-modal');
+  document.getElementById('f-section-name').focus();
 }
 
-function renderSubsetPickList() {
+function saveSection() {
+  const name = document.getElementById('f-section-name').value.trim();
+  if (!name) { toast('Name is required'); return; }
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  const already = new Set((sl.items||[]).filter(i => i.type === 'subset').map(i => i.setlistId));
-  const list = db.setlists.filter(s => s.id !== activeSetId && !already.has(s.id));
-
-  const el = document.getElementById('subset-pick-list');
-  if (!list.length) { el.innerHTML = '<div class="empty" style="padding:16px">No other setlists available</div>'; return; }
-  el.innerHTML = list.map(s => `
-    <label class="song-pick-item">
-      <input type="radio" name="subset-pick" value="${s.id}">
-      <div>
-        <div class="pick-title">${esc(s.name)}</div>
-        <div class="pick-sub">${(s.items||[]).length} item${(s.items||[]).length!==1?'s':''}</div>
-      </div>
-    </label>`).join('');
-}
-
-function confirmAddSubset() {
-  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  const checked = document.querySelector('#subset-pick-list input:checked');
-  if (!checked) { toast('Pick a setlist'); return; }
   sl.items = sl.items || [];
-  const newItem = { type: 'subset', setlistId: checked.value, optional: true, included: false };
-  if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
-    sl.items.splice(selectedItemIdx + 1, 0, newItem);
+  if (editSectionIdx !== null) {
+    const item = sl.items[editSectionIdx];
+    if (item) item.name = name;
   } else {
-    sl.items.push(newItem);
+    const newItem = { type: 'section', name, collapsed: false };
+    if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
+      sl.items.splice(selectedItemIdx + 1, 0, newItem);
+    } else {
+      sl.items.push(newItem);
+    }
   }
   save(); renderSetDetail(); renderBubbles();
-  closeModal('add-subset-modal');
-  toast('Sub-setlist added');
+  closeModal('section-modal');
+  toast(editSectionIdx !== null ? 'Section renamed' : 'Section added');
 }
 
-function toggleSubsetIncluded(idx) {
+function toggleSectionCollapsed(idx) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  const item = sl.items[idx]; if (!item || item.type !== 'subset') return;
-  item.included = !item.included;
-  save(); renderSetDetail(); renderBubbles();
+  const item = sl.items[idx]; if (!item || item.type !== 'section') return;
+  item.collapsed = !item.collapsed;
+  save(); renderSetDetail();
 }
 
 function initDrag() {
@@ -2805,9 +2805,6 @@ function saveSetlist() {
 function deleteSetlist(id) {
   if (!confirm('Delete this setlist?')) return;
   db.setlists = db.setlists.filter(s => s.id !== id);
-  db.setlists.forEach(sl => {
-    sl.items = (sl.items||[]).filter(it => it.type !== 'subset' || it.setlistId !== id);
-  });
   if (activeSetId === id) activeSetId = null;
   save(); renderSets(); renderSetDetail(); renderBubbles();
   toast('Setlist deleted');

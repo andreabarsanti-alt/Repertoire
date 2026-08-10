@@ -39,9 +39,11 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
       "id": "unique-id",
       "name": "Setlist Name",
       "items": [
+        { "type": "section", "name": "Set 1", "collapsed": false },
         { "type": "song", "songId": "id1" },
         { "type": "song", "songId": "id2", "altSongId": "id5", "useAlt": false },
-        { "type": "subset", "setlistId": "other-setlist-id", "optional": true, "included": false }
+        { "type": "section", "name": "Encore", "collapsed": true },
+        { "type": "song", "songId": "id3" }
       ]
     }
   ],
@@ -52,8 +54,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - `tuneUp` (top-level, global): tracks whether the "Half-step down tuning" header toggle is currently on. Flipping it does two things at once — bumps (or restores) every song's `capo` field by 1 fret across the whole library (a confirmed bulk edit), and adds ±1 semitone on top of whatever the CRD reader is currently showing (`crdEffectiveTranspose = crdTranspose + (tuneUp ? 1 : 0)`).
 
 - `song` items resolve to `altSongId` instead of `songId` when `useAlt` is true — lets a slot's live song be swapped without reordering.
-- `subset` items pull another setlist's songs in live (not duplicated); they only count toward playback/print/totals when `included` is true.
-- Legacy setlists with a flat `songIds: [id, ...]` array are migrated to `items` on load (`migrateSetlists()`).
+- `section` items are collapsible chapter headings that live inline in the same flat `items` array — every `song` item between one `section` and the next (or the end of the list) belongs to it by position, not by any nested/reference structure. `collapsed` just controls whether those rows are rendered; it never changes what plays, prints, or counts.
+- Legacy setlists with a flat `songIds: [id, ...]` array are migrated to `items` on load (`migrateSetlists()`), which also silently drops any leftover `subset` items from the retired embed-another-setlist feature (replaced by `section`).
 
 ## Key Implementation Details
 
@@ -72,7 +74,7 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
   - No chord/fretboard diagrams — removed after trying a diagrams-strip and a tap-to-popup version; the reader is text-only now.
 - **Setlists**: Drag-and-drop reordering via HTML5 drag API; touch-friendly ↑↓ buttons
 - **Alternate songs**: A song slot can carry an `altSongId`; the ⇄ button flips which one (`useAlt`) is live, for last-minute swaps without reordering
-- **Sub-setlists**: A setlist can embed another setlist as an optional, collapsible block (`type:'subset'`); toggling `included` pulls its songs into playback/print/counts live, no duplication. `resolvePlayableSongs()` flattens items recursively with a cycle guard
+- **Sections**: A setlist can carry `type:'section'` header items to group its songs into collapsible chapters (Set 1, Encore, …) — purely a display grouping over the same flat `items` array, not a separate structure. Collapsing a section (`collapsed`) just hides the song rows under it in `renderSetDetail()`; it never affects `resolvePlayableSongs()`, which is a plain `map`+`filter` over all items (section headers resolve to no song and are skipped automatically). New songs/sections are inserted right after whichever row is currently selected (`selectedItemIdx`), so selecting a row inside (or the header of) a section adds to that section
 - **Play mode**: Scroll-snap drum-roll UX — fixed 100px items, CSS `scroll-snap-type: y mandatory`, centered item detected via `scrollend` + debounced `scroll`. Auto-advances on return from UG via `visibilitychange`
 - **GitHub push**: Uses GitHub Contents API (PUT) to commit `repertoire.json` directly; config stored in `localStorage`
 - **Repo sync**: On boot, fetches `repertoire.json` and compares fingerprints; shows banner if remote differs
