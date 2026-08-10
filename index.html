@@ -549,6 +549,20 @@ a.crd-open:hover, a.crd-open:hover::after { color: var(--accent3); }
 /* Song rows nested under a section header — indented like chapter contents */
 .sl-row.sl-nested { margin-left: 20px; border-left: 2px solid rgba(61,158,140,.18); padding-left: 10px; }
 
+/* Inline song edit form inside a setlist row — same fields as the Songs table's inline edit
+   (.inline-fi etc.), stacked vertically instead of across table cells */
+.sl-edit-row {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 12px; border-radius: 8px; margin-bottom: 5px;
+  background: rgba(212,144,30,.05); border: 1px solid var(--border);
+}
+.sl-edit-row.sl-nested { margin-left: 20px; border-left: 2px solid rgba(61,158,140,.18); padding-left: 10px; }
+.sl-edit-top { display: flex; align-items: center; gap: 8px; }
+.sl-edit-top .inline-fi { flex: 1; }
+.sl-edit-attrs { display: flex; gap: 8px; flex-wrap: wrap; }
+.sl-edit-attr { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 120px; }
+.sl-edit-attr label { font-size: 0.68rem; color: var(--text-dim); }
+
 /* ══════════════════════════════════════════
    MODALS
 ══════════════════════════════════════════ */
@@ -1263,6 +1277,7 @@ let db = { songs:[], setlists:[], tagMeta:{}, attrGroups:deepCopy(DEFAULT_ATTR_G
            tuneUp:false };
 let activeBubble  = null;
 let inlineEditId  = null;
+let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
@@ -1935,13 +1950,17 @@ function songDisplayRow(s) {
   </tr>`;
 }
 
+// A single attribute-group <select> for an inline edit form (Songs table or setlist rows) —
+// shared so both stay in lockstep on how options/selection are built.
+function attrSelectHTML(s, grp) {
+  const curOptId = (s.attrs||{})[grp.id] || '';
+  const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
+  return `<select class="inline-fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select>`;
+}
+
 function songEditRow(s) {
   const k = `onkeydown="handleInlineKey(event,'${s.id}')"`;
-  const attrEditTds = (db.attrGroups||[]).map(grp => {
-    const curOptId = (s.attrs||{})[grp.id] || '';
-    const opts = grp.options.map(o => `<option value="${esc(o.id)}"${curOptId===o.id?' selected':''}>${esc(o.name)}</option>`).join('');
-    return `<td><select class="inline-fi" data-grp="${grp.id}"><option value="">(no ${esc(grp.name.toLowerCase())})</option>${opts}</select></td>`;
-  }).join('');
+  const attrEditTds = (db.attrGroups||[]).map(grp => `<td>${attrSelectHTML(s, grp)}</td>`).join('');
   return `<tr class="editing-row">
     <td>
       <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
@@ -2681,6 +2700,7 @@ function altRow(item, i) {
 function slRow(item, i, total, nested) {
   const s = resolveItemSong(item);
   if (!s) return '';
+  if (slEditSongId === s.id) return slEditRow(s, i, nested);
   const titleEl = s.crd
     ? `<a class="sl-title crd-open" href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')">${esc(s.title)}</a>`
     : s.ugLink
@@ -2703,11 +2723,81 @@ function slRow(item, i, total, nested) {
       <div class="sl-meta">${esc(s.tags)}</div>
     </div>
     <div class="sl-btns">
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();startSlEdit('${s.id}')" title="Edit song">✎</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove">✕</button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove from setlist">✕</button>
     </div>
   </div>`;
+}
+
+// Edits the underlying song itself (title/key/capo/harp/tags/attrs/UG link/CRD) right from
+// within the setlist row — same fields and semantics as the Songs tab's inline edit
+// (songEditRow/saveInlineEdit), just laid out for a setlist row instead of a table row, and
+// tracked separately (slEditSongId, not inlineEditId) so the two never fight over the same
+// input ids if the same song happens to be visible in both places at once.
+function slEditRow(s, i, nested) {
+  const k = `onkeydown="handleSlEditKey(event,'${s.id}')"`;
+  const attrFields = (db.attrGroups||[]).map(grp =>
+    `<div class="sl-edit-attr"><label>${esc(grp.name)}</label>${attrSelectHTML(s, grp)}</div>`
+  ).join('');
+  return `<div class="sl-edit-row${nested?' sl-nested':''}" data-idx="${i}">
+    <div class="sl-edit-top">
+      <input class="inline-fi" id="sl-ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
+      <div class="row-actions">
+        <button class="btn btn-primary   btn-sm btn-icon" onclick="saveSlEdit('${s.id}')" title="Save">✓</button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="cancelSlEdit()"        title="Cancel">✕</button>
+      </div>
+    </div>
+    <div class="inline-kch-row">
+      <input class="inline-fi inline-sm" id="sl-ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
+      <input class="inline-fi inline-sm" id="sl-ie-capo" value="${esc(s.capo||'')}" placeholder="Capo" ${k}>
+      <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
+    </div>
+    <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}>
+    ${attrFields ? `<div class="sl-edit-attrs">${attrFields}</div>` : ''}
+    <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
+    <div>
+      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('sl-ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <textarea class="inline-fi" id="sl-ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
+    </div>
+  </div>`;
+}
+
+function handleSlEditKey(e, id) {
+  if (e.key === 'Enter')  saveSlEdit(id);
+  if (e.key === 'Escape') cancelSlEdit();
+}
+
+function startSlEdit(id) {
+  slEditSongId = id;
+  renderSetDetail();
+  setTimeout(() => document.getElementById('sl-ie-title')?.focus(), 0);
+}
+
+function saveSlEdit(id) {
+  const s = db.songs.find(x => x.id === id);
+  if (!s) return;
+  const title = document.getElementById('sl-ie-title')?.value.trim();
+  if (!title) { toast('Title is required'); return; }
+  s.title  = title;
+  s.tags   = document.getElementById('sl-ie-tags')?.value.trim()  || '';
+  s.key    = document.getElementById('sl-ie-key')?.value.trim()   || '';
+  s.capo   = document.getElementById('sl-ie-capo')?.value.trim()  || '';
+  s.harp   = document.getElementById('sl-ie-harp')?.value.trim()  || '';
+  s.ugLink = normalizeUG(document.getElementById('sl-ie-uglink')?.value || '');
+  s.crd    = document.getElementById('sl-ie-crd')?.value || '';
+  s.attrs  = {};
+  document.querySelectorAll('.sl-edit-row select[data-grp]').forEach(sel => {
+    if (sel.value) s.attrs[sel.dataset.grp] = sel.value;
+  });
+  slEditSongId = null;
+  save(); renderAll(); toast('Song updated');
+}
+
+function cancelSlEdit() {
+  slEditSongId = null;
+  renderSetDetail();
 }
 
 // A section is a collapsible chapter heading living inline in the same flat `items`
