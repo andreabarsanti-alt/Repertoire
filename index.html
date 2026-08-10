@@ -1834,6 +1834,28 @@ function kchBadges(s) {
   return parts.join('');
 }
 
+// A song's title, wherever it appears: a link into the CRD reader (if it has a chord sheet), an
+// Ultimate Guitar link (if it has one), or plain text — same fallback chain, different markup
+// per call site (class, whether the plain fallback gets its own wrapping tag, whether the title
+// text itself is further wrapped, and what each link's onclick needs to do beyond navigating).
+//   cls       - class for the element in all three cases (the CRD case also gets " crd-open")
+//   plainTag  - wraps the plain (no crd, no UG) fallback in this tag with `cls`; omit for bare text
+//   wrap      - additionally wraps the title text itself in this tag (e.g. 'strong')
+//   crdStop   - adds event.stopPropagation() before openCrdReader() on the CRD link
+//   ugOnclick - raw onclick attribute value for the UG link (e.g. to stopPropagation, or flag
+//               playOpenedUG); omit for no onclick at all
+function songTitleLink(s, { cls = '', plainTag = '', wrap = '', crdStop = false, ugOnclick = '' } = {}) {
+  const inner = wrap ? `<${wrap}>${esc(s.title)}</${wrap}>` : esc(s.title);
+  if (s.crd) {
+    const stop = crdStop ? 'event.stopPropagation();' : '';
+    return `<a class="${cls ? cls + ' ' : ''}crd-open" href="javascript:void(0)" onclick="${stop}openCrdReader('${s.id}')">${inner}</a>`;
+  }
+  if (s.ugLink) {
+    return `<a${cls ? ` class="${cls}"` : ''} href="${esc(s.ugLink)}" target="_blank"${ugOnclick ? ` onclick="${ugOnclick}"` : ''}>${inner}</a>`;
+  }
+  return plainTag ? `<${plainTag}${cls ? ` class="${cls}"` : ''}>${inner}</${plainTag}>` : inner;
+}
+
 // ─────────────────────────────────────────
 // SONGS TABLE
 // ─────────────────────────────────────────
@@ -1905,11 +1927,7 @@ function songDisplayRow(s) {
     ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank">↗ UG</a>`
     : '<span style="color:var(--text-dim)">—</span>';
   const badges = kchBadges(s);
-  const titleEl = s.crd
-    ? `<a class="tbl-title crd-open" href="javascript:void(0)" onclick="openCrdReader('${s.id}')"><strong>${esc(s.title)}</strong></a>`
-    : s.ugLink
-      ? `<a class="tbl-title" href="${esc(s.ugLink)}" target="_blank"><strong>${esc(s.title)}</strong></a>`
-      : `<strong>${esc(s.title)}</strong>`;
+  const titleEl = songTitleLink(s, { cls: 'tbl-title', wrap: 'strong' });
   const CHIP_CLS = ['arr','res','reh'];
   const attrTds = (db.attrGroups||[]).map((grp, gi) => {
     const optId = (s.attrs||{})[grp.id];
@@ -2720,11 +2738,7 @@ function slRow(item, i, total, nested) {
   const s = resolveItemSong(item);
   if (!s) return '';
   if (slEditSongId === s.id) return slEditRow(s, i, nested);
-  const titleEl = s.crd
-    ? `<a class="sl-title crd-open" href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')">${esc(s.title)}</a>`
-    : s.ugLink
-      ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank" onclick="event.stopPropagation()">${esc(s.title)}</a>`
-      : `<span class="sl-title">${esc(s.title)}</span>`;
+  const titleEl = songTitleLink(s, { cls: 'sl-title', plainTag: 'span', crdStop: true, ugOnclick: 'event.stopPropagation()' });
   const badges = kchBadges(s);
   const altHtml = item.altSongId
     ? altRow(item, i)
@@ -2839,11 +2853,7 @@ function sectionBlock(item, i, total, items) {
 }
 
 function autoSlRow(s, i, typeId) {
-  const titleEl = s.crd
-    ? `<a class="sl-title crd-open" href="javascript:void(0)" onclick="openCrdReader('${s.id}')">${esc(s.title)}</a>`
-    : s.ugLink
-      ? `<a class="sl-title" href="${esc(s.ugLink)}" target="_blank">${esc(s.title)}</a>`
-      : `<span class="sl-title">${esc(s.title)}</span>`;
+  const titleEl = songTitleLink(s, { cls: 'sl-title', plainTag: 'span' });
   const badges = kchBadges(s);
   const attrMeta = (db.attrGroups||[]).map(grp => {
     const optId = (s.attrs||{})[grp.id];
@@ -3238,11 +3248,9 @@ function renderPlayList(autoScroll = true) {
   list.innerHTML = songs.map((s, i) => {
     const cur    = i === playIdx;
     const badges = cur ? kchBadges(s) : '';
-    const title  = cur && s.crd
-      ? `<a href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')" class="crd-open">${esc(s.title)}</a>`
-      : cur && s.ugLink
-        ? `<a href="${esc(s.ugLink)}" target="_blank" onclick="playOpenedUG=true">${esc(s.title)}</a>`
-        : esc(s.title);
+    const title  = cur
+      ? songTitleLink(s, { crdStop: true, ugOnclick: 'playOpenedUG=true' })
+      : esc(s.title);
     const titleEl = cur
       ? `<div class="play-title-row">
           <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(-1)" title="Previous" ${i===0?'disabled':''}>↑</button>

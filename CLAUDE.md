@@ -62,6 +62,7 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 ## Key Implementation Details
 
 - **Theme**: Deep blue-black / muted teal (`#3d9e8c`) studio/DAW aesthetic
+- **Song title links**: `songTitleLink(s, opts)` is the one shared fallback chain — CRD reader link (if `s.crd`) → Ultimate Guitar link (if `s.ugLink`) → plain text — used everywhere a title appears (Songs table, setlist rows, auto-setlists, Play mode). `opts` covers each call site's own markup: `cls`, `plainTag` (wrap the plain-text fallback too, or leave it bare), `wrap` (additionally wrap the title text itself, e.g. `'strong'`), `crdStop` (stopPropagation before opening the reader), `ugOnclick` (raw onclick for the UG link, e.g. stopPropagation or Play mode's `playOpenedUG` flag). The visualizer's bubble-detail pills (`showDetail`) build their own markup instead — there the whole pill is the link, with badges alongside the title inside it, not just the title text, so it didn't fit the same shape.
 - **Visualizer**: Animated glass bubbles packed with a circle-packing algorithm, grouped by tag; bubble size proportional to song count
 - **Songs table**: Inline editing (click row or ✎ button); sortable columns; tag autocomplete dropdown on tags fields
 - **Quick UG Import**: Parses title and artist from a UG URL slug — no network request needed. Pattern: `/tab/{artist}/{title}-{type}-{id}`
