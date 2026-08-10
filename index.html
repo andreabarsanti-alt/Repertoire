@@ -1144,7 +1144,7 @@ select.fi { cursor: pointer; }
       <span id="crd-editor-hint">Chords inline like [G], or on their own line above the lyrics · [Verse]/[Chorus] for section labels</span>
     </div>
     <div class="crd-editor-toolbar">
-      <span class="crd-toolbar-label">Preview as</span>
+      <span class="crd-toolbar-label">Playing key</span>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyStep(-1)" title="Down a semitone">−</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyStep(1)" title="Up a semitone">+</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyReset()" title="Reset to this song's saved capo">↺</button>
@@ -2606,7 +2606,7 @@ let crdEditorTargetId = null;
 let crdEditorKeyId  = null; // sibling Key/Capo field ids, derived from targetId ("f-crd" -> "f-key"/"f-capo",
 let crdEditorCapoId = null; // "ie-crd" -> "ie-key"/"ie-capo", "sl-ie-crd" -> "sl-ie-key"/"sl-ie-capo")
 let crdEditorKey  = ''; // local Key field state, synced back to crdEditorKeyId on Done
-let crdEditorTKey = ''; // local "preview as" playing key — preview-only, never written back
+let crdEditorTKey = ''; // local Playing-key state — synced into the real Key/Capo fields on Done
 
 // The full-page editor doubles as a lightweight CRD reader: a Key field, a Playing-key stepper,
 // a read-only Capo readout, and a live rendering of the sheet — all built from whichever song
@@ -2634,13 +2634,21 @@ function closeCrdEditor() {
     src.value = document.getElementById('crd-editor-textarea').value;
     src.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  // Key is a real editable field here, so it syncs back like the crd text does. Playing key/Capo
-  // are preview-only (there's often no song id yet to persist them against) and are never
-  // written back — the outer form's own Capo field is untouched.
+  // Key and the resulting Capo both sync back into the outer form's real fields — same "Key +
+  // Playing key -> Capo" relationship as the reader, just landing directly in the song instead
+  // of needing a separate Save-capo step.
   const keyEl = crdEditorKeyId && document.getElementById(crdEditorKeyId);
   if (keyEl) {
     keyEl.value = crdEditorKey;
     keyEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  const capoEl = crdEditorCapoId && document.getElementById(crdEditorCapoId);
+  if (capoEl) {
+    const c = computeCapo(crdEditorKey, crdEditorTKey);
+    if (c !== null) {
+      capoEl.value = c ? String(c) : '';
+      capoEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
   closeModal('crd-editor');
   crdEditorTargetId = crdEditorKeyId = crdEditorCapoId = null;
@@ -2651,7 +2659,7 @@ function renderCrdEditorMeta() {
   document.getElementById('crd-editor-meta').innerHTML = `<div class="kch-wrap">
     <input class="kch kch-edit kch-key" id="crd-editor-key-input" type="text" placeholder="Key" autocomplete="off"
       value="${esc(crdEditorKey)}" oninput="crdEditorKeyEdited(this.value)">
-    <span class="kch-arrow">preview as →</span>
+    <span class="kch-arrow">played as →</span>
     <input class="kch kch-edit kch-key" id="crd-editor-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
       value="${esc(crdEditorTKey)}" oninput="crdEditorTKeyEdited(this.value)">
     <span class="kch" id="crd-editor-capo-badge">${capo === null ? 'Capo —' : 'Capo ' + capo}</span>
