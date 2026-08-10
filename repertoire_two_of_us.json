@@ -1563,13 +1563,17 @@
         {
           "type": "section",
           "name": "More Neil Young",
-          "collapsed": true
+          "collapsed": false
         },
         {
           "type": "song",
           "songId": "s29",
           "altSongId": "s30",
           "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "s28"
         },
         {
           "type": "section-end"
