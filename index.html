@@ -2761,7 +2761,7 @@ function slRow(item, i, total, nested) {
     ? altRow(item, i)
     : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
   const selected = i === selectedItemIdx;
-  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sections are inserted right after the selected item">
+  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs are inserted right after the selected item; new sections are always added at the end">
     <span class="drag-handle">⠿</span>
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
@@ -2856,7 +2856,7 @@ function cancelSlEdit() {
 function sectionBlock(item, i, total, items) {
   const count = sectionSongCount(items, i);
   const selected = i === selectedItemIdx;
-  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs/sections are inserted right after the selected item">
+  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs are inserted right after the selected item; new sections are always added at the end">
     <button class="section-collapse" onclick="event.stopPropagation();toggleSectionCollapsed(${i})" title="${item.collapsed?'Expand':'Collapse'}">${item.collapsed?'▸':'▾'}</button>
     <span class="section-name">${esc(item.name || 'Section')}</span>
     <span class="section-badge">${count} song${count!==1?'s':''}</span>
@@ -3001,12 +3001,11 @@ function saveSection() {
     const item = sl.items[editSectionIdx];
     if (item) item.name = name;
   } else {
-    const newItem = { type: 'section', name, collapsed: false };
-    if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
-      sl.items.splice(selectedItemIdx + 1, 0, newItem);
-    } else {
-      sl.items.push(newItem);
-    }
+    // Always append, never insert mid-list: a section groups everything positioned after it
+    // (until the next section or the end), so splicing one in after the selected row would
+    // silently absorb whatever pre-existing songs already followed it. Appending is the only
+    // insertion point that's guaranteed to start empty.
+    sl.items.push({ type: 'section', name, collapsed: false });
   }
   save(); renderSetDetail(); renderBubbles();
   closeModal('section-modal');
