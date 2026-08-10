@@ -1496,7 +1496,7 @@
         },
         {
           "type": "song",
-          "songId": "s05"
+          "songId": "s15"
         },
         {
           "type": "song",
@@ -1505,6 +1505,14 @@
         {
           "type": "song",
           "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
         }
       ],
       "type": "generic"
