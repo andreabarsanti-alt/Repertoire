@@ -2216,8 +2216,9 @@ function crdChordsEff(s) {
 function computeCapo(rootStr, tkeyStr) {
   const rk = parseKeyName(rootStr), tk = parseKeyName(tkeyStr);
   if (!rk || !tk) return null;
-  const base = ((rk.idx - tk.idx) % 12 + 12) % 12;
-  return base + (db.tuneUp ? 1 : 0);
+  // Wrap the whole thing mod 12, not just the root/playing-key distance: a base capo of 11 plus
+  // the tuning bump lands on 12, which is really "no capo" an octave over, not a real fret.
+  return (((rk.idx - tk.idx) % 12 + 12) % 12 + (db.tuneUp ? 1 : 0)) % 12;
 }
 
 // The playing key implied by a song's *saved* key/capo/tuning — i.e. what the reader defaults
@@ -2226,7 +2227,9 @@ function computeCapo(rootStr, tkeyStr) {
 function deriveDefaultTKey(s) {
   const sk = parseKeyName(s.key);
   if (!sk) return '';
-  const baseCapo = Math.max(0, (parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0));
+  // Inverse of computeCapo's mod-12 wrap: a wrapped capo of e.g. 0 (which was really 11 before
+  // the tuning bump rolled it over) has to unwrap the same way, not just subtract-and-clamp.
+  const baseCapo = (((parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0)) % 12 + 12) % 12;
   return formatKeyName(sk.idx - baseCapo, sk.minor);
 }
 
