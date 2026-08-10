@@ -958,7 +958,7 @@
   "setlists": [
     {
       "id": "sl1",
-      "name": "Il Nove 29/3/2026",
+      "name": "Il Nove",
       "items": [
         {
           "type": "song",
@@ -1118,7 +1118,7 @@
     },
     {
       "id": "sl2",
-      "name": "Il Nove 24/4/2026",
+      "name": "Il Nove",
       "items": [
         {
           "type": "song",
@@ -1314,7 +1314,7 @@
     },
     {
       "id": "a1b51966-7581-4763-af8c-396452aeb528",
-      "name": "Vaso Bastardo 7/8/2026",
+      "name": "Vaso Bastardo",
       "items": [
         {
           "type": "song",
@@ -1475,7 +1475,7 @@
         {
           "type": "section",
           "name": "More Neil Young",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -1505,46 +1505,6 @@
         {
           "type": "song",
           "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
-        },
-        {
-          "type": "song",
-          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
-        },
-        {
-          "type": "song",
-          "songId": "s21"
-        },
-        {
-          "type": "song",
-          "songId": "s19"
-        },
-        {
-          "type": "song",
-          "songId": "mobxcagv7zvgk"
-        },
-        {
-          "type": "song",
-          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
-        },
-        {
-          "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "song",
-          "songId": "s15"
-        },
-        {
-          "type": "song",
-          "songId": "s12"
-        },
-        {
-          "type": "song",
-          "songId": "s04"
-        },
-        {
-          "type": "song",
-          "songId": "s11"
         }
       ],
       "type": "generic"
