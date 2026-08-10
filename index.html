@@ -686,10 +686,6 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 }
 #crd-editor-title { font-family: var(--fd); font-size: 1rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
 #crd-editor-hint { font-size: 0.72rem; color: var(--text-dim); flex: 1; min-width: 200px; }
-.crd-editor-toolbar {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
-  padding: 7px 16px; background: rgba(0,0,0,.4); border-bottom: 1px solid rgba(255,255,255,.06);
-}
 /* Textarea (left/top) and live rendered preview (right/bottom) — same rendering the CRD reader
    uses (.crd-body), so what you see here is what the reader will show. */
 .crd-editor-split { display: flex; flex: 1; min-height: 0; }
@@ -1142,12 +1138,6 @@ select.fi { cursor: pointer; }
       <div id="crd-editor-title">Chord Sheet Editor</div>
       <div id="crd-editor-meta"></div>
       <span id="crd-editor-hint">Chords inline like [G], or on their own line above the lyrics · [Verse]/[Chorus] for section labels</span>
-    </div>
-    <div class="crd-editor-toolbar">
-      <span class="crd-toolbar-label">Playing key</span>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyStep(-1)" title="Down a semitone">−</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyStep(1)" title="Up a semitone">+</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditorTKeyReset()" title="Reset to this song's saved capo">↺</button>
     </div>
     <div class="crd-editor-split">
       <textarea id="crd-editor-textarea" class="crd-editor-textarea" placeholder="Paste or type a chord/lyric sheet…" spellcheck="false" oninput="renderCrdEditorPreview()"></textarea>
@@ -2603,26 +2593,20 @@ function crdEditSong() {
 
 // ── Full-page CRD editor (pops out whichever textarea it was opened from) ──
 let crdEditorTargetId = null;
-let crdEditorKeyId  = null; // sibling Key/Capo field ids, derived from targetId ("f-crd" -> "f-key"/"f-capo",
-let crdEditorCapoId = null; // "ie-crd" -> "ie-key"/"ie-capo", "sl-ie-crd" -> "sl-ie-key"/"sl-ie-capo")
-let crdEditorKey  = ''; // local Key field state, synced back to crdEditorKeyId on Done
-let crdEditorTKey = ''; // local Playing-key state — synced into the real Key/Capo fields on Done
+let crdEditorKeyId = null; // sibling Key field id, derived from targetId ("f-crd" -> "f-key", "ie-crd" -> "ie-key", "sl-ie-crd" -> "sl-ie-key")
+let crdEditorKey   = '';   // local Key field state, synced back to crdEditorKeyId on Done
 
-// The full-page editor doubles as a lightweight CRD reader: a Key field, a Playing-key stepper,
-// a read-only Capo readout, and a live rendering of the sheet — all built from whichever song
-// form it was opened from (Add Song modal / Songs table inline edit / setlist inline edit),
-// even before that song has an id of its own to look up in db.songs.
+// The full-page editor doubles as a lightweight CRD viewer: a Key field plus a live rendering of
+// the sheet, built from whichever song form it was opened from (Add Song modal / Songs table
+// inline edit / setlist inline edit), even before that song has an id to look up in db.songs.
 function openCrdEditor(targetId) {
   const src = document.getElementById(targetId);
   if (!src) return;
   crdEditorTargetId = targetId;
-  crdEditorKeyId  = targetId.replace(/crd$/, 'key');
-  crdEditorCapoId = targetId.replace(/crd$/, 'capo');
+  crdEditorKeyId = targetId.replace(/crd$/, 'key');
   document.getElementById('crd-editor-textarea').value = src.value;
-  const keyEl  = document.getElementById(crdEditorKeyId);
-  const capoEl = document.getElementById(crdEditorCapoId);
-  crdEditorKey  = keyEl ? keyEl.value.trim() : '';
-  crdEditorTKey = deriveDefaultTKey({ key: crdEditorKey, capo: capoEl ? capoEl.value.trim() : '' });
+  const keyEl = document.getElementById(crdEditorKeyId);
+  crdEditorKey = keyEl ? keyEl.value.trim() : '';
   renderCrdEditorMeta();
   renderCrdEditorPreview();
   openModal('crd-editor');
@@ -2634,69 +2618,29 @@ function closeCrdEditor() {
     src.value = document.getElementById('crd-editor-textarea').value;
     src.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  // Key and the resulting Capo both sync back into the outer form's real fields — same "Key +
-  // Playing key -> Capo" relationship as the reader, just landing directly in the song instead
-  // of needing a separate Save-capo step.
   const keyEl = crdEditorKeyId && document.getElementById(crdEditorKeyId);
   if (keyEl) {
     keyEl.value = crdEditorKey;
     keyEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  const capoEl = crdEditorCapoId && document.getElementById(crdEditorCapoId);
-  if (capoEl) {
-    const c = computeCapo(crdEditorKey, crdEditorTKey);
-    if (c !== null) {
-      capoEl.value = c ? String(c) : '';
-      capoEl.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }
   closeModal('crd-editor');
-  crdEditorTargetId = crdEditorKeyId = crdEditorCapoId = null;
+  crdEditorTargetId = crdEditorKeyId = null;
 }
 
 function renderCrdEditorMeta() {
-  const capo = computeCapo(crdEditorKey, crdEditorTKey);
   document.getElementById('crd-editor-meta').innerHTML = `<div class="kch-wrap">
     <input class="kch kch-edit kch-key" id="crd-editor-key-input" type="text" placeholder="Key" autocomplete="off"
       value="${esc(crdEditorKey)}" oninput="crdEditorKeyEdited(this.value)">
-    <span class="kch-arrow">played as →</span>
-    <input class="kch kch-edit kch-key" id="crd-editor-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
-      value="${esc(crdEditorTKey)}" oninput="crdEditorTKeyEdited(this.value)">
-    <span class="kch" id="crd-editor-capo-badge">${capo === null ? 'Capo —' : 'Capo ' + capo}</span>
   </div>`;
 }
 
 function renderCrdEditorPreview() {
   const text = document.getElementById('crd-editor-textarea').value;
-  document.getElementById('crd-editor-preview').innerHTML = renderCrdHTML(text, chordsEffFor(crdEditorKey, crdEditorTKey));
+  document.getElementById('crd-editor-preview').innerHTML = renderCrdHTML(text, 0);
 }
 
-// Unlike the CRD reader, editing Key here isn't "pending vs. saved" — there's nothing saved yet
-// to diff against — so it moves the preview live, same as Playing key.
 function crdEditorKeyEdited(value) {
   crdEditorKey = value;
-  const badge = document.getElementById('crd-editor-capo-badge');
-  if (badge) { const c = computeCapo(crdEditorKey, crdEditorTKey); badge.textContent = c === null ? 'Capo —' : 'Capo ' + c; }
-  renderCrdEditorPreview();
-}
-function crdEditorTKeyEdited(value) {
-  crdEditorTKey = value;
-  const badge = document.getElementById('crd-editor-capo-badge');
-  if (badge) { const c = computeCapo(crdEditorKey, crdEditorTKey); badge.textContent = c === null ? 'Capo —' : 'Capo ' + c; }
-  renderCrdEditorPreview();
-}
-function crdEditorTKeyStep(dir) {
-  const tk = parseKeyName(crdEditorTKey) || parseKeyName(crdEditorKey);
-  if (!tk) return;
-  crdEditorTKey = formatKeyName(tk.idx + dir, tk.qual);
-  renderCrdEditorMeta();
-  renderCrdEditorPreview();
-}
-function crdEditorTKeyReset() {
-  const capoEl = crdEditorCapoId && document.getElementById(crdEditorCapoId);
-  crdEditorTKey = deriveDefaultTKey({ key: crdEditorKey, capo: capoEl ? capoEl.value.trim() : '' });
-  renderCrdEditorMeta();
-  renderCrdEditorPreview();
 }
 
 // Scroll distance per key press — the larger of "most of the visible pane" (like Page Down) or

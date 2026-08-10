@@ -21,7 +21,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
   - Auto-defaults to the song's saved Capo/Key on open, and folds in the global **Half-step down tuning** toggle
   - **Re-root** — a checkbox for fixing a sheet that's written a few semitones off from its labelled key. Check it to see the sheet exactly as saved (no capo math), nudge it up/down with −/+, type the correct Key; uncheck to bake that shift into the sheet and the key — Capo resets to 0 (or +1 with half-step tuning on), since the sheet now matches its label
   - Tap-to-hide header for a distraction-free view; keyboard scrolling (arrow keys / Page Up/Down)
-  - **⤢ Full editor** — a full-screen split view for comfortable long-sheet editing: the raw text on one side, a live rendering (styled chords, section labels — the same look as the reader) on the other, updating as you type. Its own Key/Playing-key/Capo row works out the Capo for you as you dial in the key and playing key — Key and Capo both save straight into the song when you tap Done, and it works even before the song's been saved
+  - **⤢ Full editor** — a full-screen split view for comfortable long-sheet editing: the raw text on one side, a live rendering (styled chords, section labels — the same look as the reader) on the other, updating as you type. Just a Key field alongside it (no Playing key/Capo here) — it saves straight into the song when you tap Done, and it works even before the song's been saved
 - Tag autocomplete when editing — suggests existing tags as you type
 
 ### Setlists
