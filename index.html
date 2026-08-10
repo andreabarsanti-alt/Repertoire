@@ -2095,7 +2095,7 @@ function deleteSong(id) {
 const NOTE_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const NOTE_CANON = ['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
-const CHORD_QUAL = '(?:maj7|maj9|maj13|maj|m7b5|m7#5|mM7|m6|m7|m9|m11|m13|min7|min|m|dim7|dim|aug|\\+|sus2|sus4|sus|add9|add11|add2|6\\/9|6|7b5|7#5|7b9|7#9|7|9|11|13|2|4|5)';
+const CHORD_QUAL = '(?:maj7|maj9|maj13|maj|mmaj7|mM7|m7b5|m7#5|m6|m7|m9|m11|m13|min7|min|m|dim7|dim|aug|\\+|sus2|sus4|sus|add9|add11|add2|6\\/9|6|7b5|7#5|7b9|7#9|7|9|11|13|2|4|5)';
 const CHORD_RE = new RegExp('^[A-G](#|b)?' + CHORD_QUAL + '?(\\/[A-G](#|b)?)?$');
 const CHORD_DECOR_RE = /^(\|{1,2}:?|:?\|{1,2}|%{1,2}|N\.?C\.?)$/i;
 const SECTION_RE = /^(chorus|verse|pre-chorus|prechorus|bridge|intro|outro|hook|solo|interlude|tag|refrain|coda|instrumental)\s*\d*\.?$/i;
@@ -2207,16 +2207,24 @@ function renderCrdHTML(text, semis) {
 }
 
 // ── Reader UI ──
-// Parses a key/playing-key string as a root note plus an optional minor marker — the only two
-// qualities a "key" (as opposed to a chord) can have, e.g. "Am", "F#", "Bb", "C", "Ebm". Returns
-// {idx, minor} or null if it's not exactly a root note (+ optional accidental + optional "m") —
-// blank, mid-typing, or a full chord like "Am7"/"Csus4" all correctly fail to parse.
+// Parses a key/playing-key string as a root note plus an optional quality — the handful a "key"
+// (as opposed to a full chord) can reasonably carry: nothing (major), "m" (minor), or "mmaj7"
+// (minor-major-7), e.g. "Am", "F#", "Bb", "C", "Gmmaj7". Returns {idx, qual} or null if it's not
+// exactly a root note (+ optional accidental + optional quality) — blank, mid-typing, or a full
+// chord like "Am7"/"Csus4" all correctly fail to parse.
+const KEY_QUALS = ['mmaj7', 'm', '']; // longest first, so "Gmmaj7" doesn't stop at "Gm"
 function parseKeyName(str) {
-  const m = String(str || '').trim().match(/^([A-G])([#b]?)(m?)$/);
-  return m ? { idx: noteIndex(m[1] + m[2]), minor: !!m[3] } : null;
+  const s = String(str || '').trim();
+  for (const qual of KEY_QUALS) {
+    if (!qual || s.endsWith(qual)) {
+      const m = s.slice(0, s.length - qual.length).match(/^([A-G])([#b]?)$/);
+      if (m) return { idx: noteIndex(m[1] + m[2]), qual };
+    }
+  }
+  return null;
 }
-function formatKeyName(idx, minor) {
-  return NOTE_CANON[((idx % 12) + 12) % 12] + (minor ? 'm' : '');
+function formatKeyName(idx, qual) {
+  return NOTE_CANON[((idx % 12) + 12) % 12] + (qual || '');
 }
 
 // The key the chords are being displayed in right now, relative to the song's *actual saved*
@@ -2249,7 +2257,7 @@ function deriveDefaultTKey(s) {
   // Inverse of computeCapo's mod-12 wrap: a wrapped capo of e.g. 0 (which was really 11 before
   // the tuning bump rolled it over) has to unwrap the same way, not just subtract-and-clamp.
   const baseCapo = (((parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0)) % 12 + 12) % 12;
-  return formatKeyName(sk.idx - baseCapo, sk.minor);
+  return formatKeyName(sk.idx - baseCapo, sk.qual);
 }
 
 function openCrdReader(id) {
@@ -2344,7 +2352,7 @@ function crdTKeyStep(dir) {
   if (!s) return;
   let tk = parseKeyName(crdEditTKey) || parseKeyName(deriveDefaultTKey(s));
   if (!tk) return;
-  crdEditTKey = formatKeyName(tk.idx + dir, tk.minor);
+  crdEditTKey = formatKeyName(tk.idx + dir, tk.qual);
   renderCrdBody();
 }
 function crdTKeyReset() {
