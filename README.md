@@ -16,9 +16,10 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views
 - **Quick UG Import** — paste a Ultimate Guitar URL to auto-detect title and artist
-- **CRD reader** — paste in your own chord/lyric sheet per song (inline `[G]` chords or a chord line above the lyrics, `[Verse]`/`[Chorus]` section labels); if present, the title opens it in a full-screen in-app reader instead of Ultimate Guitar, with a UG link, edit, and delete still one tap away
+- **CRD reader** — paste in your own chord/lyric sheet per song (inline `[G]` chords or a chord line above the lyrics, `[Verse]`/`[Chorus]` section labels); if present, the title opens it in a full-screen in-app reader instead of Ultimate Guitar, with a UG link and edit still one tap away (no delete here — that's Songs-tab-only, so it's never a stray tap away mid-reading)
   - **Root key vs. Playing key** — type the key you're actually playing shapes in and the header live-shows the **Capo** you need (and re-transposes the chords on screen); edit the **Key** itself to preview a different root without touching the sheet. Nothing's saved until you tap **Save capo** (just remembers the capo) or **Update root** (also rewrites the sheet into the new key) — reload without tapping either and it's exactly as it was
   - Auto-defaults to the song's saved Capo/Key on open, and folds in the global **Half-step down tuning** toggle
+  - **Re-root** — a checkbox for fixing a sheet that's written a few semitones off from its labelled key. Check it to see the sheet exactly as saved (no capo math), nudge it up/down with −/+, type the correct Key; uncheck to bake that shift into the sheet and the key. Capo is left alone by design — use Save capo right after if it needs resyncing too
   - Tap-to-hide header for a distraction-free view; a full-page editor for comfortable long-sheet editing; keyboard scrolling (arrow keys / Page Up/Down)
 - Tag autocomplete when editing — suggests existing tags as you type
 

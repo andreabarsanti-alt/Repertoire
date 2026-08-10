@@ -646,6 +646,13 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .crd-toolbar-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; }
 .crd-transpose, .crd-toolbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .crd-transpose-val { font-family: var(--fm); font-size: 0.85rem; min-width: 28px; text-align: center; color: var(--text); }
+.crd-reroot-toggle {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  font-size: 0.72rem; color: var(--text-dim); user-select: none;
+  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border);
+}
+.crd-reroot-toggle input { cursor: pointer; }
+.crd-reroot-toggle:has(input:checked) { color: var(--accent); border-color: var(--accent); background: rgba(61,158,140,.1); }
 #crd-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .crd-body {
   font-family: var(--fm); white-space: pre-wrap; word-break: break-word;
@@ -1080,15 +1087,18 @@ select.fi { cursor: pointer; }
         <div class="crd-reader-actions">
           <a class="btn btn-secondary btn-sm" id="crd-ug-link" href="#" target="_blank" title="Open on Ultimate Guitar">↗ UG</a>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditSong()" title="Edit song">✎</button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="crdDeleteSong()" title="Delete song">✕</button>
         </div>
       </div>
       <div class="crd-toolbar">
         <div class="crd-transpose">
-          <span class="crd-toolbar-label">Playing key</span>
+          <label class="crd-reroot-toggle" title="Show the sheet exactly as saved (no capo math) and shift it with ± — for fixing a chord sheet that's written in the wrong key">
+            <input type="checkbox" id="crd-reroot-chk" onchange="crdReRootToggle(this.checked)"> Re-root
+          </label>
+          <span class="crd-toolbar-label" id="crd-transpose-label">Playing key</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(-1)" title="Down a semitone">−</button>
+          <span class="crd-transpose-val" id="crd-reroot-delta-label" style="display:none">±0</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(1)" title="Up a semitone">+</button>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyReset()" title="Reset to this song's saved capo">↺</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyReset()" title="Reset">↺</button>
           <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo, or rewrite the sheet into a new root key" disabled>💾 Save capo</button>
         </div>
         <div class="crd-toolbar-right">
@@ -1294,6 +1304,11 @@ let crdFontSize = parseInt(localStorage.getItem('rep_crd_font') || '24', 10);
 // read-only Capo badge — see crdChordsEff/computeCapo.
 let crdEditKey  = '';
 let crdEditTKey = '';
+// "Re-root" mode — for fixing a sheet that's written a few semitones off from its labelled key.
+// While true, the reader shows the raw saved crd (crdReRootDelta semitones applied, no capo
+// math at all) and only the Key field + a raw ± stepper are live; see crdReRootToggle.
+let crdReRoot      = false;
+let crdReRootDelta = 0;
 
 // ─────────────────────────────────────────
 // PERSISTENCE
@@ -2266,6 +2281,8 @@ function openCrdReader(id) {
   crdSongId = id;
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
+  crdReRoot = false;
+  crdReRootDelta = 0;
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
   renderCrdBody();
   crdUpdateScrollPctLabel();
@@ -2277,22 +2294,38 @@ function renderCrdBody() {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
   document.getElementById('crd-title').textContent = s.title;
-  // Root key and Playing key are both editable right here — typing into them only updates
-  // crdEditKey/crdEditTKey (see crdMetaEdited); nothing is written to the song until
-  // "Save capo" / "Update root" (crdCommit). The Capo badge is read-only, derived from the two.
-  const capo = computeCapo(crdEditKey, crdEditTKey);
-  document.getElementById('crd-meta').innerHTML = `<div class="kch-wrap">
-    <input class="kch kch-edit kch-key" id="crd-key-input" type="text" placeholder="Key" autocomplete="off"
-      value="${esc(crdEditKey)}" oninput="crdMetaEdited('key', this.value)">
-    <span class="kch-arrow">played as →</span>
-    <input class="kch kch-edit kch-key" id="crd-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
-      value="${esc(crdEditTKey)}" oninput="crdMetaEdited('tkey', this.value)">
-    <span class="kch" id="crd-capo-badge">${capo === null ? 'Capo —' : 'Capo ' + capo}</span>
-    ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
-  </div>`;
+
+  // Re-root mode shows the raw saved sheet with no capo math at all — only Key is editable,
+  // Playing key/Capo don't apply. Otherwise: Key and Playing key are both editable right here —
+  // typing only updates crdEditKey/crdEditTKey (see crdMetaEdited); nothing is written to the
+  // song until "Save capo" / "Update root" (crdCommit). The Capo badge is read-only, derived
+  // from the two.
+  document.getElementById('crd-meta').innerHTML = crdReRoot
+    ? `<div class="kch-wrap">
+        <input class="kch kch-edit kch-key" id="crd-key-input" type="text" placeholder="Key" autocomplete="off"
+          value="${esc(crdEditKey)}" oninput="crdMetaEdited('key', this.value)">
+        <span class="kch-arrow">raw saved sheet, no capo</span>
+        ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
+      </div>`
+    : `<div class="kch-wrap">
+        <input class="kch kch-edit kch-key" id="crd-key-input" type="text" placeholder="Key" autocomplete="off"
+          value="${esc(crdEditKey)}" oninput="crdMetaEdited('key', this.value)">
+        <span class="kch-arrow">played as →</span>
+        <input class="kch kch-edit kch-key" id="crd-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
+          value="${esc(crdEditTKey)}" oninput="crdMetaEdited('tkey', this.value)">
+        <span class="kch" id="crd-capo-badge">${(() => { const c = computeCapo(crdEditKey, crdEditTKey); return c === null ? 'Capo —' : 'Capo ' + c; })()}</span>
+        ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
+      </div>`;
+
+  document.getElementById('crd-reroot-chk').checked = crdReRoot;
+  document.getElementById('crd-transpose-label').textContent = crdReRoot ? 'Re-root shift' : 'Playing key';
+  const deltaLabel = document.getElementById('crd-reroot-delta-label');
+  deltaLabel.style.display = crdReRoot ? '' : 'none';
+  if (crdReRoot) deltaLabel.textContent = crdReRootDelta === 0 ? '±0' : (crdReRootDelta > 0 ? '+' : '') + crdReRootDelta;
+  document.getElementById('crd-store-btn').style.display = crdReRoot ? 'none' : '';
   crdUpdateStoreBtn();
 
-  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
+  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdReRoot ? crdReRootDelta : crdChordsEff(s));
   crdApplyFontSize();
 
   const ugBtn = document.getElementById('crd-ug-link');
@@ -2307,6 +2340,9 @@ function crdMetaEdited(field, value) {
   if (field === 'key') crdEditKey = value; else crdEditTKey = value;
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
+  // Re-root mode only has the Key field, and editing it never touches the (raw) display, same
+  // as everywhere else — nothing more to refresh here.
+  if (crdReRoot) return;
   if (field === 'tkey') {
     document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
     crdApplyFontSize();
@@ -2321,11 +2357,12 @@ function crdMetaEdited(field, value) {
 
 // Keeps the save button's label/enabled-state in sync: it reads "Update root" (rewrites the
 // sheet + capo together) once the root key has actually changed, or "Save capo" (capo only,
-// root and sheet untouched) when just the playing key/capo drifted from what's saved.
+// root and sheet untouched) when just the playing key/capo drifted from what's saved. Hidden
+// entirely in re-root mode (see renderCrdBody) — that mode commits via the checkbox instead.
 function crdUpdateStoreBtn() {
   const s = db.songs.find(x => x.id === crdSongId);
   const btn = document.getElementById('crd-store-btn');
-  if (!btn || !s) return;
+  if (!btn || !s || crdReRoot) return;
   const rootChanged = crdEditKey !== (s.key || '');
   const capo = computeCapo(crdEditKey, crdEditTKey);
   const capoChanged = capo !== null && capo !== (parseInt(s.capo, 10) || 0);
@@ -2346,10 +2383,16 @@ function toggleCrdChrome() {
 }
 
 // −/+ nudge the playing key by a semitone (handy one-handed); ↺ discards any pending playing-key
-// edit and goes back to what's derived from the song's saved key/capo/tuning.
+// edit and goes back to what's derived from the song's saved key/capo/tuning. In re-root mode
+// these instead nudge the raw shift (crdReRootDelta) / reset it to 0 — see crdReRootToggle.
 function crdTKeyStep(dir) {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
+  if (crdReRoot) {
+    crdReRootDelta = Math.max(-11, Math.min(11, crdReRootDelta + dir));
+    renderCrdBody();
+    return;
+  }
   let tk = parseKeyName(crdEditTKey) || parseKeyName(deriveDefaultTKey(s));
   if (!tk) return;
   crdEditTKey = formatKeyName(tk.idx + dir, tk.qual);
@@ -2358,8 +2401,53 @@ function crdTKeyStep(dir) {
 function crdTKeyReset() {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
+  if (crdReRoot) { crdReRootDelta = 0; renderCrdBody(); return; }
   crdEditTKey = deriveDefaultTKey(s);
   renderCrdBody();
+}
+
+// "Re-root" mode: for fixing a chord sheet that's written a few semitones off from its
+// labelled key. Checking it switches the display to the raw saved sheet (crdReRootDelta
+// semitones, no capo math); −/+/↺ shift that raw delta directly (see crdTKeyStep/crdTKeyReset).
+// Unchecking bakes the accumulated shift into the saved sheet and sets the key, but deliberately
+// leaves capo untouched — "Save capo" is there afterward if it also needs resyncing to the new
+// playing key, kept as a separate, explicit step rather than a silent side effect.
+function crdReRootToggle(checked) {
+  const s = db.songs.find(x => x.id === crdSongId);
+  if (!s) return;
+
+  if (checked) {
+    crdReRoot = true;
+    crdReRootDelta = 0;
+    renderCrdBody();
+    return;
+  }
+
+  const rootChanged  = crdEditKey !== (s.key || '');
+  const deltaChanged = crdReRootDelta !== 0;
+  if (!rootChanged && !deltaChanged) {
+    crdReRoot = false;
+    renderCrdBody();
+    return;
+  }
+
+  const newRoot = parseKeyName(crdEditKey);
+  if (!newRoot) { toast('Enter a valid root key'); renderCrdBody(); return; }
+
+  const label = (crdReRootDelta > 0 ? '+' : '') + crdReRootDelta;
+  const msg = deltaChanged
+    ? `Rewrite the saved chord sheet ${label} semitones and set key to ${crdEditKey}? Capo (${s.capo || '0'}) is left as-is.`
+    : `Set key to ${crdEditKey}? The chord sheet itself is unchanged.`;
+  if (!confirm(msg)) { renderCrdBody(); return; }
+
+  if (deltaChanged) s.crd = transposeCrdText(s.crd, crdReRootDelta);
+  s.key = crdEditKey;
+  crdEditTKey = formatKeyName(newRoot.idx + crdReRootDelta, newRoot.qual);
+  crdReRoot = false;
+  crdReRootDelta = 0;
+  save(); renderAll();
+  renderCrdBody();
+  toast('Saved');
 }
 
 // "Half-step down tuning" is a global, JSON-persisted setting (db.tuneUp). Toggling it bumps
@@ -2479,13 +2567,6 @@ function crdEditSong() {
   document.querySelector('.tab-btn[data-tab="songs"]')?.click();
   startInlineEdit(id);
   setTimeout(() => document.getElementById('ie-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
-}
-
-function crdDeleteSong() {
-  if (!crdSongId) return;
-  const id = crdSongId;
-  closeCrdReader();
-  deleteSong(id);
 }
 
 // ── Full-page CRD editor (pops out whichever textarea it was opened from) ──
