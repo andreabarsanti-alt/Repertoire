@@ -231,11 +231,12 @@
       "id": "73bc8f45-8bbb-4f69-ac94-cb7f4e329285",
       "title": "Im Goin Down",
       "tags": "Bruce Springsteen,",
-      "key": "Bb",
-      "capo": "-2",
+      "key": "A",
+      "capo": "9",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bruce-springsteen/im-goin-down-official-4799708",
-      "attrs": {}
+      "attrs": {},
+      "crd": "[Intro]\nA E F#m D\nA E\nF#m\n\n\n[Verse 1]\nD  A                  E                       F#m\n We sit in the car outside your house, you're quiet\n                      D\nI can feel the heat coming around\nA                  E\n I go to put my arm around you\n       F#m                            D\nAnd you   give me a look like I'm way out of bounds\n     A                             E\nWell, you let out one of your bored sighs\n     F#m                          D\nWell,   well lately when I look into your eyes\n\n\n[Chorus]\n          A                E\nI'm goin' down, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n\n\n[Verse 2]\nA                  E         F#m           D\n We get dressed up, and we go   out, baby, for the night\nA                      E             F#m                D\n We come home early burning, burning.   Burning in some fire fight\nA                          E\n I'm sick and tired of you setting me up, yeah\nF#m                  D\n   Set me up just to knocka knocka knocka me\n\n\n[Chorus]\n     A           E\ndown, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n(HIT IT, NOW)\n\n\n[Solo]\nA E F#m D\nA E F#m D\n\n\n[Bridge]\nA                E\n I pull you close now, baby\nF#m                        D\n   But when we kiss, I can feel a doubt\nA                    E\n I remember back when we started\nF#m                           D\n   My kisses used to turn you insideout\nA                       E\n I used to drive you to work in the morning\nF#m                            D\n   Friday night, I'd drive you all around\nA                         E\n You used to love to drive me wild, yeah\nF#m                               D\n   But lately, girl, you get your kicks from you just driving me\n\n\n[Chorus]\n     A           E\ndown, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m               D\nI'm goin' down, Hey! aboppa de down, down\n      A                E\ngoin' down, down, down, down.\n          F#m               D\nI'm goin' down. Hey! aboppa de down down\n         A                E\nI'm goin down, down, down. Yeah!\n         F#m                D\nI'm goin down, down. Aboppa, aboppa dooda, say\nA                E\ndown, down, down, down\n          F#m              D\nI'm goin' down, down, down, down\n          A                E\nI'm goin' down, down, down, down\n          F#m               D\nI'm goin' down, Hey! aboppa dooda down.\n\n\n[Fade Out]\nA E F#m D\nA E F#m D"
     },
     {
       "id": "b3cd5db3-c8f8-454e-865e-b68fbdcdfdb5",
@@ -366,7 +367,8 @@
           "songId": "9349c2ab-fa76-473e-a647-de6b6c5063e3"
         }
       ],
-      "type": "generic"
+      "type": "live",
+      "date": "2026-06-21"
     },
     {
       "id": "7c7dc4b3-a8de-440a-974a-78bb992808a7",
@@ -400,6 +402,10 @@
         {
           "type": "song",
           "songId": "d89bbc86-e646-40bf-8ff2-c5df280af6fb"
+        },
+        {
+          "type": "song",
+          "songId": "73bc8f45-8bbb-4f69-ac94-cb7f4e329285"
         }
       ],
       "date": "2026-09-18"
