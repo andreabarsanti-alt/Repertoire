@@ -826,6 +826,9 @@ select.fi { cursor: pointer; }
     <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
       <input type="checkbox" id="global-tune-toggle" onchange="toggleGlobalTune()"> Half-step down tuning
     </label>
+    <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
+      <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
+    </label>
     <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
     <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer">
@@ -896,7 +899,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Artists (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, The Beatles"></div>
     <div class="fg-row">
       <div class="fg"><label>Key</label><input class="fi" id="f-key" type="text" placeholder="G"></div>
-      <div class="fg"><label>Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
+      <div class="fg"><label id="lbl-f-capo">Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
     </div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
@@ -1092,7 +1095,7 @@ select.fi { cursor: pointer; }
     <h2>Print options</h2>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="print-capo" style="width:16px;height:16px"> Include Capo
+        <input type="checkbox" id="print-capo" style="width:16px;height:16px"> Include <span id="lbl-print-capo">Capo</span>
       </label>
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
         <input type="checkbox" id="print-harp" style="width:16px;height:16px"> Include Harp
@@ -1162,6 +1165,11 @@ function migrateSetlists() {
 }
 
 let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false };
+// Keyboard Mode is a device-local *display* preference (not song data, not JSON-persisted/pushed):
+// it relabels every "Capo N" as "Transpose ±N", wrapping fret counts over 6 down an octave
+// (capo 7 → Transpose -5 … capo 11 → Transpose -1) so keyboard players see the shift they'd
+// actually play rather than a guitarist's fret count. See capoWord()/capoText().
+let keyboardMode = localStorage.getItem('rep_keyboard_mode') === '1';
 let activeBubble  = null;
 let inlineEditId  = null;
 let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
@@ -1514,7 +1522,7 @@ function closeDetail() { activeBubble = null; renderBubbles(); }
 function kchBadges(s) {
   const parts = [];
   if (s.key)  parts.push(`<span class="kch">${esc(s.key)}</span>`);
-  if (s.capo) parts.push(`<span class="kch">Capo ${esc(s.capo)}</span>`);
+  if (s.capo) parts.push(`<span class="kch">${esc(capoText(s.capo))}</span>`);
   if (s.harp) parts.push(`<span class="kch harp">Harp ${esc(s.harp)}</span>`);
   return parts.join('');
 }
@@ -1618,7 +1626,7 @@ function songEditRow(s) {
       <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
       <div class="inline-kch-row">
         <input class="inline-fi inline-sm" id="ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
-        <input class="inline-fi inline-sm" id="ie-capo" value="${esc(s.capo||'')}" placeholder="Capo" ${k}>
+        <input class="inline-fi inline-sm" id="ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
     </td>
@@ -1917,7 +1925,7 @@ function renderCrdBody() {
     <span class="kch-arrow">played as →</span>
     <input class="kch kch-edit kch-key" id="crd-tkey-input" type="text" placeholder="Playing key" autocomplete="off"
       value="${esc(crdEditTKey)}" oninput="crdMetaEdited('tkey', this.value)">
-    <span class="kch" id="crd-capo-badge">${(() => { const c = computeCapo(crdEditKey, crdEditTKey); return c === null ? 'Capo —' : 'Capo ' + c; })()}</span>
+    <span class="kch" id="crd-capo-badge">${esc(capoBadgeText(computeCapo(crdEditKey, crdEditTKey)))}</span>
     ${s.harp ? `<span class="kch harp">Harp ${esc(s.harp)}</span>` : ''}
   </div>`;
   crdUpdateStoreBtn();
@@ -1944,7 +1952,7 @@ function crdMetaEdited(field, value) {
   const badge = document.getElementById('crd-capo-badge');
   if (badge) {
     const capo = computeCapo(crdEditKey, crdEditTKey);
-    badge.textContent = capo === null ? 'Capo —' : 'Capo ' + capo;
+    badge.textContent = capoBadgeText(capo);
   }
   crdUpdateStoreBtn();
 }
@@ -1960,10 +1968,10 @@ function crdUpdateStoreBtn() {
   const capo = computeCapo(crdEditKey, crdEditTKey);
   const capoChanged = capo !== null && capo !== (parseInt(s.capo, 10) || 0);
   btn.disabled = !(rootChanged || capoChanged);
-  btn.textContent = rootChanged ? '💾 Update root' : '💾 Save capo';
+  btn.textContent = rootChanged ? '💾 Update root' : `💾 Save ${capoWord().toLowerCase()}`;
   btn.title = rootChanged
-    ? 'Rewrite the chord sheet into the new root key and update capo'
-    : "Save this capo as the song's default";
+    ? `Rewrite the chord sheet into the new root key and update ${capoWord().toLowerCase()}`
+    : `Save this ${capoWord().toLowerCase()} as the song's default`;
 }
 
 function closeCrdReader() {
@@ -1999,6 +2007,35 @@ function crdTKeyReset() {
 function syncTuneToggles() {
   const a = document.getElementById('global-tune-toggle');
   if (a) a.checked = !!db.tuneUp;
+  const k = document.getElementById('keyboard-mode-toggle');
+  if (k) k.checked = keyboardMode;
+  const lblF = document.getElementById('lbl-f-capo');
+  if (lblF) lblF.textContent = capoWord();
+  const lblP = document.getElementById('lbl-print-capo');
+  if (lblP) lblP.textContent = capoWord();
+}
+
+// ─────────────────────────────────────────
+// KEYBOARD MODE — display-only relabeling of "Capo N" as "Transpose ±N". The underlying
+// s.capo value (a fret count, 0-11) never changes; only how it's shown does. A capo raises
+// pitch by N semitones; a keyboard player gets there faster going the short way round the
+// octave, so counts over 6 are shown as the equivalent negative shift instead
+// (capo 7 == +7 semitones == -5 semitones, i.e. Transpose -5).
+function capoWord() { return keyboardMode ? 'Transpose' : 'Capo'; }
+function capoWrap(n) { return n > 6 ? n - 12 : n; }
+function capoText(capoVal) {
+  const n = parseInt(capoVal, 10);
+  if (isNaN(n)) return '';
+  return keyboardMode ? `Transpose ${capoWrap(n)}` : `Capo ${n}`;
+}
+// Like capoText, but for a computeCapo() result that may be null (no valid playing key yet).
+function capoBadgeText(c) { return c === null ? `${capoWord()} —` : capoText(c); }
+function toggleKeyboardMode() {
+  const cb = document.getElementById('keyboard-mode-toggle');
+  keyboardMode = cb.checked;
+  localStorage.setItem('rep_keyboard_mode', keyboardMode ? '1' : '0');
+  renderAll();
+  if (crdSongId) renderCrdBody();
 }
 function toggleGlobalTune() {
   const cb = document.getElementById('global-tune-toggle');
@@ -2067,8 +2104,8 @@ function crdCommit() {
   if (!rootChanged && !capoChanged) return;
 
   const msg = rootChanged
-    ? `Rewrite the chord sheet from ${s.key || '—'} to ${crdEditKey}, and set capo to ${pendingCapo}?`
-    : `Save capo ${pendingCapo} as this song's default?`;
+    ? `Rewrite the chord sheet from ${s.key || '—'} to ${crdEditKey}, and set ${capoWord().toLowerCase()} to ${keyboardMode ? capoWrap(pendingCapo) : pendingCapo}?`
+    : `Save ${capoText(pendingCapo).toLowerCase()} as this song's default?`;
   if (!confirm(msg)) return;
 
   if (rootChanged) {
@@ -2389,7 +2426,7 @@ function slEditRow(s, i, nested) {
     </div>
     <div class="inline-kch-row">
       <input class="inline-fi inline-sm" id="sl-ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
-      <input class="inline-fi inline-sm" id="sl-ie-capo" value="${esc(s.capo||'')}" placeholder="Capo" ${k}>
+      <input class="inline-fi inline-sm" id="sl-ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}>
@@ -2734,7 +2771,7 @@ function doPrint() {
   const extraCol = inclCapo || inclHarp;
   const rows = songs.map((s, i) => {
     let extras = '';
-    if (inclCapo && s.capo) extras += `<span class="badge">Capo ${s.capo}</span>`;
+    if (inclCapo && s.capo) extras += `<span class="badge">${esc(capoText(s.capo))}</span>`;
     if (inclHarp && s.harp) extras += `<span class="badge harp">Harp ${s.harp}</span>`;
     return `<tr>
       <td class="num">${i + 1}</td>

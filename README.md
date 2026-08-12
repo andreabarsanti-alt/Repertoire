@@ -35,6 +35,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 
 ### Data
 - **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match
+- **Keyboard Mode** — a header toggle (device-local, not saved with the data) that relabels every "Capo" as "Transpose" throughout the app, for players who don't use a capo. Fret counts over 6 are shown wrapped an octave down as the equivalent negative shift (capo 7 → Transpose -5, capo 11 → Transpose -1) — the underlying saved value is unchanged, only the display
 - All data stored in `localStorage` (persists across sessions on the same device)
 - On first load, seeds from `repertoire.json` if no saved data exists
 - Detects when the repo file differs from local data and offers to sync
