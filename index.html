@@ -2821,12 +2821,20 @@ function doPrint() {
   setTimeout(() => w.print(), 250);
 }
 
-document.querySelectorAll('.overlay').forEach(o =>
+// Click-outside-to-close for every overlay *except* the full-page CRD editor: that one's a
+// full-screen text editor whose content only makes it back into the song via closeCrdEditor()'s
+// sync — a bare classList.add('hidden') here would skip that and silently drop whatever was
+// typed. Its wide-screen backdrop margin is also the easiest of all the overlays to fat-finger,
+// so it requires the explicit "← Done" button instead of a stray click.
+document.querySelectorAll('.overlay:not(#crd-editor)').forEach(o =>
   o.addEventListener('click', e => { if (e.target === o) o.classList.add('hidden'); })
 );
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (playSetId) { closePlay(); return; }
+    // The full-page CRD editor needs its own sync-on-close (closeCrdEditor), same reasoning
+    // as the backdrop-click exclusion above — a bare hide would drop whatever was typed.
+    if (!document.getElementById('crd-editor').classList.contains('hidden')) { closeCrdEditor(); return; }
     document.querySelectorAll('.overlay:not(.hidden)').forEach(o => o.classList.add('hidden'));
   }
 });
