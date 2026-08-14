@@ -642,23 +642,19 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 }
 #crd-editor-title { font-family: var(--fd); font-size: 1rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
 #crd-editor-hint { font-size: 0.72rem; color: var(--text-dim); flex: 1; min-width: 200px; }
-/* Textarea (left/top) and live rendered preview (right/bottom) — same rendering the CRD reader
-   uses (.crd-body), so what you see here is what the reader will show. */
-.crd-editor-split { display: flex; flex: 1; min-height: 0; }
+/* Full-width textarea, or the live rendered preview (same rendering the CRD reader uses,
+   .crd-body, so what you see here is what the reader will show) — one pane at a time,
+   toggled by the header's Preview button. */
+.crd-editor-pane { flex: 1; min-height: 0; }
 .crd-editor-textarea {
-  flex: 1 1 50%; min-width: 0; border: none; outline: none; resize: none;
+  width: 100%; height: 100%; border: none; outline: none; resize: none;
   background: #020408; color: var(--text); font-family: var(--fm);
   font-size: 18px; line-height: 1.6; padding: 20px 20px 40vh;
 }
 .crd-editor-preview {
-  flex: 1 1 50%; min-width: 0; max-width: none; margin: 0; overflow-y: auto;
-  font-size: 18px; padding: 20px 20px 40vh;
-  border-left: 1px solid rgba(255,255,255,.08); background: #06090c;
-}
-@media (max-width: 720px) {
-  .crd-editor-split { flex-direction: column; }
-  .crd-editor-textarea, .crd-editor-preview { flex: 1 1 50%; min-height: 0; }
-  .crd-editor-preview { border-left: none; border-top: 1px solid rgba(255,255,255,.08); }
+  width: 100%; height: 100%; max-width: none; margin: 0; overflow-y: auto;
+  box-sizing: border-box; font-size: 18px; padding: 20px 20px 40vh;
+  background: #06090c;
 }
 
 /* Add songs list */
@@ -1061,10 +1057,11 @@ select.fi { cursor: pointer; }
       <div id="crd-editor-title">Chord Sheet Editor</div>
       <div id="crd-editor-meta"></div>
       <span id="crd-editor-hint">Chords inline like [G], or on their own line above the lyrics · [Verse]/[Chorus] for section labels</span>
+      <button type="button" class="crd-expand-btn" id="crd-editor-preview-btn" onclick="toggleCrdEditorPreview()" title="Preview how this will look in the reader">👁 Preview</button>
     </div>
-    <div class="crd-editor-split">
-      <textarea id="crd-editor-textarea" class="crd-editor-textarea" placeholder="Paste or type a chord/lyric sheet…" spellcheck="false" oninput="renderCrdEditorPreview()"></textarea>
-      <pre id="crd-editor-preview" class="crd-body crd-editor-preview"></pre>
+    <div class="crd-editor-pane">
+      <textarea id="crd-editor-textarea" class="crd-editor-textarea" placeholder="Paste or type a chord/lyric sheet…" spellcheck="false"></textarea>
+      <pre id="crd-editor-preview" class="crd-body crd-editor-preview" style="display:none"></pre>
     </div>
   </div>
 </div>
@@ -2152,6 +2149,7 @@ function crdEditSong() {
 let crdEditorTargetId = null;
 let crdEditorKeyId = null; // sibling Key field id, derived from targetId ("f-crd" -> "f-key", "ie-crd" -> "ie-key", "sl-ie-crd" -> "sl-ie-key")
 let crdEditorKey   = '';   // local Key field state, synced back to crdEditorKeyId on Done
+let crdEditorPreviewing = false; // false = editing the textarea, true = showing the rendered preview (toggleCrdEditorPreview)
 
 // The full-page editor doubles as a lightweight CRD viewer: a Key field plus a live rendering of
 // the sheet, built from whichever song form it was opened from (Add Song modal / Songs table
@@ -2165,7 +2163,7 @@ function openCrdEditor(targetId) {
   const keyEl = document.getElementById(crdEditorKeyId);
   crdEditorKey = keyEl ? keyEl.value.trim() : '';
   renderCrdEditorMeta();
-  renderCrdEditorPreview();
+  setCrdEditorPreviewing(false);
   openModal('crd-editor');
   setTimeout(() => document.getElementById('crd-editor-textarea').focus(), 60);
 }
@@ -2191,10 +2189,21 @@ function renderCrdEditorMeta() {
   </div>`;
 }
 
-function renderCrdEditorPreview() {
-  const text = document.getElementById('crd-editor-textarea').value;
-  document.getElementById('crd-editor-preview').innerHTML = renderCrdHTML(text, 0);
+// Swaps between the raw textarea and a live rendering of it (same renderCrdHTML the reader
+// uses, so what you see here is what the reader will show) — one full-width pane at a time,
+// rather than a permanent side-by-side split.
+function setCrdEditorPreviewing(on) {
+  crdEditorPreviewing = on;
+  const ta = document.getElementById('crd-editor-textarea');
+  const pv = document.getElementById('crd-editor-preview');
+  const btn = document.getElementById('crd-editor-preview-btn');
+  if (on) pv.innerHTML = renderCrdHTML(ta.value, 0);
+  ta.style.display = on ? 'none' : '';
+  pv.style.display = on ? '' : 'none';
+  btn.textContent = on ? '✎ Edit' : '👁 Preview';
+  if (!on) ta.focus();
 }
+function toggleCrdEditorPreview() { setCrdEditorPreviewing(!crdEditorPreviewing); }
 
 function crdEditorKeyEdited(value) {
   crdEditorKey = value;
