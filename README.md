@@ -12,6 +12,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 
 ### Songs
 - Sortable, searchable table of all songs
+- Filter to only songs **with** or **without** a chord sheet, alongside the text search
 - Add, inline-edit, and delete songs
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views

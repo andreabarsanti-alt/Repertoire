@@ -209,7 +209,7 @@ nav { display: flex; gap: 3px; flex: 1; }
   display: flex; align-items: center; gap: 10px;
   padding: 0 0 14px 0; flex-wrap: wrap;
 }
-#viz-filters { display: flex; gap: 4px; }
+#viz-filters, #songs-crd-filters { display: flex; gap: 4px; }
 .viz-filter-btn {
   padding: 7px 16px; border: 1px solid var(--border);
   border-radius: 20px; cursor: pointer;
@@ -865,6 +865,11 @@ select.fi { cursor: pointer; }
     <button class="btn btn-primary" onclick="openSongModal()">+ Add Song</button>
     <button class="btn btn-secondary btn-sm" onclick="openUGImport()" title="Import from Ultimate Guitar">⬇ UG</button>
     <button class="btn btn-secondary btn-sm" onclick="openPrintModal('songs')" title="Print song list">⎙ Print</button>
+    <div id="songs-crd-filters">
+      <button type="button" class="viz-filter-btn active" data-crd-filter="all" onclick="setSongsCrdFilter('all')">All</button>
+      <button type="button" class="viz-filter-btn" data-crd-filter="with" onclick="setSongsCrdFilter('with')" title="Only songs with a chord sheet">🎸 Has chords</button>
+      <button type="button" class="viz-filter-btn" data-crd-filter="without" onclick="setSongsCrdFilter('without')" title="Only songs without a chord sheet">No chords</button>
+    </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
   <div class="tbl-wrap">
@@ -1173,6 +1178,7 @@ let slEditSongId  = null; // song being inline-edited from within a setlist row 
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
+let songsCrdFilter = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
 let dragIdx = null;
 let selectedItemIdx = null;
 let crdSongId       = null;
@@ -1565,13 +1571,22 @@ function renderSongsHeader() {
   </tr>`;
 }
 
+function setSongsCrdFilter(f) {
+  songsCrdFilter = f;
+  document.querySelectorAll('#songs-crd-filters .viz-filter-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.crdFilter === f)
+  );
+  renderSongs();
+}
+
 function renderSongs() {
   const q  = (document.getElementById('songs-search').value || '').toLowerCase();
   let rows = db.songs.filter(s =>
-    !q ||
-    (s.title || '').toLowerCase().includes(q) ||
-    (s.tags  || '').toLowerCase().includes(q) ||
-    (s.key   || '').toLowerCase().includes(q)
+    (!q ||
+      (s.title || '').toLowerCase().includes(q) ||
+      (s.tags  || '').toLowerCase().includes(q) ||
+      (s.key   || '').toLowerCase().includes(q)) &&
+    (songsCrdFilter === 'all' || (songsCrdFilter === 'with') === !!s.crd)
   );
 
   rows.sort((a, b) => {
@@ -1585,7 +1600,11 @@ function renderSongs() {
   const colCount = 4;
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty">${q ? 'No songs match your search' : 'No songs yet'}</div></td></tr>`;
+    const emptyMsg = q ? 'No songs match your search'
+      : songsCrdFilter === 'with' ? 'No songs with chords yet'
+      : songsCrdFilter === 'without' ? 'No songs without chords'
+      : 'No songs yet';
+    tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty">${emptyMsg}</div></td></tr>`;
     return;
   }
 
