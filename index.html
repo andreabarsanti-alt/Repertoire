@@ -841,7 +841,7 @@ select.fi { cursor: pointer; }
     <label class="btn btn-secondary btn-sm" style="cursor:pointer">
       Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
     </label>
-    <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Reload from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
+    <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app and its data from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
     <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull repertoire.json from GitHub">⬇ Pull</button>
     <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push repertoire.json to GitHub">⬆ Push</button>
   </div>
@@ -1208,6 +1208,13 @@ let crdEditTKey = '';
 // PERSISTENCE
 // ─────────────────────────────────────────
 async function boot() {
+  // Clean the "_hr" cache-bust param (from hardReloadPage/forceRefresh) back off the visible
+  // URL — history.replaceState doesn't trigger another fetch, so this is safe to do unconditionally
+  if (new URLSearchParams(location.search).has('_hr')) {
+    const clean = new URL(location.href);
+    clean.searchParams.delete('_hr');
+    history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
+  }
   // One-time migration: move legacy unnamespaced data into the two_of_us key
   if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem('rep_v2')) {
     localStorage.setItem(STORAGE_KEY, localStorage.getItem('rep_v2'));
@@ -1320,7 +1327,7 @@ function dismissSync() {
 // needed (unlike ⬇ Pull's GitHub-API round trip). Always overwrites local data, so it confirms
 // first — same JSON-shape validation/migration as doPull()/acceptSync().
 async function forceRefresh() {
-  if (!confirm('Force refresh from the published ' + SEED_FILE + '? Any local changes not yet pushed will be lost.')) return;
+  if (!confirm('Force refresh from the published ' + SEED_FILE + '? Any local changes not yet pushed will be lost, and the page will reload.')) return;
   const btn = document.getElementById('btn-force-refresh');
   btn.disabled = true; btn.textContent = '🔄…';
   try {
@@ -1330,14 +1337,27 @@ async function forceRefresh() {
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
     db = d; migrateSetlists();
-    save(); renderAll();
-    document.getElementById('sync-banner').classList.add('hidden');
-    toast('Refreshed from ' + SEED_FILE);
+    save();
+    // Data's refreshed in localStorage — now hard-reload the page itself (cache-busted URL, so
+    // the browser can't serve a stale index.html out of its cache) so the app code (HTML/CSS/JS
+    // are all inline in this one file) gets refreshed too, not just the JSON. boot() picks the
+    // fresh data straight back up from localStorage on the way back in.
+    hardReloadPage();
   } catch (err) {
     toast('Refresh failed: ' + err.message, 4000);
-  } finally {
     btn.disabled = false; btn.textContent = '🔄 Refresh';
   }
+}
+
+// Forces a real network fetch of index.html itself, bypassing the browser's HTTP cache — plain
+// location.reload() isn't reliable enough for this on iPad Safari, especially "Add to Home
+// Screen" standalone mode (no visible reload button, and caching there is more aggressive than
+// a normal browser tab). A changed query string is guaranteed to miss any cached copy of the
+// exact URL. boot() strips the cache-bust param back off the visible URL right after.
+function hardReloadPage() {
+  const url = new URL(location.href);
+  url.searchParams.set('_hr', Date.now());
+  location.replace(url.toString());
 }
 
 function exportJSON() {

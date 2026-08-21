@@ -40,7 +40,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - All data stored in `localStorage` (persists across sessions on the same device)
 - On first load, seeds from `repertoire.json` if no saved data exists
 - Detects when the repo file differs from local data and offers to sync
-- **🔄 Refresh** — reloads straight from the published `repertoire_<profile>.json` right now (no GitHub login needed), replacing local data after a confirm
+- **🔄 Refresh** — hard-reloads both the app itself and its data from what's published (`repertoire_<profile>.json` and `index.html`), bypassing the browser cache on both — no GitHub login needed, replaces local data after a confirm
 - **Export** — downloads current state as `repertoire.json`
 - **Import** — loads a previously exported JSON file
 - **Push to GitHub** — pushes `repertoire.json` directly to the repo via GitHub API
