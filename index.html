@@ -226,7 +226,8 @@ nav { display: flex; gap: 3px; flex: 1; }
   display: flex; align-items: center; gap: 10px;
   padding: 0 0 14px 0; flex-wrap: wrap;
 }
-#viz-filters, #songs-crd-filters { display: flex; gap: 4px; }
+#viz-filters { display: flex; gap: 4px; }
+#songs-filters { display: flex; gap: 6px; }
 .viz-filter-btn {
   padding: 7px 16px; border: 1px solid var(--border);
   border-radius: 20px; cursor: pointer;
@@ -359,7 +360,12 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   transition: all .15s;
 }
 .ug-link:hover { background: var(--surface2); }
-.row-actions { display: flex; gap: 4px; }
+.row-actions { display: flex; gap: 4px; align-items: center; }
+.row-tryout {
+  display: inline-flex; align-items: center; gap: 3px;
+  cursor: pointer; font-size: 0.85rem; padding: 0 4px; min-height: 36px;
+}
+.row-tryout input { width: 15px; height: 15px; cursor: pointer; accent-color: #e0c060; }
 .editing-row td { background: rgba(212,144,30,.05) !important; vertical-align: top; padding-top: 8px; }
 .inline-fi {
   width: 100%; padding: 6px 9px;
@@ -926,11 +932,17 @@ select.fi { cursor: pointer; }
     <button class="btn btn-primary" onclick="openSongModal()">+ Add Song</button>
     <button class="btn btn-secondary btn-sm" onclick="openUGImport()" title="Import from Ultimate Guitar">⬇ UG</button>
     <button class="btn btn-secondary btn-sm" onclick="openPrintModal('songs')" title="Print song list">⎙ Print</button>
-    <div id="songs-crd-filters">
-      <button type="button" class="viz-filter-btn active" data-crd-filter="all" onclick="setSongsCrdFilter('all')">All</button>
-      <button type="button" class="viz-filter-btn" data-crd-filter="with" onclick="setSongsCrdFilter('with')" title="Only songs with a chord sheet">🎸 Has chords</button>
-      <button type="button" class="viz-filter-btn" data-crd-filter="without" onclick="setSongsCrdFilter('without')" title="Only songs without a chord sheet">No chords</button>
-      <button type="button" class="viz-filter-btn" id="songs-tryout-toggle" onclick="toggleSongsTryOutFilter()" title="Only songs checked 🧪 Try out">🧪 Try out</button>
+    <div id="songs-filters">
+      <select class="profile-select" id="songs-crd-select" onchange="setSongsCrdFilter(this.value)" title="Filter by chord sheet">
+        <option value="all">Any chords</option>
+        <option value="with">🎸 Has chords</option>
+        <option value="without">No chords</option>
+      </select>
+      <select class="profile-select" id="songs-scope-select" onchange="setSongsScopeFilter(this.value)" title="Filter by repertoire status">
+        <option value="all">Any song</option>
+        <option value="repertoire">In repertoire</option>
+        <option value="tryout">🧪 Try out</option>
+      </select>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
@@ -1301,8 +1313,8 @@ let slEditSongId  = null; // song being inline-edited from within a setlist row 
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
-let songsCrdFilter = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
-let songsTryOutOnly = false; // Songs tab toolbar toggle — combines with songsCrdFilter, not exclusive with it
+let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
+let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
 const TRYOUT_ID = '__tryout__'; // synthetic setlist id for the auto-built "Try Outs" pane (see renderTryOutDetail)
 let dragIdx = null;
 let selectedItemIdx = null;
@@ -1841,15 +1853,11 @@ function renderSongsHeader() {
 
 function setSongsCrdFilter(f) {
   songsCrdFilter = f;
-  document.querySelectorAll('#songs-crd-filters .viz-filter-btn[data-crd-filter]').forEach(b =>
-    b.classList.toggle('active', b.dataset.crdFilter === f)
-  );
   renderSongs();
 }
 
-function toggleSongsTryOutFilter() {
-  songsTryOutOnly = !songsTryOutOnly;
-  document.getElementById('songs-tryout-toggle').classList.toggle('active', songsTryOutOnly);
+function setSongsScopeFilter(f) {
+  songsScopeFilter = f;
   renderSongs();
 }
 
@@ -1861,7 +1869,7 @@ function renderSongs() {
       (s.tags  || '').toLowerCase().includes(q) ||
       (s.key   || '').toLowerCase().includes(q)) &&
     (songsCrdFilter === 'all' || (songsCrdFilter === 'with') === !!s.crd) &&
-    (!songsTryOutOnly || !!s.tryOut)
+    (songsScopeFilter === 'all' || (songsScopeFilter === 'tryout' ? !!s.tryOut : !s.tryOut))
   );
 
   rows.sort((a, b) => {
@@ -1876,7 +1884,10 @@ function renderSongs() {
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     const emptyMsg = q ? 'No songs match your search'
-      : songsTryOutOnly ? 'No songs checked 🧪 Try out yet'
+      : songsScopeFilter === 'tryout' ? 'No songs checked 🧪 Try out yet'
+      : songsScopeFilter === 'repertoire' && songsCrdFilter === 'with' ? 'No repertoire songs with chords yet'
+      : songsScopeFilter === 'repertoire' && songsCrdFilter === 'without' ? 'No repertoire songs without chords'
+      : songsScopeFilter === 'repertoire' ? 'No songs in the repertoire yet'
       : songsCrdFilter === 'with' ? 'No songs with chords yet'
       : songsCrdFilter === 'without' ? 'No songs without chords'
       : 'No songs yet';
@@ -1905,6 +1916,9 @@ function songDisplayRow(s) {
     <td>${artists}</td>
     <td>${ug}</td>
     <td><div class="row-actions">
+      <label class="row-tryout" title="🧪 Try out" onclick="event.stopPropagation()">
+        <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> 🧪
+      </label>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="deleteSong('${s.id}')"      title="Delete">✕</button>
     </div></td>
@@ -2008,6 +2022,15 @@ function saveSong() {
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
+}
+
+// Quick-toggle from the Songs table row itself (no need to open inline edit) — same field
+// as the checkbox in the Add/Edit modal and inline edit rows, just a faster path to it.
+function toggleSongTryOut(id) {
+  const s = db.songs.find(x => x.id === id);
+  if (!s) return;
+  s.tryOut = !s.tryOut;
+  save(); renderAll();
 }
 
 function deleteSong(id) {
