@@ -13,7 +13,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 ### Songs
 - Sortable, searchable table of all songs
 - Two filter dropdowns, alongside the text search: chord sheet (Any chords / **Has chords** / **No chords**) and repertoire scope (Any song / **In repertoire** / **🧪 Try out**)
-- Check a song **🧪 Try out** right from its row — no need to type a tag — and it's automatically pulled into the **Try Outs** entry pinned at the top of the Setlists tab (and excluded from "In repertoire" above)
+- Check a song **🧪 Try out** right from its row — no need to type a tag — and it's excluded from "In repertoire" above until you uncheck it again
 - Add, inline-edit, and delete songs
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views
@@ -34,7 +34,6 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Alternate songs** — give any song slot a backup; swap which one is live with one tap
 - **Sections** — collapsible chapter headings within a setlist (e.g. "Set 1", "Encore"); add songs directly under a section, collapse it to a single row, expand/collapse all with one tap. Adding a section always starts it empty — songs already after your selection stay right where they were, they don't get swallowed into the new section
 - **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar
-- **🧪 Try Outs** — a pinned entry above your setlists that auto-collects every song checked "Try out" — nothing to add or reorder by hand, just check the box on a song and it shows up here; uncheck it (from here or the Songs tab) and it drops back out
 
 ### Data
 - **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match

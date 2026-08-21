@@ -847,15 +847,6 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
   background: rgba(61,158,140,.1); border-color: rgba(61,158,140,.35);
   border-left-color: var(--accent);
 }
-/* Pinned auto-built "Try Outs" entry above Live/Generic */
-.set-item.tryout-set {
-  border-left: 2px solid rgba(224,168,74,.4);
-  background: rgba(224,168,74,.04);
-}
-.set-item.tryout-set.active {
-  background: rgba(224,168,74,.12); border-color: rgba(224,168,74,.4);
-  border-left-color: #e0c060; color: #e0c060;
-}
 .set-name-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .set-name-col .set-name { flex: none; white-space: nowrap; }
 .set-date { font-size: 0.68rem; color: var(--text-dim); }
@@ -980,7 +971,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="f-tryout"> 🧪 Try out <span style="color:var(--text-dim);font-weight:400">— shows up in the auto Try Outs list on the Setlists tab</span>
+        <input type="checkbox" id="f-tryout"> 🧪 Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
       </label>
     </div>
     <div class="fg">
@@ -1315,7 +1306,6 @@ let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
 let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
-const TRYOUT_ID = '__tryout__'; // synthetic setlist id for the auto-built "Try Outs" pane (see renderTryOutDetail)
 let dragIdx = null;
 let selectedItemIdx = null;
 let crdSongId       = null;
@@ -2595,18 +2585,6 @@ function setItemRow(sl) {
   </div>`;
 }
 
-// Pinned entry above Live/Generic: not a stored setlist, just every song currently checked
-// 🧪 Try out, counted fresh on each render. See renderTryOutDetail for the pane it opens.
-function tryOutItemRow() {
-  const n = db.songs.filter(s => s.tryOut).length;
-  return `<div class="set-item tryout-set${activeSetId===TRYOUT_ID?' active':''}" onclick="selectSet('${TRYOUT_ID}')">
-    <div class="set-name-col">
-      <span class="set-name">🧪 Try Outs</span>
-      <span class="set-date">${n} song${n===1?'':'s'}</span>
-    </div>
-  </div>`;
-}
-
 function renderSets() {
   const el = document.getElementById('sets-list');
   const live = db.setlists.filter(sl => sl.type === 'live')
@@ -2614,14 +2592,14 @@ function renderSets() {
   const generic = db.setlists.filter(sl => sl.type !== 'live')
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
-  const liveHtml = `<div class="sets-divider" style="margin-top:10px">Live</div>` +
+  const liveHtml = `<div class="sets-divider">Live</div>` +
     (live.length ? live.map(setItemRow).join('')
       : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None yet</div>');
   const genericHtml = `<div class="sets-divider" style="margin-top:10px">Generic</div>` +
     (generic.length ? generic.map(setItemRow).join('')
       : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No setlists yet</div>');
 
-  el.innerHTML = tryOutItemRow() + liveHtml + genericHtml;
+  el.innerHTML = liveHtml + genericHtml;
 }
 
 function selectSet(id) {
@@ -2652,8 +2630,6 @@ function resolvePlayableSongs(sl) {
 
 function renderSetDetail() {
   const el = document.getElementById('set-detail');
-
-  if (activeSetId === TRYOUT_ID) { renderTryOutDetail(el); return; }
 
   const sl = db.setlists.find(s => s.id === activeSetId);
   if (!sl) { el.innerHTML = '<div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>'; return; }
@@ -2695,58 +2671,6 @@ function renderSetDetail() {
     <div id="sl-list">${rowsHtml}</div>`;
 
   initDrag();
-}
-
-// The Try Outs pane isn't a stored setlist — it's every song currently checked 🧪 Try out,
-// recomputed fresh each render (alphabetical, since there's no manual order to persist). No
-// drag/sections/alternates/add-songs here: reorder-by-hand doesn't make sense for a list whose
-// membership is decided by a checkbox, not by you dropping songs into it. Removing a song here
-// just unchecks the flag (untryOut) — same effect as unchecking it back in the Songs tab.
-function renderTryOutDetail(el) {
-  const songs = db.songs.filter(s => s.tryOut)
-    .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
-
-  const rowsHtml = !songs.length
-    ? '<div class="empty" style="padding:20px">No songs checked 🧪 Try out yet — check the box on a song in the Songs tab (or a setlist row) to see it here</div>'
-    : songs.map(s => {
-        const titleEl = songTitleLink(s, { cls: 'sl-title', plainTag: 'span', crdStop: true, ugOnclick: 'event.stopPropagation()' });
-        const badges = kchBadges(s);
-        return `<div class="sl-row">
-          <div class="sl-info">
-            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-              ${titleEl}
-              ${badges ? `<div class="kch-wrap" style="margin-top:0">${badges}</div>` : ''}
-            </div>
-            <div class="sl-meta">${esc(s.tags)}</div>
-          </div>
-          <div class="sl-btns">
-            <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();tryOutEditSong('${s.id}')" title="Edit song">✎</button>
-            <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();untryOut('${s.id}')" title="Remove from Try Outs">✕</button>
-          </div>
-        </div>`;
-      }).join('');
-
-  el.innerHTML = `
-    <div class="set-detail-header">
-      <h2>🧪 Try Outs <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${songs.length} song${songs.length===1?'':'s'}</span></h2>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <span style="font-size:0.75rem;color:var(--text-dim);align-self:center">Auto-built from every song checked 🧪 Try out — no manual add/reorder here</span>
-      </div>
-    </div>
-    <div id="sl-list">${rowsHtml}</div>`;
-}
-
-function untryOut(id) {
-  const s = db.songs.find(x => x.id === id);
-  if (!s) return;
-  s.tryOut = false;
-  save(); renderAll();
-}
-
-function tryOutEditSong(id) {
-  document.querySelector('.tab-btn[data-tab="songs"]')?.click();
-  startInlineEdit(id);
-  setTimeout(() => document.getElementById('ie-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
 }
 
 // Number of resolvable songs that fall under section header at `idx`, i.e. everything after it
