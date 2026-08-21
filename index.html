@@ -26,6 +26,10 @@
   --radius:   8px;
   --fd: 'Inter', system-ui, -apple-system, sans-serif;
   --fm: 'DM Mono', 'Courier New', monospace;
+  /* Actual rendered <header> height, kept in sync by syncHeaderHeight() — the header wraps to
+     a different number of rows depending on screen width (and whether the ⋯ More panel is
+     open), so anything sticky-positioned below it reads this instead of a guessed pixel value. */
+  --hdr-h: 58px;
 }
 
 /* ── BASE ────────────────────────────────── */
@@ -62,7 +66,7 @@ header {
   padding: 9px 18px;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   font-size: 0.8rem; color: var(--text);
-  position: sticky; top: 58px; z-index: 190;
+  position: sticky; top: var(--hdr-h); z-index: 190;
 }
 #sync-banner.hidden { display: none; }
 #sync-banner .sync-actions { display: flex; gap: 6px; margin-left: auto; }
@@ -95,6 +99,12 @@ nav { display: flex; gap: 3px; flex: 1; }
 }
 .profile-select:hover { background: var(--border); }
 
+/* display:contents so on wide screens these items lay out as if they were direct
+   .hdr-actions flex children — the wrapping div only becomes a real block (and the ⋯
+   toggle button only appears) once the mobile breakpoint below takes over. */
+.hdr-more { display: contents; }
+.hdr-more-toggle { display: none; }
+
 /* ── BUTTONS ─────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
@@ -122,7 +132,7 @@ nav { display: flex; gap: 3px; flex: 1; }
 ══════════════════════════════════════════ */
 #tab-viz {
   padding: 18px;
-  min-height: calc(100dvh - 58px);
+  min-height: calc(100dvh - var(--hdr-h));
   /* Faint staff lines + warm glow */
   background-image:
     radial-gradient(ellipse at 50% -10%, rgba(61,158,140,.06) 0%, transparent 55%),
@@ -378,13 +388,42 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
     max-height: none !important; overflow-y: visible !important;
   }
   .sets-resize { display: none; }
+
+  /* Header: fold the checkboxes/UG/Export/Import row behind a ⋯ toggle so the primary row
+     (title, profile, tabs) doesn't compete with a wall of small controls for space. */
+  header { padding: 10px 14px; gap: 8px; }
+  header h1 { font-size: 1.25rem; }
+  .hdr-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .hdr-more-toggle { display: inline-flex; }
+  .hdr-more { display: none; }
+  .hdr-more.open {
+    display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+    width: 100%; order: 9;
+    padding-top: 10px; margin-top: 2px; border-top: 1px solid var(--border);
+  }
+  .hdr-more.open .btn, .hdr-more.open .tune-toggle {
+    width: 100%; justify-content: flex-start;
+  }
+  .hdr-more.open .tune-toggle { padding: 6px 2px; font-size: 0.85rem; }
+  nav { order: 8; width: 100%; justify-content: center; }
+  .profile-select { flex: 1; min-width: 0; }
+
+  /* Bigger, more legible touch targets across the board */
+  .btn-sm { padding: 9px 14px; font-size: 0.8rem; min-height: 40px; }
+  .tab-btn { padding: 9px 14px; font-size: 0.85rem; }
+
+  /* Bubble view: fixed px sizing from renderBubbles() gets cramped on a narrow screen —
+     give the label text more room to breathe and clamp the smallest bubbles a bit larger
+     so tag names don't get crushed against the circle edge (see renderBubbles' BUBBLE_MIN_R). */
+  .bubble-name { font-size: 0.85rem; }
+  .bubble-count { font-size: 0.72rem; }
 }
 .sets-sidebar {
   width: max-content; min-width: 200px; max-width: 340px;
   flex-shrink: 0;
   display: flex; flex-direction: column; gap: 5px;
-  position: sticky; top: 76px; align-self: flex-start;
-  max-height: calc(100dvh - 94px); overflow-y: auto;
+  position: sticky; top: calc(var(--hdr-h) + 18px); align-self: flex-start;
+  max-height: calc(100dvh - var(--hdr-h) - 36px); overflow-y: auto;
 }
 .sets-resize {
   width: 20px; flex-shrink: 0; cursor: col-resize;
@@ -433,7 +472,7 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   flex-wrap: wrap; gap: 8px;
   border-bottom: 1px solid var(--border);
   margin: -18px -18px 16px; padding: 18px 18px 14px;
-  position: sticky; top: 76px; z-index: 5;
+  position: sticky; top: calc(var(--hdr-h) + 18px); z-index: 5;
   background: var(--surface); border-radius: 14px 14px 0 0;
 }
 .set-detail-header h2 {
@@ -840,17 +879,20 @@ select.fi { cursor: pointer; }
     <button class="tab-btn" data-tab="sets">Setlists</button>
   </nav>
   <div class="hdr-actions">
-    <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
-      <input type="checkbox" id="global-tune-toggle" onchange="toggleGlobalTune()"> Half-step down tuning
-    </label>
-    <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
-      <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
-    </label>
-    <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
-    <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-      Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
-    </label>
+    <div class="hdr-more" id="hdr-more">
+      <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
+        <input type="checkbox" id="global-tune-toggle" onchange="toggleGlobalTune()"> Half-step down tuning
+      </label>
+      <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
+        <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
+      </label>
+      <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
+      <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+        Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+      </label>
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm hdr-more-toggle" id="hdr-more-toggle" onclick="toggleHdrMore()" title="More options">⋯</button>
     <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app and its data from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
     <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull repertoire.json from GitHub">⬇ Pull</button>
     <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push repertoire.json to GitHub">⬆ Push</button>
@@ -1271,6 +1313,10 @@ async function boot() {
   if (!db.tagMeta) db.tagMeta = {};
   document.getElementById('profile-select').value = PROFILE;
   renderAll();
+  syncHeaderHeight();
+  // Inter/DM Mono load async from Google Fonts (see <head>) and can nudge the header's
+  // wrapped height slightly once they swap in — resync once that settles.
+  document.fonts?.ready?.then(syncHeaderHeight);
 }
 
 // Reloads the page on a different profile (?profile=<name>) — each profile is its own
@@ -1281,6 +1327,23 @@ function switchProfile(name) {
   const params = new URLSearchParams(location.search);
   params.set('profile', name);
   location.search = params.toString();
+}
+
+// Keeps the --hdr-h CSS var equal to the header's real rendered height, since it wraps to a
+// different number of rows depending on screen width and whether the ⋯ More panel is open —
+// everything sticky-positioned below it (sync banner, setlist sidebar/detail header) reads
+// this instead of a hardcoded pixel guess, so it can't end up stuck under the header.
+function syncHeaderHeight() {
+  const h = document.querySelector('header')?.offsetHeight;
+  if (h) document.documentElement.style.setProperty('--hdr-h', h + 'px');
+}
+
+// Mobile-only: folds the tune toggles / UG link / Export / Import behind a ⋯ button so the
+// header's primary row (title, profile, tabs) isn't fighting a wall of small controls for
+// space on a phone-width screen. Hidden entirely above the 600px breakpoint (see CSS).
+function toggleHdrMore() {
+  document.getElementById('hdr-more').classList.toggle('open');
+  syncHeaderHeight();
 }
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
@@ -1528,9 +1591,13 @@ function renderBubbles() {
   }
 
   const max   = Math.max(...keys.map(k => groups[k].length));
+  // On a narrow phone screen, raise the floor radius (same ceiling as before) so the smallest
+  // bubbles still have room for their label instead of crushing it against the glass edge.
+  const narrow  = window.innerWidth < 600;
+  const BUBBLE_MIN_R = narrow ? 44 : 38, BUBBLE_ADD_R = narrow ? 46 : 52;
   const items = keys.map((key, i) => ({
     key, count: groups[key].length, i,
-    r: Math.round(38 + (groups[key].length / max) * 52),
+    r: Math.round(BUBBLE_MIN_R + (groups[key].length / max) * BUBBLE_ADD_R),
     artist: key !== 'Untagged'
   }));
 
@@ -1578,7 +1645,7 @@ function renderBubbles() {
 let _resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
-  _resizeTimer = setTimeout(renderBubbles, 150);
+  _resizeTimer = setTimeout(() => { syncHeaderHeight(); renderBubbles(); }, 150);
 });
 
 function clickBubble(key) {

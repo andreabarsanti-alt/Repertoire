@@ -1,6 +1,6 @@
 # Repertoire
 
-A single-page web app for managing a musical repertoire — built to run on an iPad via GitHub Pages, with no backend or build step required.
+A single-page web app for managing a musical repertoire — built to run on an iPad via GitHub Pages, with no backend or build step required. Also usable on a phone: under 600px wide, the header folds its less-used controls behind a `⋯` button and the visualizer's bubbles get a bit more breathing room for their labels.
 
 ## Features
 
