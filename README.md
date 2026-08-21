@@ -40,9 +40,11 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - All data stored in `localStorage` (persists across sessions on the same device)
 - On first load, seeds from `repertoire.json` if no saved data exists
 - Detects when the repo file differs from local data and offers to sync
+- **🔄 Refresh** — reloads straight from the published `repertoire_<profile>.json` right now (no GitHub login needed), replacing local data after a confirm
 - **Export** — downloads current state as `repertoire.json`
 - **Import** — loads a previously exported JSON file
 - **Push to GitHub** — pushes `repertoire.json` directly to the repo via GitHub API
+- **Profile switcher** — a header dropdown to jump between all available profiles (e.g. Two of Us / Loose Ends) without editing the URL by hand
 
 ## Hosting on GitHub Pages
 

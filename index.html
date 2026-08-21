@@ -87,6 +87,13 @@ nav { display: flex; gap: 3px; flex: 1; }
   font-size: 0.78rem; color: var(--text-dim); display: flex; align-items: center;
   gap: 5px; cursor: pointer; white-space: nowrap;
 }
+.profile-select {
+  padding: 8px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; min-height: 36px;
+}
+.profile-select:hover { background: var(--border); }
 
 /* ── BUTTONS ─────────────────────────────── */
 .btn {
@@ -812,7 +819,11 @@ select.fi { cursor: pointer; }
 
 <!-- HEADER -->
 <header>
-  <h1>Repertoire<span id="profile-label"></span></h1>
+  <h1>Repertoire</h1>
+  <select class="profile-select" id="profile-select" title="Switch profile" onchange="switchProfile(this.value)">
+    <option value="two_of_us">Two of Us</option>
+    <option value="loose_ends">Loose Ends</option>
+  </select>
   <nav>
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
@@ -830,6 +841,7 @@ select.fi { cursor: pointer; }
     <label class="btn btn-secondary btn-sm" style="cursor:pointer">
       Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
     </label>
+    <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Reload from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
     <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull repertoire.json from GitHub">⬇ Pull</button>
     <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push repertoire.json to GitHub">⬆ Push</button>
   </div>
@@ -1232,8 +1244,18 @@ async function boot() {
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
-  document.getElementById('profile-label').textContent = ' · ' + PROFILE.replace(/_/g, ' ');
+  document.getElementById('profile-select').value = PROFILE;
   renderAll();
+}
+
+// Reloads the page on a different profile (?profile=<name>) — each profile is its own
+// localStorage namespace/seed file/GitHub config (see PROFILE/STORAGE_KEY/SEED_FILE/GH_CFG_KEY
+// above), so switching is just a navigation, not a live in-place swap.
+function switchProfile(name) {
+  if (name === PROFILE) return;
+  const params = new URLSearchParams(location.search);
+  params.set('profile', name);
+  location.search = params.toString();
 }
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
@@ -1291,6 +1313,31 @@ function acceptSync() {
 
 function dismissSync() {
   document.getElementById('sync-banner').classList.add('hidden');
+}
+
+// Manual "🔄 Refresh" button — unlike checkRepoSync (which only runs once on boot and just
+// shows a banner), this reloads straight from the published SEED_FILE right now, no login/token
+// needed (unlike ⬇ Pull's GitHub-API round trip). Always overwrites local data, so it confirms
+// first — same JSON-shape validation/migration as doPull()/acceptSync().
+async function forceRefresh() {
+  if (!confirm('Force refresh from the published ' + SEED_FILE + '? Any local changes not yet pushed will be lost.')) return;
+  const btn = document.getElementById('btn-force-refresh');
+  btn.disabled = true; btn.textContent = '🔄…';
+  try {
+    const r = await fetch(SEED_FILE + '?_=' + Date.now());
+    if (!r.ok) throw new Error(`GET ${r.status}`);
+    const d = await r.json();
+    if (!Array.isArray(d.songs)) throw new Error('Invalid data');
+    if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
+    db = d; migrateSetlists();
+    save(); renderAll();
+    document.getElementById('sync-banner').classList.add('hidden');
+    toast('Refreshed from ' + SEED_FILE);
+  } catch (err) {
+    toast('Refresh failed: ' + err.message, 4000);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Refresh';
+  }
 }
 
 function exportJSON() {

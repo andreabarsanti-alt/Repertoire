@@ -10,7 +10,7 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - **No build step**: Plain vanilla JS, no frameworks or transpilation
 - **Storage**: Uses `localStorage` for persistence; seeds from a per-profile JSON file on first load
 - **Hosting**: Static files served via GitHub Pages
-- **Profiles**: `?profile=<name>` in the URL (default `two_of_us`) namespaces both the `localStorage` key and the seed filename — `repertoire_<name>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`). Since `PROFILE` always falls back to `two_of_us` when unset, the *bare* `repertoire.json` is never actually fetched by the app — it's a pre-multi-profile leftover, kept in sync manually rather than something to seed real data through.
+- **Profiles**: `?profile=<name>` in the URL (default `two_of_us`) namespaces both the `localStorage` key and the seed filename — `repertoire_<name>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`). Since `PROFILE` always falls back to `two_of_us` when unset, the *bare* `repertoire.json` is never actually fetched by the app — it's a pre-multi-profile leftover, kept in sync manually rather than something to seed real data through. The header's `#profile-select` dropdown (hardcoded `two_of_us`/`loose_ends` options, same two-profile list as `LEGACY_LIVE_DATES`-adjacent code) switches between them via `switchProfile()` — just a `location.search` navigation, since each profile is a fully separate `STORAGE_KEY`/`SEED_FILE`/`GH_CFG_KEY`, not something to swap live in place.
 
 ## Files
 
@@ -94,4 +94,5 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - **Play mode**: Scroll-snap drum-roll UX — fixed 100px items, CSS `scroll-snap-type: y mandatory`, centered item detected via `scrollend` + debounced `scroll`. Auto-advances on return from UG via `visibilitychange`
 - **GitHub push**: Uses GitHub Contents API (PUT) to commit `repertoire.json` directly; config stored in `localStorage`
 - **Repo sync**: On boot, fetches `repertoire.json` and compares fingerprints; shows banner if remote differs
+- **Force refresh**: The header's "🔄 Refresh" button (`forceRefresh`) is a manual, always-overwrites version of the same idea — refetches `SEED_FILE` (cache-busted) right now and loads it unconditionally after a confirm, no GitHub token needed (unlike ⬆/⬇ Push/Pull, which go through the authenticated Contents API and so always see the exact latest commit even if GitHub Pages' CDN hasn't caught up yet)
 - **Viewport fix**: Resets viewport meta on `visibilitychange` to prevent iPad Safari zoom-out on app resume
