@@ -34,7 +34,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
       "capo": "2",
       "harp": "G",
       "ugLink": "https://tabs.ultimate-guitar.com/...",
-      "crd": "Am        C          G\nLyric line one..."
+      "crd": "Am        C          G\nLyric line one...",
+      "tryOut": false
     }
   ],
   "setlists": [
@@ -60,6 +61,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - `tuneUp` (top-level, global): tracks whether the "Half-step down tuning" header toggle is currently on. Flipping it bumps (or restores) every song's `capo` field by 1 fret across the whole library (a confirmed bulk edit, `toggleGlobalTune`); the CRD reader's own Capo readout folds that bump back in on top of the root/playing-key distance (`computeCapo`).
 - `setlist.type` is `'live'` (a real gig, has a `date`) or `'generic'` (a working/rehearsal list, no date). Drives the left-pane split — see "Setlists" below.
 
+- `song.tryOut` (boolean, default off): a checkbox on the song itself, settable from the Songs tab, its inline edit row, or a setlist row's ✎ edit — see "Try Outs" below for what reads it.
+
 - `song` items resolve to `altSongId` instead of `songId` when `useAlt` is true — lets a slot's live song be swapped without reordering.
 - `section` items are collapsible chapter headings that live inline in the same flat `items` array — every `song` item after one belongs to it by position (not by any nested/reference structure) up to the next boundary: another `section`, an explicit `section-end`, or the end of the list. `collapsed` just controls whether those rows are rendered; it never changes what plays, prints, or counts.
 - `section-end` items are an invisible boundary marker with no other fields — they close a section early instead of letting it run to the next header. See "Sections" below.
@@ -70,7 +73,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - **Theme**: Deep blue-black / muted teal (`#3d9e8c`) studio/DAW aesthetic
 - **Song title links**: `songTitleLink(s, opts)` is the one shared fallback chain — CRD reader link (if `s.crd`) → Ultimate Guitar link (if `s.ugLink`) → plain text — used everywhere a title appears (Songs table, setlist rows, Play mode). `opts` covers each call site's own markup: `cls`, `plainTag` (wrap the plain-text fallback too, or leave it bare), `wrap` (additionally wrap the title text itself, e.g. `'strong'`), `crdStop` (stopPropagation before opening the reader), `ugOnclick` (raw onclick for the UG link, e.g. stopPropagation or Play mode's `playOpenedUG` flag). The visualizer's bubble-detail pills (`showDetail`) build their own markup instead — there the whole pill is the link, with badges alongside the title inside it, not just the title text, so it didn't fit the same shape.
 - **Visualizer**: Animated glass bubbles packed with a circle-packing algorithm, grouped by tag; bubble size proportional to song count
-- **Songs table**: Inline editing (click row or ✎ button); sortable columns; tag autocomplete dropdown on tags fields; toolbar has an All/🎸 Has chords/No chords filter (`songsCrdFilter`, `setSongsCrdFilter`) alongside the text search — both apply together in `renderSongs()`, reusing the visualizer's dormant `.viz-filter-btn` pill-toggle CSS
+- **Songs table**: Inline editing (click row or ✎ button); sortable columns; tag autocomplete dropdown on tags fields; toolbar has an All/🎸 Has chords/No chords filter (`songsCrdFilter`, `setSongsCrdFilter`) plus an independent 🧪 Try out toggle (`songsTryOutOnly`, `toggleSongsTryOutFilter`) alongside the text search — all three apply together (AND) in `renderSongs()`, reusing the visualizer's dormant `.viz-filter-btn` pill-toggle CSS
+- **Try Outs**: a pinned entry at the top of the Setlists sidebar (`tryOutItemRow`, selected via the synthetic id `TRYOUT_ID`), auto-built each render from every song with `tryOut: true` — not a stored `setlist`, so there's nothing in `db.setlists` for it and no manual add/reorder/sections/alternates. `renderSetDetail()` special-cases `activeSetId === TRYOUT_ID` before the normal `db.setlists.find` lookup and hands off to `renderTryOutDetail()`; its ✕ button just flips the song's `tryOut` flag off (`untryOut`) rather than removing an item from anywhere, and its ✎ button jumps to the Songs tab and opens that song's inline edit (`tryOutEditSong`, same pattern as the CRD reader's `crdEditSong`). Marking/unmarking a song happens via the `tryOut` checkbox in the Songs tab add/edit form, its inline edit row, or a setlist row's ✎ edit — never by typing a tag
 - **Quick UG Import**: Parses title and artist from a UG URL slug — no network request needed. Pattern: `/tab/{artist}/{title}-{type}-{id}`
 - **Ultimate Guitar links**: Normalized to `tabs.ultimate-guitar.com` Universal Link domain for iOS app compatibility
 - **CRD reader**: A song can carry a `crd` field — a plain-text chord/lyric sheet, entered manually (Add Song modal, inline edit, or the full-page editor). When a song has `crd`, its title everywhere (songs table, setlists, play mode, visualizer pills) opens the in-app CRD reader (`openCrdReader`) instead of the UG link. Because it's an in-page overlay rather than a navigation, it also sidesteps the AirTurn/UG Universal-Link app-switch issue during Play mode.

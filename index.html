@@ -299,6 +299,7 @@ a.pill > span:first-child { text-decoration: underline; text-underline-offset: 3
   line-height: 1.6;
 }
 .kch.harp { background: rgba(109,168,84,.18); border-color: rgba(109,168,84,.4); color: #8fd474; }
+.kch.tryout { background: rgba(224,168,74,.18); border-color: rgba(224,168,74,.4); color: #e0c060; }
 
 /* Editable Key / Playing-key badges in the CRD reader header, and the read-only Capo badge
    derived from them */
@@ -801,6 +802,15 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
   background: rgba(61,158,140,.1); border-color: rgba(61,158,140,.35);
   border-left-color: var(--accent);
 }
+/* Pinned auto-built "Try Outs" entry above Live/Generic */
+.set-item.tryout-set {
+  border-left: 2px solid rgba(224,168,74,.4);
+  background: rgba(224,168,74,.04);
+}
+.set-item.tryout-set.active {
+  background: rgba(224,168,74,.12); border-color: rgba(224,168,74,.4);
+  border-left-color: #e0c060; color: #e0c060;
+}
 .set-name-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .set-name-col .set-name { flex: none; white-space: nowrap; }
 .set-date { font-size: 0.68rem; color: var(--text-dim); }
@@ -881,6 +891,7 @@ select.fi { cursor: pointer; }
       <button type="button" class="viz-filter-btn active" data-crd-filter="all" onclick="setSongsCrdFilter('all')">All</button>
       <button type="button" class="viz-filter-btn" data-crd-filter="with" onclick="setSongsCrdFilter('with')" title="Only songs with a chord sheet">🎸 Has chords</button>
       <button type="button" class="viz-filter-btn" data-crd-filter="without" onclick="setSongsCrdFilter('without')" title="Only songs without a chord sheet">No chords</button>
+      <button type="button" class="viz-filter-btn" id="songs-tryout-toggle" onclick="toggleSongsTryOutFilter()" title="Only songs checked 🧪 Try out">🧪 Try out</button>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
@@ -916,6 +927,11 @@ select.fi { cursor: pointer; }
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
     </div>
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="f-tryout"> 🧪 Try out <span style="color:var(--text-dim);font-weight:400">— shows up in the auto Try Outs list on the Setlists tab</span>
+      </label>
+    </div>
     <div class="fg">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></label>
       <textarea class="fi" id="f-crd" rows="8" placeholder="Paste or type a chord/lyric sheet — if filled in, the song opens this in-app instead of Ultimate Guitar"></textarea>
@@ -1191,6 +1207,8 @@ let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
+let songsTryOutOnly = false; // Songs tab toolbar toggle — combines with songsCrdFilter, not exclusive with it
+const TRYOUT_ID = '__tryout__'; // synthetic setlist id for the auto-built "Try Outs" pane (see renderTryOutDetail)
 let dragIdx = null;
 let selectedItemIdx = null;
 let crdSongId       = null;
@@ -1594,6 +1612,7 @@ function kchBadges(s) {
   if (s.key)  parts.push(`<span class="kch">${esc(s.key)}</span>`);
   if (s.capo) parts.push(`<span class="kch">${esc(capoText(s.capo))}</span>`);
   if (s.harp) parts.push(`<span class="kch harp">Harp ${esc(s.harp)}</span>`);
+  if (s.tryOut) parts.push(`<span class="kch tryout">🧪 Try out</span>`);
   return parts.join('');
 }
 
@@ -1640,9 +1659,15 @@ function renderSongsHeader() {
 
 function setSongsCrdFilter(f) {
   songsCrdFilter = f;
-  document.querySelectorAll('#songs-crd-filters .viz-filter-btn').forEach(b =>
+  document.querySelectorAll('#songs-crd-filters .viz-filter-btn[data-crd-filter]').forEach(b =>
     b.classList.toggle('active', b.dataset.crdFilter === f)
   );
+  renderSongs();
+}
+
+function toggleSongsTryOutFilter() {
+  songsTryOutOnly = !songsTryOutOnly;
+  document.getElementById('songs-tryout-toggle').classList.toggle('active', songsTryOutOnly);
   renderSongs();
 }
 
@@ -1653,7 +1678,8 @@ function renderSongs() {
       (s.title || '').toLowerCase().includes(q) ||
       (s.tags  || '').toLowerCase().includes(q) ||
       (s.key   || '').toLowerCase().includes(q)) &&
-    (songsCrdFilter === 'all' || (songsCrdFilter === 'with') === !!s.crd)
+    (songsCrdFilter === 'all' || (songsCrdFilter === 'with') === !!s.crd) &&
+    (!songsTryOutOnly || !!s.tryOut)
   );
 
   rows.sort((a, b) => {
@@ -1668,6 +1694,7 @@ function renderSongs() {
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     const emptyMsg = q ? 'No songs match your search'
+      : songsTryOutOnly ? 'No songs checked 🧪 Try out yet'
       : songsCrdFilter === 'with' ? 'No songs with chords yet'
       : songsCrdFilter === 'without' ? 'No songs without chords'
       : 'No songs yet';
@@ -1712,6 +1739,9 @@ function songEditRow(s) {
         <input class="inline-fi inline-sm" id="ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
+        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> 🧪 Try out
+      </label>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
@@ -1756,6 +1786,7 @@ function saveInlineEdit(id) {
   s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
   s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
   s.crd    = document.getElementById('ie-crd')?.value || '';
+  s.tryOut = !!document.getElementById('ie-tryout')?.checked;
   inlineEditId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -1774,6 +1805,7 @@ function openSongModal() {
   document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = '';
   document.getElementById('f-crd').value    = '';
+  document.getElementById('f-tryout').checked = false;
   openModal('song-modal');
   document.getElementById('f-title').focus();
 }
@@ -1790,6 +1822,7 @@ function saveSong() {
     harp:        document.getElementById('f-harp').value.trim(),
     ugLink: normalizeUG(document.getElementById('f-uglink').value),
     crd:    document.getElementById('f-crd').value || '',
+    tryOut: document.getElementById('f-tryout').checked,
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
@@ -2357,6 +2390,18 @@ function setItemRow(sl) {
   </div>`;
 }
 
+// Pinned entry above Live/Generic: not a stored setlist, just every song currently checked
+// 🧪 Try out, counted fresh on each render. See renderTryOutDetail for the pane it opens.
+function tryOutItemRow() {
+  const n = db.songs.filter(s => s.tryOut).length;
+  return `<div class="set-item tryout-set${activeSetId===TRYOUT_ID?' active':''}" onclick="selectSet('${TRYOUT_ID}')">
+    <div class="set-name-col">
+      <span class="set-name">🧪 Try Outs</span>
+      <span class="set-date">${n} song${n===1?'':'s'}</span>
+    </div>
+  </div>`;
+}
+
 function renderSets() {
   const el = document.getElementById('sets-list');
   const live = db.setlists.filter(sl => sl.type === 'live')
@@ -2364,14 +2409,14 @@ function renderSets() {
   const generic = db.setlists.filter(sl => sl.type !== 'live')
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
-  const liveHtml = `<div class="sets-divider">Live</div>` +
+  const liveHtml = `<div class="sets-divider" style="margin-top:10px">Live</div>` +
     (live.length ? live.map(setItemRow).join('')
       : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None yet</div>');
   const genericHtml = `<div class="sets-divider" style="margin-top:10px">Generic</div>` +
     (generic.length ? generic.map(setItemRow).join('')
       : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No setlists yet</div>');
 
-  el.innerHTML = liveHtml + genericHtml;
+  el.innerHTML = tryOutItemRow() + liveHtml + genericHtml;
 }
 
 function selectSet(id) {
@@ -2402,6 +2447,8 @@ function resolvePlayableSongs(sl) {
 
 function renderSetDetail() {
   const el = document.getElementById('set-detail');
+
+  if (activeSetId === TRYOUT_ID) { renderTryOutDetail(el); return; }
 
   const sl = db.setlists.find(s => s.id === activeSetId);
   if (!sl) { el.innerHTML = '<div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>'; return; }
@@ -2443,6 +2490,58 @@ function renderSetDetail() {
     <div id="sl-list">${rowsHtml}</div>`;
 
   initDrag();
+}
+
+// The Try Outs pane isn't a stored setlist — it's every song currently checked 🧪 Try out,
+// recomputed fresh each render (alphabetical, since there's no manual order to persist). No
+// drag/sections/alternates/add-songs here: reorder-by-hand doesn't make sense for a list whose
+// membership is decided by a checkbox, not by you dropping songs into it. Removing a song here
+// just unchecks the flag (untryOut) — same effect as unchecking it back in the Songs tab.
+function renderTryOutDetail(el) {
+  const songs = db.songs.filter(s => s.tryOut)
+    .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+
+  const rowsHtml = !songs.length
+    ? '<div class="empty" style="padding:20px">No songs checked 🧪 Try out yet — check the box on a song in the Songs tab (or a setlist row) to see it here</div>'
+    : songs.map(s => {
+        const titleEl = songTitleLink(s, { cls: 'sl-title', plainTag: 'span', crdStop: true, ugOnclick: 'event.stopPropagation()' });
+        const badges = kchBadges(s);
+        return `<div class="sl-row">
+          <div class="sl-info">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+              ${titleEl}
+              ${badges ? `<div class="kch-wrap" style="margin-top:0">${badges}</div>` : ''}
+            </div>
+            <div class="sl-meta">${esc(s.tags)}</div>
+          </div>
+          <div class="sl-btns">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();tryOutEditSong('${s.id}')" title="Edit song">✎</button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();untryOut('${s.id}')" title="Remove from Try Outs">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  el.innerHTML = `
+    <div class="set-detail-header">
+      <h2>🧪 Try Outs <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${songs.length} song${songs.length===1?'':'s'}</span></h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:0.75rem;color:var(--text-dim);align-self:center">Auto-built from every song checked 🧪 Try out — no manual add/reorder here</span>
+      </div>
+    </div>
+    <div id="sl-list">${rowsHtml}</div>`;
+}
+
+function untryOut(id) {
+  const s = db.songs.find(x => x.id === id);
+  if (!s) return;
+  s.tryOut = false;
+  save(); renderAll();
+}
+
+function tryOutEditSong(id) {
+  document.querySelector('.tab-btn[data-tab="songs"]')?.click();
+  startInlineEdit(id);
+  setTimeout(() => document.getElementById('ie-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
 }
 
 // Number of resolvable songs that fall under section header at `idx`, i.e. everything after it
@@ -2524,6 +2623,9 @@ function slEditRow(s, i, nested) {
       <input class="inline-fi inline-sm" id="sl-ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
+      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> 🧪 Try out
+    </label>
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}>
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
     <div>
@@ -2556,6 +2658,7 @@ function saveSlEdit(id) {
   s.harp   = document.getElementById('sl-ie-harp')?.value.trim()  || '';
   s.ugLink = normalizeUG(document.getElementById('sl-ie-uglink')?.value || '');
   s.crd    = document.getElementById('sl-ie-crd')?.value || '';
+  s.tryOut = !!document.getElementById('sl-ie-tryout')?.checked;
   slEditSongId = null;
   save(); renderAll(); toast('Song updated');
 }
