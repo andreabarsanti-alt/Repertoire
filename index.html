@@ -869,10 +869,7 @@ select.fi { cursor: pointer; }
 <!-- HEADER -->
 <header>
   <h1>Repertoire</h1>
-  <select class="profile-select" id="profile-select" title="Switch profile" onchange="switchProfile(this.value)">
-    <option value="two_of_us">Two of Us</option>
-    <option value="loose_ends">Loose Ends</option>
-  </select>
+  <select class="profile-select" id="profile-select" title="Switch profile" onchange="switchProfile(this.value)"></select>
   <nav>
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
@@ -1001,6 +998,25 @@ select.fi { cursor: pointer; }
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('setlist-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveSetlist()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT PROFILES MODAL ══ -->
+<div class="overlay hidden" id="profiles-modal">
+  <div class="modal">
+    <h2>Edit Profiles</h2>
+    <div id="profiles-list"></div>
+    <div class="fg" style="margin-top:14px">
+      <label>Add a profile</label>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="f-new-profile-name" type="text" placeholder="e.g. Duo Name" onkeydown="if(event.key==='Enter'){event.preventDefault();addProfile();}">
+        <button class="btn btn-primary btn-sm" onclick="addProfile()">+ Add</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-dim);margin-top:6px">Starts empty on this device — switch to it, add songs, then ⬆ Push to publish its own repertoire file to the repo.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('profiles-modal')">Close</button>
     </div>
   </div>
 </div>
@@ -1195,6 +1211,43 @@ const SEED_FILE   = 'repertoire'        + (PROFILE ? '_' + PROFILE : '') + '.jso
 const GH_CFG_KEY  = 'rep_github_config' + (PROFILE ? '_' + PROFILE : '');
 
 // ─────────────────────────────────────────
+// PROFILE REGISTRY (add/delete via the header dropdown's "Edit profiles…")
+// ─────────────────────────────────────────
+// Deliberately NOT namespaced by PROFILE — this is the one list every profile's URL needs to
+// see, so it has to live outside the per-profile rep_v2_<id>/rep_github_config_<id> keys above.
+const PROFILES_KEY = 'rep_profiles';
+const DEFAULT_PROFILES = [
+  { id: 'two_of_us',  name: 'Two of Us' },
+  { id: 'loose_ends', name: 'Loose Ends' },
+];
+
+function getProfiles() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROFILES_KEY) || 'null');
+    if (Array.isArray(saved) && saved.length) return saved;
+  } catch {}
+  return DEFAULT_PROFILES;
+}
+function saveProfiles(list) { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); }
+
+function slugifyProfile(name) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'profile';
+}
+
+// Rebuilds the header <select> from the registry, plus a trailing "Edit profiles…" entry
+// (handled specially in switchProfile). If the URL points at a profile that was never added
+// through this UI (a hand-typed ?profile=, or a legacy bookmark), it's shown without being
+// persisted — it only joins the registry for real via addProfile().
+function renderProfileSelect() {
+  const sel = document.getElementById('profile-select');
+  let list = getProfiles();
+  if (!list.some(p => p.id === PROFILE)) list = [{ id: PROFILE, name: PROFILE }, ...list];
+  sel.innerHTML = list.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
+    + `<option value="__manage__">✎ Edit profiles…</option>`;
+  sel.value = PROFILE;
+}
+
+// ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
 function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
@@ -1311,7 +1364,7 @@ async function boot() {
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
-  document.getElementById('profile-select').value = PROFILE;
+  renderProfileSelect();
   renderAll();
   syncHeaderHeight();
   // Inter/DM Mono load async from Google Fonts (see <head>) and can nudge the header's
@@ -1323,10 +1376,72 @@ async function boot() {
 // localStorage namespace/seed file/GitHub config (see PROFILE/STORAGE_KEY/SEED_FILE/GH_CFG_KEY
 // above), so switching is just a navigation, not a live in-place swap.
 function switchProfile(name) {
+  if (name === '__manage__') {
+    document.getElementById('profile-select').value = PROFILE; // don't leave "Edit profiles…" selected
+    openProfilesModal();
+    return;
+  }
   if (name === PROFILE) return;
   const params = new URLSearchParams(location.search);
   params.set('profile', name);
   location.search = params.toString();
+}
+
+// ─────────────────────────────────────────
+// EDIT PROFILES MODAL
+// ─────────────────────────────────────────
+function openProfilesModal() {
+  renderProfilesModalList();
+  document.getElementById('f-new-profile-name').value = '';
+  openModal('profiles-modal');
+  document.getElementById('f-new-profile-name').focus();
+}
+
+function renderProfilesModalList() {
+  const list = getProfiles();
+  document.getElementById('profiles-list').innerHTML = list.map(p => `
+    <div class="set-item" style="cursor:default">
+      <div class="set-name-col">
+        <span class="set-name">${esc(p.name)}</span>
+        <span class="set-date">${esc(p.id)}${p.id === PROFILE ? ' · current' : ''}</span>
+      </div>
+      <div class="set-actions">
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteProfile('${esc(p.id)}')" ${list.length <= 1 ? 'disabled' : ''} title="${list.length <= 1 ? "Can't delete the last profile" : 'Delete profile'}">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function addProfile() {
+  const nameInput = document.getElementById('f-new-profile-name');
+  const name = nameInput.value.trim();
+  if (!name) { toast('Name is required'); return; }
+  const list = getProfiles();
+  const base = slugifyProfile(name);
+  let id = base, n = 2;
+  while (list.some(p => p.id === id)) id = `${base}_${n++}`; // two profiles can slugify to the same id
+  list.push({ id, name });
+  saveProfiles(list);
+  nameInput.value = '';
+  renderProfilesModalList();
+  renderProfileSelect();
+  toast(`Added "${name}" — switch to it from the dropdown to start adding songs`);
+}
+
+function deleteProfile(id) {
+  const list = getProfiles();
+  if (list.length <= 1) { toast("Can't delete the last profile"); return; }
+  const p = list.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Delete profile "${p.name}"? This removes it from the picker and clears its locally-saved data on this device — anything already pushed to GitHub (repertoire_${id}.json) is untouched.`)) return;
+
+  saveProfiles(list.filter(x => x.id !== id));
+  localStorage.removeItem('rep_v2_' + id);
+  localStorage.removeItem('rep_github_config_' + id);
+
+  if (id === PROFILE) { switchProfile(getProfiles()[0].id); return; } // navigates away — nothing left to re-render here
+  renderProfilesModalList();
+  renderProfileSelect();
+  toast(`Deleted "${p.name}"`);
 }
 
 // Keeps the --hdr-h CSS var equal to the header's real rendered height, since it wraps to a

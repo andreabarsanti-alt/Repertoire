@@ -46,7 +46,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Export** — downloads current state as `repertoire.json`
 - **Import** — loads a previously exported JSON file
 - **Push to GitHub** — pushes `repertoire.json` directly to the repo via GitHub API
-- **Profile switcher** — a header dropdown to jump between all available profiles (e.g. Two of Us / Loose Ends) without editing the URL by hand
+- **Profile switcher** — a header dropdown to jump between all available profiles (e.g. Two of Us / Loose Ends) without editing the URL by hand; its **✎ Edit profiles…** entry opens a popup to add a new one (starts empty — push to it once you've added songs) or delete one you no longer need
 
 ## Hosting on GitHub Pages
 
