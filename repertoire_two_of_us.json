@@ -154,7 +154,8 @@
       "capo": "5",
       "harp": "",
       "tags": "Eric Clapton",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/layla-official-3551282"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/eric-clapton/layla-official-3551282",
+      "tryOut": true
     },
     {
       "id": "mobwys0zxdtab",
@@ -353,7 +354,8 @@
       "capo": "1",
       "harp": "",
       "tags": "Robert Johnson",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212",
+      "tryOut": false
     },
     {
       "id": "s24",
@@ -398,7 +400,8 @@
       "capo": "3",
       "harp": "",
       "tags": "U2",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/one-official-1990391",
+      "tryOut": false
     },
     {
       "id": "s39",
@@ -479,7 +482,8 @@
       "capo": "1",
       "harp": "",
       "tags": "Banda Bardot",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/2044469"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/2044469",
+      "tryOut": true
     },
     {
       "id": "e9e7e2b8-920f-4092-815f-45f8f03f42d0",
@@ -488,7 +492,8 @@
       "key": "D",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/already-one-chords-1962923"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/neil-young/already-one-chords-1962923",
+      "tryOut": true
     },
     {
       "id": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be",
@@ -507,7 +512,8 @@
       "key": "G",
       "capo": "3",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/una-vita-da-mediano-chords-1765661"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/ligabue/una-vita-da-mediano-chords-1765661",
+      "tryOut": true
     },
     {
       "id": "51af4aea-828e-45ad-b215-50dd9f750afe",
@@ -553,7 +559,8 @@
       "key": "F",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/sweet-home-chicago-official-2185005"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/sweet-home-chicago-official-2185005",
+      "tryOut": true
     },
     {
       "id": "12836013-3483-4122-a342-218470148f7d",
@@ -572,7 +579,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rokes/ce-una-strana-chords-82189"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rokes/ce-una-strana-chords-82189",
+      "tryOut": true
     },
     {
       "id": "115ff934-ff2d-4102-b150-0ca7d303f124",
@@ -590,7 +598,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/with-or-without-you-official-1955543"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/with-or-without-you-official-1955543",
+      "tryOut": true
     },
     {
       "id": "babba8c0-8d5b-4895-aaa1-82ea835874bf",
@@ -599,7 +608,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/lucio-battisti/si-viaggiare-chords-1900826"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/lucio-battisti/si-viaggiare-chords-1900826",
+      "tryOut": true
     },
     {
       "id": "e4a931ce-40a6-43f0-84d7-83e7158c56f3",
@@ -617,7 +627,8 @@
       "key": "F#m",
       "capo": "2",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/starman-official-2085341"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/david-bowie/starman-official-2085341",
+      "tryOut": true
     },
     {
       "id": "b5f5de41-59b0-4fec-aedd-5014761404c5",
@@ -626,7 +637,8 @@
       "key": "Ebm",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/sting/fragile-official-2463044"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/sting/fragile-official-2463044",
+      "tryOut": true
     },
     {
       "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
@@ -635,7 +647,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497",
+      "tryOut": true
     },
     {
       "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
@@ -644,7 +657,8 @@
       "key": "C#",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855",
+      "tryOut": true
     },
     {
       "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
@@ -653,7 +667,8 @@
       "key": "D",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/and-i-love-her-official-2042407"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/and-i-love-her-official-2042407",
+      "tryOut": true
     },
     {
       "id": "8b195afc-2191-4028-976a-b77044a54478",
@@ -672,7 +687,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=vO9omnicDw0VN4PWuCUBRQUr&tab_id=30458183"
+      "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=vO9omnicDw0VN4PWuCUBRQUr&tab_id=30458183",
+      "tryOut": true
     },
     {
       "id": "fde76324-becf-4df7-8c8b-17e03d8c8c1e",
@@ -681,7 +697,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/r-e-m-/everybody-hurts-official-1979985"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/r-e-m-/everybody-hurts-official-1979985",
+      "tryOut": true
     },
     {
       "id": "bd2920c9-b948-4788-a1f4-15268bab1e2e",
@@ -690,7 +707,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/paint-it-black-official-2137031"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/paint-it-black-official-2137031",
+      "tryOut": true
     },
     {
       "id": "5e051375-d77f-4dab-b610-9dba96aaa638",
@@ -699,7 +717,9 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667",
+      "crd": "",
+      "tryOut": true
     },
     {
       "id": "214bf23d-b10c-4475-b93c-8608d81ca91d",
@@ -708,7 +728,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/sympathy-for-the-devil-official-2383129"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/sympathy-for-the-devil-official-2383129",
+      "tryOut": true
     },
     {
       "id": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9",
@@ -717,7 +738,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/wild-horses-official-2469000"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/wild-horses-official-2469000",
+      "tryOut": true
     },
     {
       "id": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc",
@@ -726,7 +748,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/karma-police-official-1911473"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/radiohead/karma-police-official-1911473",
+      "tryOut": true
     },
     {
       "id": "7093eab3-255f-4300-ba1e-df0efc6d1059",
@@ -744,7 +767,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": ""
+      "ugLink": "",
+      "tryOut": true
     },
     {
       "id": "fde7f81b-696b-4eb6-975f-18463905e07a",
@@ -789,7 +813,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/yesterday-official-1981167"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/yesterday-official-1981167",
+      "tryOut": true
     },
     {
       "id": "72855055-6f25-4472-baaf-df56e543fdda",
@@ -798,7 +823,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/ive-just-seen-a-face-official-2049777"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/ive-just-seen-a-face-official-2049777",
+      "tryOut": true
     },
     {
       "id": "7bd19725-c158-4cfd-a661-dc3a1c5f9349",
@@ -807,7 +833,8 @@
       "key": "",
       "capo": "1",
       "harp": "",
-      "ugLink": ""
+      "ugLink": "",
+      "tryOut": true
     },
     {
       "id": "96b1f45b-00fd-4dad-b7e7-f625e28ddbed",
@@ -816,7 +843,8 @@
       "key": "Em",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-official-2238415"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-official-2238415",
+      "tryOut": true
     },
     {
       "id": "7f2dfdcf-5ca1-47a7-b4f3-7871da1d90b1",
@@ -825,7 +853,8 @@
       "key": "G",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/at-the-zoo-official-6196298"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/at-the-zoo-official-6196298",
+      "tryOut": true
     },
     {
       "id": "c085662b-6fe7-455d-a0f0-5c7e0c0f34d1",
@@ -834,7 +863,8 @@
       "key": "A",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/death-is-not-the-end-chords-2891969"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/death-is-not-the-end-chords-2891969",
+      "tryOut": true
     },
     {
       "id": "c4b351d2-de69-494d-a274-e7dcec1aa131",
@@ -843,7 +873,8 @@
       "key": "C",
       "capo": "1",
       "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/into-my-arms-official-2106795"
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/nick-cave-the-bad-seeds/into-my-arms-official-2106795",
+      "tryOut": true
     },
     {
       "id": "9cdfb7ce-5974-4ac1-aca2-12434efbba91",
@@ -853,7 +884,8 @@
       "capo": "5",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/bob-dylan/the-lonesome-death-of-hattie-carroll-official-5907482",
-      "crd": "[Verse 1]\nE          C#m                G#m\nWilliam Zanzinger killed poor Hattie Carroll\n           E               C#m             G#m\nWith a cane that he twirled  around his diamond ring finger\n        E        C#m      G#m\nAt a Baltimore hotel, society gath'rin'\n        E                   C#m       G#m\nAnd the cops were called in,  and his weapon took from him\n        E              C#m       G#m\nAs they rode him in custody down to the station\n           E          C#m             G#m\nAnd booked William Zanzinger for firstdegree murder\n\n\n[Chorus]\nB    A      B     E                C#m   A        B    E\n But you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 2]\nE          C#m             G#m      E          C#m            G#m\nWilliam Zanzinger, who at 24 years, owns a tobacco farm of six  hundred acres\n       E              C#m              G#m\nWith a rich wealthy parents who provide  and protect him\n           E        C#m          G#m\nAnd high office relations in the politics of Maryland\n    E              C#m           G#m\nReacted to his deed  with a shrug  of his shoulders\n    E               C#m                      G#m\nAnd swear words and sneering, and his tongue it was snarling\n         E           C#m           G#m\nAnd in a matter of minutes, on bail  was out walkin'\n\n\n[Chorus]\nB    A   B        E                     A    B        E\n But you who philosophize, disgrace and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 3]\nE        C#m             G#m\nHattie Carroll was a maid  in the kitchen\n           E               C#m             G#m\nShe was fifty one years old  and gave birth  to 10 children\n    E             C#m      G#m\nWho carried the dishes and took out the garbage\n    E             C#m      G#m\nAnd never sat once  at the head of the table\n    E               C#m         G#m\nAnd didn't even talk  to the people at the table\n    E            C#m            G#m\nWho just cleaned up all the food  from the table\n       E           C#m             G#m\nAnd emptied the ashtrays on a whole  other level\n    E                C#m   G#m\nGot killed by a blow,  lay slain by a cane\n        E                  C#m            G#m\nThat sailed through the air  and came down  through the room\nE               C#m             G#m\nDoomed and determined to destroy  all the gentle\n        E            C#m      G#m        B\nAnd she never done nothing to William Zanzinger\n\n\n[Chorus]\n    A      B     E                C#m   A    B        E\nAnd you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Solo]\nE C#m G#m E C#m G#m\nE C#m G#m E C#m G#m\nE C#m G#m B A B E\nA B E A B\nE C#m A B E\n\n\n[Verse 4]\n       E              C#m           G#m\nIn the courtroom of honor, the judge  pounded his gavel\n       E            C#m               G#m\nTo show that all's equal and that the courts are on the level\n              E                  C#m           G#m\nAnd that the strings in the books  ain't pulled  and persuaded\n          E         C#m         G#m\nAnd that even the nobles get properly handled\nE                 C#m           G#m\nOnce that the cops  have chased after and caught 'em\n             E         C#m        G#m\nAnd that the ladder of law has no top and no bottom\n E               C#m           G#m\nStared at the person who killed  for no reason\n         E              C#m             G#m\nWho just happened to be feelin' that way  without warnin'\n       E                       C#m         G#m\nAnd he spoke through his cloak,  most deep and distinguished\n        E      C#m            G#m\nAnd handed out strongly for penalty and repentance\n  E        C#m          G#m\nWilliam Zanzinger with a  sixmonth sentence\n\n\n[Chorus]\nB           A   B     E           C#m       A    B        E\n Ah, but you who philosophize, disgrace and criticize all fears\nA           B    E             E       A           B         E\nTake the rag deep in your face, for now is the time for your tears\n\n\n[Outro]\nA B B7 E"
+      "crd": "[Verse 1]\nE          C#m                G#m\nWilliam Zanzinger killed poor Hattie Carroll\n           E               C#m             G#m\nWith a cane that he twirled  around his diamond ring finger\n        E        C#m      G#m\nAt a Baltimore hotel, society gath'rin'\n        E                   C#m       G#m\nAnd the cops were called in,  and his weapon took from him\n        E              C#m       G#m\nAs they rode him in custody down to the station\n           E          C#m             G#m\nAnd booked William Zanzinger for firstdegree murder\n\n\n[Chorus]\nB    A      B     E                C#m   A        B    E\n But you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 2]\nE          C#m             G#m      E          C#m            G#m\nWilliam Zanzinger, who at 24 years, owns a tobacco farm of six  hundred acres\n       E              C#m              G#m\nWith a rich wealthy parents who provide  and protect him\n           E        C#m          G#m\nAnd high office relations in the politics of Maryland\n    E              C#m           G#m\nReacted to his deed  with a shrug  of his shoulders\n    E               C#m                      G#m\nAnd swear words and sneering, and his tongue it was snarling\n         E           C#m           G#m\nAnd in a matter of minutes, on bail  was out walkin'\n\n\n[Chorus]\nB    A   B        E                     A    B        E\n But you who philosophize, disgrace and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Verse 3]\nE        C#m             G#m\nHattie Carroll was a maid  in the kitchen\n           E               C#m             G#m\nShe was fifty one years old  and gave birth  to 10 children\n    E             C#m      G#m\nWho carried the dishes and took out the garbage\n    E             C#m      G#m\nAnd never sat once  at the head of the table\n    E               C#m         G#m\nAnd didn't even talk  to the people at the table\n    E            C#m            G#m\nWho just cleaned up all the food  from the table\n       E           C#m             G#m\nAnd emptied the ashtrays on a whole  other level\n    E                C#m   G#m\nGot killed by a blow,  lay slain by a cane\n        E                  C#m            G#m\nThat sailed through the air  and came down  through the room\nE               C#m             G#m\nDoomed and determined to destroy  all the gentle\n        E            C#m      G#m        B\nAnd she never done nothing to William Zanzinger\n\n\n[Chorus]\n    A      B     E                C#m   A    B        E\nAnd you who philosophize, disgrace  and criticize all fears\nA        B       E          C#m   A                 B              E\nTake the rag away from your face, now ain't the time for your tears\n\n\n[Solo]\nE C#m G#m E C#m G#m\nE C#m G#m E C#m G#m\nE C#m G#m B A B E\nA B E A B\nE C#m A B E\n\n\n[Verse 4]\n       E              C#m           G#m\nIn the courtroom of honor, the judge  pounded his gavel\n       E            C#m               G#m\nTo show that all's equal and that the courts are on the level\n              E                  C#m           G#m\nAnd that the strings in the books  ain't pulled  and persuaded\n          E         C#m         G#m\nAnd that even the nobles get properly handled\nE                 C#m           G#m\nOnce that the cops  have chased after and caught 'em\n             E         C#m        G#m\nAnd that the ladder of law has no top and no bottom\n E               C#m           G#m\nStared at the person who killed  for no reason\n         E              C#m             G#m\nWho just happened to be feelin' that way  without warnin'\n       E                       C#m         G#m\nAnd he spoke through his cloak,  most deep and distinguished\n        E      C#m            G#m\nAnd handed out strongly for penalty and repentance\n  E        C#m          G#m\nWilliam Zanzinger with a  sixmonth sentence\n\n\n[Chorus]\nB           A   B     E           C#m       A    B        E\n Ah, but you who philosophize, disgrace and criticize all fears\nA           B    E             E       A           B         E\nTake the rag deep in your face, for now is the time for your tears\n\n\n[Outro]\nA B B7 E",
+      "tryOut": true
     },
     {
       "id": "19696b65-49a2-429c-971e-6ab1851b6a11",
@@ -863,7 +895,8 @@
       "capo": "",
       "harp": "",
       "ugLink": "",
-      "crd": ""
+      "crd": "",
+      "tryOut": true
     },
     {
       "id": "9b03507e-3e6d-459c-9c96-8ee0f76fcc26",
@@ -873,7 +906,8 @@
       "capo": "",
       "harp": "",
       "ugLink": "",
-      "crd": ""
+      "crd": "",
+      "tryOut": true
     }
   ],
   "tagMeta": {
