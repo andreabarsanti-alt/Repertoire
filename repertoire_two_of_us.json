@@ -1550,11 +1550,11 @@
         {
           "type": "section",
           "name": "More S & G",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
-          "songId": "s13",
+          "songId": "s33",
           "altSongId": "mobx34z6fdygx",
           "useAlt": false
         },
@@ -1570,26 +1570,26 @@
           "songId": "s32"
         },
         {
-          "type": "song",
-          "songId": "s12"
-        },
-        {
           "type": "section",
           "name": "More S & G",
-          "collapsed": false
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s13",
+          "altSongId": "s14",
+          "useAlt": false
         },
         {
           "type": "song",
           "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
         },
         {
-          "type": "song",
-          "songId": "s33",
-          "altSongId": "s14",
-          "useAlt": true
+          "type": "section-end"
         },
         {
-          "type": "section-end"
+          "type": "song",
+          "songId": "s12"
         },
         {
           "type": "song",
