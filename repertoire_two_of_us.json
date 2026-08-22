@@ -1563,11 +1563,17 @@
         },
         {
           "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
           "songId": "s32"
         },
         {
           "type": "song",
-          "songId": "s15"
+          "songId": "s07",
+          "altSongId": "s06",
+          "useAlt": false
         },
         {
           "type": "song",
