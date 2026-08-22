@@ -1054,7 +1054,13 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="alt-modal">
   <div class="modal">
     <h2>Set Alternate</h2>
-    <input class="fi" type="search" placeholder="Search…" oninput="renderAltPickList(this.value)" style="margin-bottom:12px">
+    <input class="fi" type="search" id="alt-search" placeholder="Search…" oninput="renderAltPickList(this.value)" style="margin-bottom:10px">
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:6px">
+      <input type="checkbox" id="alt-hide-existing" checked onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide songs already in this setlist
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
+      <input type="checkbox" id="alt-hide-tryout" onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide 🧪 Try outs
+    </label>
     <div class="song-pick-list" id="alt-pick-list"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('alt-modal')">Cancel</button>
@@ -2761,6 +2767,17 @@ function sectionStartFor(items, endIdx) {
   return null;
 }
 
+// Whether index `pos` currently falls under a still-open section (any section, regardless of
+// collapse) -- same walk as renderSetDetail's own `nested` tracking, standalone.
+function nestedBefore(items, pos) {
+  let nested = false;
+  for (let j = 0; j < pos; j++) {
+    if (items[j].type === 'section') nested = true;
+    else if (items[j].type === 'section-end') nested = false;
+  }
+  return nested;
+}
+
 // Removes the blockLen items[] starting at fromIdx and reinserts them so the block starts
 // right before whatever was originally at toIdx (toIdx is an index into the *pre-removal*
 // array -- "insert before this").
@@ -2813,7 +2830,7 @@ function slRow(item, i, total, nested) {
     <div class="sl-btns">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();startSlEdit('${s.id}')" title="Edit song">✎</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1&&!nested?'disabled':''} title="${i===total-1&&nested?'Leave section (already last)':'Down'}">↓</button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove from setlist">✕</button>
     </div>
   </div>`;
@@ -2915,31 +2932,78 @@ function reindexSelection(items, selectedItem) {
   selectedItemIdx = selectedItem ? items.indexOf(selectedItem) : null;
 }
 
+// Common tail for every ↑/↓ outcome below: reorder, keep selection pointed at the same item,
+// persist, re-render.
+function doMove(items, idx, len, toIdx) {
+  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
+  moveBlockTo(items, idx, len, toIdx);
+  reindexSelection(items, selectedItem);
+  save(); renderSetDetail(); renderBubbles();
+}
+
+// Closes the current section right where `idx` stands, without moving it: a pure membership
+// change (the item stops being nested, loses its indent, and its own ↓ becomes a real no-op
+// next render) rather than a reorder. Used whenever a nested song's next ↓ step would otherwise
+// have to also decide what happens with a *different* section in the same move (see moveSlSong).
+function exitSectionInPlace(items, idx) {
+  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
+  items.splice(idx, 0, { type: 'section-end' });
+  reindexSelection(items, selectedItem);
+  save(); renderSetDetail(); renderBubbles();
+  toast('Left the section');
+}
+
 function moveSlSong(idx, dir) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   const items = sl.items;
   const len = slBlockLen(items, idx);
-  if (dir < 0 && idx === 0) return;
-  if (dir > 0 && idx + len >= items.length) return;
-  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
-  // A plain song's ↑/↓ step is normally just a swap with its one neighbor -- but if that
-  // neighbor is the boundary of a *collapsed* section, a bare swap would tuck the song inside
-  // it as a newly-hidden song: its own row (buttons included) vanishes from view with no
-  // warning, since collapsed rows don't render. Skip the whole section instead, landing on
-  // its far side, so the song always stays visible. Multi-item section-block moves (len > 1)
-  // don't have this risk -- headers stay visible regardless of collapse -- so they keep the
-  // plain adjacent-block swap.
-  let toIdx;
-  if (len === 1 && dir > 0 && items[idx + 1].type === 'section' && items[idx + 1].collapsed) {
-    toIdx = sectionBlockEnd(items, idx + 1);
-  } else if (len === 1 && dir < 0 && items[idx - 1].type === 'section-end' && collapsedBefore(items, idx - 1)) {
-    toIdx = sectionStartFor(items, idx - 1) ?? (idx - 1);
-  } else {
-    toIdx = dir < 0 ? idx - 1 : idx + len + 1;
+
+  if (dir < 0) {
+    if (idx === 0) return;
+    if (len > 1) {
+      // Moving a whole section up: whatever sits right before it can never have more of its
+      // own content trailing behind before reaching our header -- a section always auto-closes
+      // at the next header regardless (see the section-end note in CLAUDE.md) -- so a plain
+      // single-slot swap is always safe here, unlike the down case below.
+      return doMove(items, idx, len, idx - 1);
+    }
+    // Plain song stepping up: swap with whatever's immediately before. If that's a section-end
+    // closing a *collapsed* section, landing as its new (hidden) last song would make this row
+    // vanish with no warning -- skip the whole section instead, landing above it.
+    const toIdx = (items[idx - 1].type === 'section-end' && collapsedBefore(items, idx - 1))
+      ? (sectionStartFor(items, idx - 1) ?? (idx - 1))
+      : idx - 1;
+    return doMove(items, idx, 1, toIdx);
   }
-  moveBlockTo(items, idx, len, toIdx);
-  reindexSelection(items, selectedItem);
-  save(); renderSetDetail(); renderBubbles();
+
+  // dir > 0 (down)
+  if (len > 1) {
+    // Moving a whole section down: if what immediately follows is itself ANOTHER section's
+    // header, a naive single-slot swap would leapfrog just that header and strand its own
+    // songs behind with no header of their own -- silently "eating" them out of any section,
+    // collapsed or not (collapsed just hides the wreckage). Swap whole blocks instead: past the
+    // neighbor's own full extent, which slBlockLen already gives as 1 for anything that isn't
+    // itself a section header.
+    if (idx + len >= items.length) return;
+    const neighborLen = slBlockLen(items, idx + len);
+    return doMove(items, idx, len, idx + len + neighborLen);
+  }
+  const next = items[idx + 1]; // undefined once idx is the very last item
+  const nested = nestedBefore(items, idx);
+  // A nested song about to cross straight into a DIFFERENT section (or off the end of a
+  // trailing one) should land one step at a time: out of its own section first -- even with a
+  // different section's header immediately next -- then, a second press later, into whatever
+  // comes after. Otherwise a single ↓ could exit one section AND enter the next in the same
+  // step, skipping right past the "between the two sections" position one press implies.
+  if (nested && (!next || next.type === 'section')) return exitSectionInPlace(items, idx);
+  if (!next) return; // top-level, already at the very end -- nothing to do
+  if (next.type === 'section') {
+    // Not nested -- approaching a fresh section from outside. Entering it is the single step
+    // here: lands as its first song if expanded, or skips the whole block if collapsed (a
+    // collapsed section can't show an "inside" landing spot -- same rule drag-and-drop uses).
+    return doMove(items, idx, 1, next.collapsed ? sectionBlockEnd(items, idx + 1) : idx + 2);
+  }
+  return doMove(items, idx, 1, idx + 2); // plain song, or an existing section-end
 }
 
 function removeSlItem(idx) {
@@ -2969,27 +3033,43 @@ function clearAlt(idx) {
 let altItemIdx = null;
 function openAltModal(idx) {
   altItemIdx = idx;
+  document.getElementById('alt-hide-existing').checked = true;
+  document.getElementById('alt-hide-tryout').checked = false;
   renderAltPickList('');
   openModal('alt-modal');
 }
 
+// Same picker helpers as the Add Songs modal (renderPickList): "Hide songs already in this
+// setlist" (checked by default) and "Hide 🧪 Try outs" (off by default), plus the same
+// disabled-and-marked treatment for already-used songs rather than hiding them outright when
+// unchecked. The slot's own current song (item.songId) is always excluded outright -- it can
+// never be its own alternate -- and its *current* alt (if changing an existing one) is always
+// exempt from the "already in setlist" dimming so re-opening this modal still shows it picked.
 function renderAltPickList(q) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   const item = sl.items[altItemIdx]; if (!item) return;
+  const have = setlistSongIds(sl);
+  const hideExisting = document.getElementById('alt-hide-existing')?.checked !== false;
+  const hideTryout    = !!document.getElementById('alt-hide-tryout')?.checked;
   const ql = q.toLowerCase();
   const list = db.songs.filter(s => s.id !== item.songId &&
+    (!hideExisting || !have.has(s.id) || s.id === item.altSongId) &&
+    !(hideTryout && s.tryOut) &&
     (!ql || s.title.toLowerCase().includes(ql) || (s.tags||'').toLowerCase().includes(ql)));
 
   const el = document.getElementById('alt-pick-list');
   if (!list.length) { el.innerHTML = '<div class="empty" style="padding:16px">No songs</div>'; return; }
-  el.innerHTML = list.map(s => `
-    <label class="song-pick-item">
-      <input type="radio" name="alt-pick" value="${s.id}">
+  el.innerHTML = list.map(s => {
+    const already = have.has(s.id) && s.id !== item.altSongId;
+    return `
+    <label class="song-pick-item${already ? ' pick-disabled' : ''}">
+      <input type="radio" name="alt-pick" value="${s.id}" ${item.altSongId===s.id?'checked':''} ${already?'disabled':''}>
       <div>
-        <div class="pick-title">${esc(s.title)}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
-    </label>`).join('');
+    </label>`;
+  }).join('');
 }
 
 function confirmAltPick() {
@@ -3102,13 +3182,13 @@ function onSlDragMove(e) {
   const { fromIdx, blockLen, rows, items } = slDrag;
   rows.forEach(r => r.classList.remove('drag-over'));
   // Find the row the pointer is currently over (skipping the dragged block itself) and drop
-  // before/after it depending on which half of the row the pointer is in. A lone song (not a
-  // section itself) hovered onto the *lower* half of a section header is a special case: an
-  // expanded section is being dropped "into" (lands as its first song, i.e. right after the
-  // header -- which the plain before/after math already gives), but a collapsed one can't
-  // show that landing spot, so the song instead lands right after the section's whole block
-  // -- past the end of a section (its own or one it's hovering over) always drops the song
-  // right after that section, never left orphaned mid-block.
+  // before/after it depending on which half of the row the pointer is in. Dropping onto the
+  // *lower* half of a section header is a special case either way: dropping a lone song lands
+  // it inside as the section's first song if expanded (which the plain before/after math
+  // already gives), or after the whole block if collapsed (can't show an "inside" landing spot
+  // while collapsed). Dropping a whole *section* there always lands after the neighbor's whole
+  // block, collapsed or not -- landing right after just its header would wedge our dragged
+  // section between that header and its own songs, stranding them with no header of their own.
   let dropIdx = null;
   for (const r of rows) {
     const di = +r.dataset.idx;
@@ -3117,7 +3197,7 @@ function onSlDragMove(e) {
     if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
       const before = e.clientY < rect.top + rect.height / 2;
       const targetItem = items[di];
-      if (!before && blockLen === 1 && targetItem.type === 'section' && targetItem.collapsed) {
+      if (!before && targetItem.type === 'section' && (blockLen > 1 || targetItem.collapsed)) {
         dropIdx = sectionBlockEnd(items, di);
       } else {
         dropIdx = di + (before ? 0 : 1);
@@ -3132,6 +3212,11 @@ function onSlDragMove(e) {
     const firstTop = rows[0].getBoundingClientRect().top;
     dropIdx = e.clientY < firstTop ? 0 : (+rows[rows.length - 1].dataset.idx + 1);
   }
+  // Defensive clamp: the fallback above (or a collapsed/hidden gap in the row list) could in
+  // principle land inside the dragged block's own range -- e.g. dragging the very last,
+  // collapsed section and releasing below everything, where the only visible row past it is
+  // its own header. Snap back to "no-op" rather than let moveBlockTo splice into itself.
+  if (dropIdx !== null && dropIdx > fromIdx && dropIdx < fromIdx + blockLen) dropIdx = fromIdx;
   slDrag.dropIdx = dropIdx;
 }
 
@@ -3206,6 +3291,19 @@ function deleteSetlist(id) {
   toast('Setlist deleted');
 }
 
+// Every songId currently used somewhere in a setlist -- both a slot's primary songId and any
+// altSongId set on it, since an alternate is just as "in this setlist" as the song it stands
+// in for. Shared by the Add Songs and Set Alternate pickers' "already in this setlist" checks.
+function setlistSongIds(sl) {
+  const have = new Set();
+  (sl?.items || []).forEach(it => {
+    if (it.type !== 'song') return;
+    have.add(it.songId);
+    if (it.altSongId) have.add(it.altSongId);
+  });
+  return have;
+}
+
 function openAddSongsModal() {
   document.getElementById('pick-hide-existing').checked = true;
   document.getElementById('pick-hide-tryout').checked = false;
@@ -3220,7 +3318,7 @@ function openAddSongsModal() {
 // only makes it visible, e.g. to double-check what's already there without leaving the modal.
 function renderPickList(q) {
   const sl   = db.setlists.find(s => s.id === activeSetId);
-  const have = new Set((sl?.items||[]).filter(i => i.type === 'song').map(i => i.songId));
+  const have = setlistSongIds(sl);
   const hideExisting = document.getElementById('pick-hide-existing')?.checked !== false;
   const hideTryout    = !!document.getElementById('pick-hide-tryout')?.checked;
   const ql   = q.toLowerCase();
@@ -3246,7 +3344,7 @@ function renderPickList(q) {
 function confirmAddSongs() {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   sl.items = sl.items || [];
-  const have = new Set(sl.items.filter(i => i.type === 'song').map(i => i.songId));
+  const have = setlistSongIds(sl);
   const checked = [...document.querySelectorAll('#pick-list input:checked')];
   const toAdd = checked.filter(cb => !have.has(cb.value)).map(cb => ({ type: 'song', songId: cb.value }));
   if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
