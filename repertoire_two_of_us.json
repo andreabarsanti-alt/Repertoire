@@ -1550,7 +1550,7 @@
         {
           "type": "section",
           "name": "More S & G",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -1584,27 +1584,21 @@
           "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
         },
         {
-          "type": "section",
-          "name": "More 80s and 90s",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "48059d27-3a58-415f-8814-1199e07162e4",
-          "altSongId": "86b59268-5f33-4c3a-be96-a3099959ca4e",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "mobwy45ykmxg3"
-        },
-        {
           "type": "song",
           "songId": "s05"
         },
         {
           "type": "song",
           "songId": "s04"
+        },
+        {
+          "type": "section",
+          "name": "Encore",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "mobwy45ykmxg3"
         },
         {
           "type": "section",
