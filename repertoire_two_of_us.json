@@ -1656,7 +1656,7 @@
         {
           "type": "section",
           "name": "Encore",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -1674,6 +1674,87 @@
         },
         {
           "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Songs to place",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "s03"
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "s26"
+        },
+        {
+          "type": "song",
+          "songId": "s41"
+        },
+        {
+          "type": "song",
+          "songId": "mobwnzg39cdvz"
+        },
+        {
+          "type": "song",
+          "songId": "mobx4gbien69s"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s22"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "song",
+          "songId": "s38"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "mobwzwj4octlr"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "fccb7d11-ae07-4874-aec2-17c29e060147"
+        },
+        {
+          "type": "song",
+          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
         }
       ],
       "type": "generic"
