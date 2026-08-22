@@ -834,16 +834,25 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .play-current .kch-wrap { margin-top: 8px; justify-content: center; }
 .play-current .kch { font-size: 1.0rem; padding: 6px 14px; background: rgba(61,158,140,.2); border-color: rgba(61,158,140,.4); color: #6ed4c0; }
 .play-title-row { display: flex; align-items: center; gap: 20px; }
-.play-section-tag { color: rgba(255,255,255,.35); }
+/* Section tag: a plain dim label was too easy to miss scanning the queue -- accent color and
+   real weight so a song's section context reads at a glance instead of on close inspection. */
+.play-section-tag { color: #6ed4c0; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.play-current .play-section-badge {
+  display: inline-block; margin-bottom: 12px; padding: 5px 16px; border-radius: 20px;
+  background: rgba(61,158,140,.18); border: 1px solid rgba(61,158,140,.5);
+  color: #6ed4c0; font-size: 1rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+/* Alternate: a real button-sized, high-contrast pill, not a small icon easy to miss or
+   mis-tap mid-performance -- the whole pill (not just an icon) is the tap target. */
 .play-alt {
-  margin-top: 6px; font-size: 0.85rem; color: rgba(255,255,255,.4);
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 10px 20px; border-radius: 26px; min-height: 44px;
+  background: rgba(61,158,140,.16); border: 1.5px solid rgba(61,158,140,.55);
+  color: #9fe8da; font-size: 1.05rem; font-weight: 600; cursor: pointer;
+  transition: background .15s, border-color .15s;
 }
-.play-alt-swap {
-  background: none; border: 1px solid rgba(255,255,255,.25); border-radius: 5px;
-  color: rgba(255,255,255,.6); cursor: pointer; font-size: 0.85rem; padding: 1px 6px;
-}
-.play-alt-swap:hover { border-color: var(--accent); color: #6ed4c0; }
+.play-alt:hover, .play-alt:active { background: rgba(61,158,140,.3); border-color: var(--accent); }
+.play-alt-icon { font-size: 1.3rem; line-height: 1; }
 .play-nav-btn {
   background: none; border: none; cursor: pointer;
   font-size: 1.6rem; line-height: 1;
@@ -3448,7 +3457,16 @@ function doPrint() {
   .section-row td { border-bottom: 1px solid #000; padding-top: 16px;
                      font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
   .section-row:first-child td { padding-top: 7px; }
+  /* Standalone "Add to Home Screen" iPad Safari has no browser chrome at all -- no tabs, no
+     back button -- so this window would otherwise be a dead end once the print sheet (or its
+     Cancel) closes. window.close() only works on a window script opened, which this is, so a
+     plain in-page button is enough to get back. Hidden from the actual printed output. */
+  .no-print { margin-bottom: 18px; }
+  .no-print button { font: inherit; font-family: sans-serif; font-size: 0.85rem; padding: 6px 14px;
+                      border: 1px solid #888; border-radius: 5px; background: #fff; color: #000; }
+  @media print { .no-print { display: none; } }
 </style></head><body>
+<div class="no-print"><button onclick="window.close()">← Close</button></div>
 <h1>${title}</h1>
 <table>
   <thead><tr>
@@ -3459,23 +3477,17 @@ function doPrint() {
 </table>
 </body></html>`;
 
-  // Printed via a hidden iframe rather than window.open(): standalone "Add to Home Screen"
-  // iPad Safari has no browser chrome at all -- no tabs, no back button -- and window.open()
-  // there can navigate the app's own single window away to the print document instead of
-  // opening a separate one, leaving no way back short of relaunching the app from the home
-  // screen icon. An iframe never touches the top-level document, so the app is always still
-  // there underneath once the native print/share sheet is dismissed.
-  const ifr = document.createElement('iframe');
-  ifr.setAttribute('aria-hidden', 'true');
-  ifr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-  ifr.onload = () => {
-    try { ifr.contentWindow.addEventListener('afterprint', () => ifr.remove()); } catch {}
-    ifr.contentWindow.focus();
-    ifr.contentWindow.print();
-  };
-  document.body.appendChild(ifr);
-  ifr.srcdoc = html;
-  setTimeout(() => { if (ifr.parentNode) ifr.remove(); }, 60000); // fallback if afterprint never fires
+  // window.open() + document.write()/close(), same mechanism the app always used for print --
+  // an iframe (tried instead, to solve the "no way back" problem below) turned out to be an
+  // unreliable place to call print() from: WebKit doesn't consistently scope printing to an
+  // iframe's own content, so the print preview could come out blank rather than showing the
+  // sheet. A real new window, printed the ordinary way, doesn't have that problem -- so the
+  // "no way back" issue is solved with an explicit in-page "← Close" button (window.close())
+  // instead, which works because the window was opened by this script.
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 250);
 }
 
 // Click-outside-to-close for every overlay *except* the full-page CRD editor: that one's a
@@ -3589,12 +3601,16 @@ function renderPlayList(autoScroll = true) {
           <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(1)" title="Next" ${i===entries.length-1?'disabled':''}>↓</button>
         </div>`
       : `<div class="play-title-text">${sectionTag}${title}</div>`;
-    const altHtml = (cur && altSong) ? `<div class="play-alt">
-        <button class="play-alt-swap" onclick="event.stopPropagation();togglePlayAlt(${itemIdx})" title="Swap to ${esc(altSong.title)}">⇄</button>
-        alt: ${esc(altSong.title)}
+    // Current row only: a standalone badge (not squeezed into the small play-num line) and a
+    // full tap-sized pill for the alt -- the whole pill is clickable (togglePlayAlt), not just
+    // a small icon, so it's a real button at a glance and a real touch target mid-performance.
+    const sectionBadge = (cur && sectionName) ? `<div class="play-section-badge">${esc(sectionName)}</div>` : '';
+    const altHtml = (cur && altSong) ? `<div class="play-alt" onclick="event.stopPropagation();togglePlayAlt(${itemIdx})" title="Swap to ${esc(altSong.title)}">
+        <span class="play-alt-icon">⇄</span> alt: ${esc(altSong.title)}
       </div>` : '';
     return `<div class="play-song${cur ? ' play-current' : ''}" data-idx="${i}" onclick="handlePlayClick(event,${i})">
-      ${cur ? `<div class="play-num">${i + 1}.${sectionTag ? ' · '+sectionTag : ''}</div>` : ''}
+      ${sectionBadge}
+      ${cur ? `<div class="play-num">${i + 1}.</div>` : ''}
       ${titleEl}
       ${altHtml}
       ${cur && badges ? `<div class="kch-wrap">${badges}</div>` : ''}
