@@ -1547,6 +1547,20 @@
           "type": "section-end"
         },
         {
+          "type": "section",
+          "name": "More S & G",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "s13",
+          "altSongId": "mobx34z6fdygx",
+          "useAlt": false
+        },
+        {
+          "type": "section-end"
+        },
+        {
           "type": "song",
           "songId": "s32"
         },
@@ -1563,12 +1577,43 @@
           "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
         },
         {
+          "type": "section",
+          "name": "More 90s",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "48059d27-3a58-415f-8814-1199e07162e4"
+        },
+        {
+          "type": "section-end"
+        },
+        {
           "type": "song",
           "songId": "s05"
         },
         {
           "type": "song",
           "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "mobxcagv7zvgk"
+        },
+        {
+          "type": "section",
+          "name": "More Blues",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "s23",
+          "altSongId": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
+          "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "mobwys0zxdtab"
         }
       ],
       "type": "generic"
