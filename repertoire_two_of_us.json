@@ -1550,7 +1550,7 @@
         {
           "type": "section",
           "name": "More S & G",
-          "collapsed": true
+          "collapsed": false
         },
         {
           "type": "song",
@@ -1571,6 +1571,28 @@
         },
         {
           "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "section",
+          "name": "More S & G",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+        },
+        {
+          "type": "song",
+          "songId": "s33",
+          "altSongId": "s14",
+          "useAlt": true
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "song",
           "songId": "s07",
           "altSongId": "s06",
           "useAlt": false
@@ -1585,11 +1607,51 @@
         },
         {
           "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "mobxcagv7zvgk"
+        },
+        {
+          "type": "section",
+          "name": "More Blues",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s23",
+          "altSongId": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
+          "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "mobwys0zxdtab"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
           "songId": "s05"
         },
         {
           "type": "song",
           "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe",
+          "altSongId": "s36",
+          "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "s37"
         },
         {
           "type": "section",
@@ -1601,23 +1663,14 @@
           "songId": "mobwy45ykmxg3"
         },
         {
-          "type": "section",
-          "name": "Blues",
-          "collapsed": false
+          "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
         },
         {
           "type": "song",
-          "songId": "mobxcagv7zvgk"
-        },
-        {
-          "type": "song",
-          "songId": "s23",
-          "altSongId": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "mobwys0zxdtab"
+          "songId": "s39",
+          "altSongId": "mobvrnnwqd8gq",
+          "useAlt": true
         },
         {
           "type": "section-end"
