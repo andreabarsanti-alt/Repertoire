@@ -1656,11 +1656,15 @@
         {
           "type": "section",
           "name": "Encore",
-          "collapsed": true
+          "collapsed": false
         },
         {
           "type": "song",
           "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
           "type": "song",
@@ -1743,10 +1747,6 @@
         {
           "type": "song",
           "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
-        },
-        {
-          "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
           "type": "song",
