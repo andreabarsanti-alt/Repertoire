@@ -493,6 +493,11 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   border: 1px solid transparent; transition: border-color .15s, background .15s;
 }
 .sl-row:hover { border-color: rgba(61,158,140,.2); }
+/* 🧪 Try out songs get a whole-row tint, not just the small kch badge -- easy to miss one
+   scanning a long setlist otherwise. Sits under .selected/.drag-over, which only touch
+   border-color, so both cues stay visible together. */
+.sl-row.sl-tryout { background: rgba(224,168,74,.10); border-color: rgba(224,168,74,.28); }
+.sl-row.sl-tryout:hover { border-color: rgba(224,168,74,.45); }
 .drag-item { cursor: pointer; }
 .drag-item.drag-over { border-color: var(--accent); background: rgba(61,158,140,.07); }
 .drag-item.dragging { opacity: .35; }
@@ -500,7 +505,7 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
 .drag-handle {
   color: var(--text-dim); cursor: grab; font-size: 1.1rem;
   padding: 0 3px; flex-shrink: 0; touch-action: none;
-  opacity: .5;
+  opacity: .5; user-select: none; -webkit-user-select: none;
 }
 .drag-handle:hover { opacity: 1; color: var(--accent); }
 .sl-num {
@@ -1028,7 +1033,10 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="add-songs-modal">
   <div class="modal">
     <h2>Add Songs</h2>
-    <input class="fi" type="search" placeholder="Search…" oninput="renderPickList(this.value)" style="margin-bottom:12px">
+    <input class="fi" type="search" id="pick-search" placeholder="Search…" oninput="renderPickList(this.value)" style="margin-bottom:10px">
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
+      <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide 🧪 Try outs
+    </label>
     <div class="song-pick-list" id="pick-list"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('add-songs-modal')">Cancel</button>
@@ -1306,7 +1314,8 @@ let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
 let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
-let dragIdx = null;
+let slCrdFilter = 'all'; // 'all' | 'with' | 'without' — Setlist detail toolbar filter on whether the resolved song has crd; view-only, never touches sl.items
+let slDrag = null; // active setlist pointer-drag, see initDrag()
 let selectedItemIdx = null;
 let crdSongId       = null;
 let crdScrollPct = Math.max(5, Math.min(100, parseInt(localStorage.getItem('rep_crd_scroll_pct') || '35', 10)));
@@ -1849,6 +1858,11 @@ function setSongsCrdFilter(f) {
 function setSongsScopeFilter(f) {
   songsScopeFilter = f;
   renderSongs();
+}
+
+function setSlCrdFilter(f) {
+  slCrdFilter = f;
+  renderSetDetail();
 }
 
 function renderSongs() {
@@ -2644,21 +2658,35 @@ function renderSetDetail() {
   // shown, so collapsing a section just hides its rows — the flat `items` array and its
   // indices never change. section-end is a purely structural, invisible boundary (renders
   // nothing) for closing a section early instead of letting it run to the next header.
-  let collapsed = false, nested = false;
+  //
+  // slCrdFilter is view-only on top of that same pass -- a song row that doesn't match gets
+  // hidden exactly like a collapsed one, but sl.items itself is never touched, so it's not a
+  // real removal (unlike Songs tab's filter, which also just narrows a display list, not
+  // stored data).
+  let collapsed = false, nested = false, shownCount = 0;
   const rowsHtml = !items.length
     ? '<div class="empty" style="padding:20px">No songs yet</div>'
     : items.map((it, i) => {
         if (it.type === 'section') { collapsed = !!it.collapsed; nested = true; return sectionBlock(it, i, items.length, items); }
         if (it.type === 'section-end') { collapsed = false; nested = false; return ''; }
         if (collapsed) return '';
+        const s = resolveItemSong(it);
+        if (s && slCrdFilter !== 'all' && (slCrdFilter === 'with') !== !!s.crd) return '';
+        if (s) shownCount++;
         return slRow(it, i, items.length, nested);
       }).join('');
+  const filteredEmpty = items.length > 0 && slCrdFilter !== 'all' && shownCount === 0;
 
   const dateSuffix = sl.type === 'live' && sl.date ? ` <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">· ${formatSetDate(sl.date)}</span>` : '';
   el.innerHTML = `
     <div class="set-detail-header">
       <h2>${esc(sl.name)}${dateSuffix} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${playCount} songs</span></h2>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select class="profile-select" id="sl-crd-select" onchange="setSlCrdFilter(this.value)" title="Filter this view by chord sheet — doesn't change the setlist">
+          <option value="all"     ${slCrdFilter==='all'    ?'selected':''}>Any chords</option>
+          <option value="with"    ${slCrdFilter==='with'   ?'selected':''}>🎸 Has chords</option>
+          <option value="without" ${slCrdFilter==='without'?'selected':''}>No chords</option>
+        </select>
         <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
         ${hasSections ? `
@@ -2668,7 +2696,8 @@ function renderSetDetail() {
         <button class="btn btn-primary   btn-sm" onclick="openAddSongsModal()">+ Add Songs</button>
       </div>
     </div>
-    <div id="sl-list">${rowsHtml}</div>`;
+    <div id="sl-list">${rowsHtml}</div>
+    ${filteredEmpty ? '<div class="empty" style="padding:20px">No songs match this filter</div>' : ''}`;
 
   initDrag();
 }
@@ -2683,6 +2712,34 @@ function sectionSongCount(items, idx) {
     if (resolveItemSong(items[j])) n++;
   }
   return n;
+}
+
+// End index (exclusive) of everything that belongs to the section header at `idx` -- its
+// songs, plus (if present) the section-end that closes it, since that marker is *this*
+// section's own closing boundary and has to travel with it on move/drag. Stops at (without
+// consuming) the next section header, or the list end, same boundary rule as sectionSongCount.
+function sectionBlockEnd(items, idx) {
+  let end = idx + 1;
+  while (end < items.length && items[end].type !== 'section' && items[end].type !== 'section-end') end++;
+  if (end < items.length && items[end].type === 'section-end') end++;
+  return end;
+}
+
+// How many contiguous items[] slots move together when item `idx` is reordered: a lone song
+// (or section-end) moves by itself, but a section header drags its whole block along --
+// otherwise moving/dragging a section would leave its songs behind. Used by both the ↑/↓
+// buttons (moveSlSong) and pointer drag-and-drop (initDrag).
+function slBlockLen(items, idx) {
+  return items[idx].type === 'section' ? sectionBlockEnd(items, idx) - idx : 1;
+}
+
+// Removes the blockLen items[] starting at fromIdx and reinserts them so the block starts
+// right before whatever was originally at toIdx (toIdx is an index into the *pre-removal*
+// array -- "insert before this").
+function moveBlockTo(items, fromIdx, blockLen, toIdx) {
+  const block = items.splice(fromIdx, blockLen);
+  const insertAt = toIdx > fromIdx ? toIdx - blockLen : toIdx;
+  items.splice(insertAt, 0, ...block);
 }
 
 function expandAllSections(state) {
@@ -2712,7 +2769,9 @@ function slRow(item, i, total, nested) {
     ? altRow(item, i)
     : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
   const selected = i === selectedItemIdx;
-  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
+  // kchBadges already appends a small "🧪 Try out" chip, but that's easy to miss scanning a
+  // long setlist -- tint the whole row too so a try-out slipping into a real setlist stands out.
+  return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}${s.tryOut?' sl-tryout':''}" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
     <span class="sl-num">${i+1}.</span>
     <div class="sl-info">
@@ -2803,36 +2862,41 @@ function cancelSlEdit() {
 function sectionBlock(item, i, total, items) {
   const count = sectionSongCount(items, i);
   const selected = i === selectedItemIdx;
-  return `<div class="section-block drag-item${selected?' selected':''}" draggable="true" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
+  // Down is disabled once this section's whole block (header + songs + closing section-end,
+  // if any) already reaches the end of the list -- not just when the header row itself does,
+  // otherwise the button would look enabled while having nothing left to swap past.
+  const blockEnd = sectionBlockEnd(items, i);
+  return `<div class="section-block drag-item${selected?' selected':''}" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
+    <span class="drag-handle">⠿</span>
     <button class="section-collapse" onclick="event.stopPropagation();toggleSectionCollapsed(${i})" title="${item.collapsed?'Expand':'Collapse'}">${item.collapsed?'▸':'▾'}</button>
     <span class="section-name">${esc(item.name || 'Section')}</span>
     <span class="section-badge">${count} song${count!==1?'s':''}</span>
     <div class="sl-btns">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();renameSection(${i})" title="Rename">✎</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1?'disabled':''} title="Down">↓</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${blockEnd>=total?'disabled':''} title="Down">↓</button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove section heading (songs stay, and join the section above)">✕</button>
     </div>
   </div>`;
 }
 
-// Keeps selectedItemIdx pointing at the same logical item after items move around
-// (single-position swap, or an arbitrary drag from `from` to `to`).
-function adjustSelectionForMove(from, to) {
-  if (selectedItemIdx === null) return;
-  if (selectedItemIdx === from) { selectedItemIdx = to; return; }
-  if (from < to) {
-    if (selectedItemIdx > from && selectedItemIdx <= to) selectedItemIdx--;
-  } else {
-    if (selectedItemIdx >= to && selectedItemIdx < from) selectedItemIdx++;
-  }
+// Keeps selectedItemIdx pointing at the same logical item after items move around. Tracks
+// the item by reference rather than recomputing index arithmetic -- simplest thing that stays
+// correct for both a single-item swap and a multi-item section-block move.
+function reindexSelection(items, selectedItem) {
+  selectedItemIdx = selectedItem ? items.indexOf(selectedItem) : null;
 }
 
 function moveSlSong(idx, dir) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-  const ni = idx + dir; if (ni < 0 || ni >= sl.items.length) return;
-  [sl.items[idx], sl.items[ni]] = [sl.items[ni], sl.items[idx]];
-  adjustSelectionForMove(idx, ni);
+  const items = sl.items;
+  const len = slBlockLen(items, idx);
+  if (dir < 0 && idx === 0) return;
+  if (dir > 0 && idx + len >= items.length) return;
+  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
+  const toIdx = dir < 0 ? idx - 1 : idx + len + 1;
+  moveBlockTo(items, idx, len, toIdx);
+  reindexSelection(items, selectedItem);
   save(); renderSetDetail(); renderBubbles();
 }
 
@@ -2952,33 +3016,106 @@ function toggleSectionCollapsed(idx) {
   save(); renderSetDetail();
 }
 
+// Setlist reordering by drag, via Pointer Events rather than the HTML5 drag-and-drop API --
+// dragstart/dragover/drop never fire from touch input on iPad Safari (this app's actual
+// platform), so native DnD looked like it did nothing when grabbed on-device even though it
+// worked fine with a mouse. Pointer events fire uniformly for mouse, touch, and pen. Drag is
+// only initiated from a row's ⠿ handle (matching the handle's pre-existing touch-action:none),
+// so it can't fight with tap-to-select or with normal scrolling of the list.
+//
+// Grabbing a section header carries its whole block (see slBlockLen) -- otherwise dragging a
+// section only relocated the header and left its songs behind at the old spot.
 function initDrag() {
   const list = document.getElementById('sl-list'); if (!list) return;
-  list.querySelectorAll('.drag-item').forEach(row => {
-    row.addEventListener('dragstart', e => {
-      dragIdx = +row.dataset.idx;
-      row.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    row.addEventListener('dragend', () => {
-      row.classList.remove('dragging');
-      list.querySelectorAll('.drag-item').forEach(r => r.classList.remove('drag-over'));
-    });
-    row.addEventListener('dragover', e => {
-      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-      list.querySelectorAll('.drag-item').forEach(r => r.classList.remove('drag-over'));
-      row.classList.add('drag-over');
-    });
-    row.addEventListener('drop', e => {
-      e.preventDefault();
-      const di = +row.dataset.idx; if (dragIdx === di) return;
-      const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
-      const [m] = sl.items.splice(dragIdx, 1);
-      sl.items.splice(di, 0, m);
-      adjustSelectionForMove(dragIdx, di);
-      save(); renderSetDetail(); renderBubbles();
-    });
+  list.querySelectorAll('.drag-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', startSlDrag);
   });
+}
+
+function startSlDrag(e) {
+  if (slDrag) return; // already mid-drag (e.g. a second touch point) -- ignore
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const row = e.currentTarget.closest('.drag-item'); if (!row) return;
+  const list = document.getElementById('sl-list'); if (!list) return;
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const items = sl.items;
+  const fromIdx = +row.dataset.idx;
+  const blockLen = slBlockLen(items, fromIdx);
+  e.preventDefault();
+  const rows = Array.from(list.querySelectorAll('.drag-item'));
+  slDrag = { fromIdx, blockLen, rows, items, dropIdx: null, pointerId: e.pointerId };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+  rows.forEach(r => {
+    const di = +r.dataset.idx;
+    if (di >= fromIdx && di < fromIdx + blockLen) r.classList.add('dragging');
+  });
+  document.addEventListener('pointermove', onSlDragMove);
+  document.addEventListener('pointerup', endSlDrag);
+  document.addEventListener('pointercancel', cancelSlDrag);
+}
+
+function onSlDragMove(e) {
+  if (!slDrag || e.pointerId !== slDrag.pointerId) return;
+  e.preventDefault();
+  const { fromIdx, blockLen, rows, items } = slDrag;
+  rows.forEach(r => r.classList.remove('drag-over'));
+  // Find the row the pointer is currently over (skipping the dragged block itself) and drop
+  // before/after it depending on which half of the row the pointer is in. A lone song (not a
+  // section itself) hovered onto the *lower* half of a section header is a special case: an
+  // expanded section is being dropped "into" (lands as its first song, i.e. right after the
+  // header -- which the plain before/after math already gives), but a collapsed one can't
+  // show that landing spot, so the song instead lands right after the section's whole block
+  // -- past the end of a section (its own or one it's hovering over) always drops the song
+  // right after that section, never left orphaned mid-block.
+  let dropIdx = null;
+  for (const r of rows) {
+    const di = +r.dataset.idx;
+    if (di >= fromIdx && di < fromIdx + blockLen) continue;
+    const rect = r.getBoundingClientRect();
+    if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      const before = e.clientY < rect.top + rect.height / 2;
+      const targetItem = items[di];
+      if (!before && blockLen === 1 && targetItem.type === 'section' && targetItem.collapsed) {
+        dropIdx = sectionBlockEnd(items, di);
+      } else {
+        dropIdx = di + (before ? 0 : 1);
+      }
+      r.classList.add('drag-over');
+      break;
+    }
+  }
+  if (dropIdx === null && rows.length) {
+    // Pointer is above the first row or below the last (or over a hidden/collapsed gap) --
+    // clamp to whichever end it's nearer.
+    const firstTop = rows[0].getBoundingClientRect().top;
+    dropIdx = e.clientY < firstTop ? 0 : (+rows[rows.length - 1].dataset.idx + 1);
+  }
+  slDrag.dropIdx = dropIdx;
+}
+
+function endSlDrag(e) {
+  if (!slDrag || e.pointerId !== slDrag.pointerId) return;
+  const { fromIdx, blockLen, dropIdx } = slDrag;
+  cleanupSlDrag();
+  // No-op if dropped back on itself (same slot, or right after its own current end).
+  if (dropIdx === null || dropIdx === fromIdx || dropIdx === fromIdx + blockLen) return;
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const items = sl.items;
+  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
+  moveBlockTo(items, fromIdx, blockLen, dropIdx);
+  reindexSelection(items, selectedItem);
+  save(); renderSetDetail(); renderBubbles();
+}
+
+function cancelSlDrag() { cleanupSlDrag(); }
+
+function cleanupSlDrag() {
+  if (!slDrag) return;
+  slDrag.rows.forEach(r => r.classList.remove('dragging', 'drag-over'));
+  document.removeEventListener('pointermove', onSlDragMove);
+  document.removeEventListener('pointerup', endSlDrag);
+  document.removeEventListener('pointercancel', cancelSlDrag);
+  slDrag = null;
 }
 
 function toggleSetLiveField() {
@@ -3028,16 +3165,23 @@ function deleteSetlist(id) {
 }
 
 function openAddSongsModal() {
+  document.getElementById('pick-hide-tryout').checked = false;
   renderPickList('');
   openModal('add-songs-modal');
 }
 
+// The picker already only offers songs not already in this setlist (`have`) -- that's the
+// baseline "helper on top of full search" over just reusing the plain song search. "Hide try
+// outs" is an optional extra narrowing on top of that, off by default so it doesn't silently
+// hide anything the first time the modal opens.
 function renderPickList(q) {
   const sl   = db.setlists.find(s => s.id === activeSetId);
   const have = new Set((sl?.items||[]).filter(i => i.type === 'song').map(i => i.songId));
+  const hideTryout = !!document.getElementById('pick-hide-tryout')?.checked;
   const ql   = q.toLowerCase();
   const list = db.songs
-    .filter(s => !have.has(s.id) && (!ql || s.title.toLowerCase().includes(ql) || (s.tags||'').toLowerCase().includes(ql)));
+    .filter(s => !have.has(s.id) && !(hideTryout && s.tryOut) &&
+      (!ql || s.title.toLowerCase().includes(ql) || (s.tags||'').toLowerCase().includes(ql)));
 
   const el = document.getElementById('pick-list');
   if (!list.length) { el.innerHTML = '<div class="empty" style="padding:16px">No songs to add</div>'; return; }
@@ -3045,7 +3189,7 @@ function renderPickList(q) {
     <label class="song-pick-item">
       <input type="checkbox" value="${s.id}">
       <div>
-        <div class="pick-title">${esc(s.title)}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
     </label>`).join('');
