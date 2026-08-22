@@ -728,8 +728,6 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 }
 .song-pick-item:last-child { border-bottom: none; }
 .song-pick-item:hover { background: var(--surface2); }
-.song-pick-item.pick-disabled { opacity: .45; cursor: default; }
-.song-pick-item.pick-disabled:hover { background: none; }
 .song-pick-item input[type=checkbox] {
   flex-shrink: 0; width: 18px; height: 18px; cursor: pointer;
   accent-color: var(--accent);
@@ -836,6 +834,16 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .play-current .kch-wrap { margin-top: 8px; justify-content: center; }
 .play-current .kch { font-size: 1.0rem; padding: 6px 14px; background: rgba(61,158,140,.2); border-color: rgba(61,158,140,.4); color: #6ed4c0; }
 .play-title-row { display: flex; align-items: center; gap: 20px; }
+.play-section-tag { color: rgba(255,255,255,.35); }
+.play-alt {
+  margin-top: 6px; font-size: 0.85rem; color: rgba(255,255,255,.4);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.play-alt-swap {
+  background: none; border: 1px solid rgba(255,255,255,.25); border-radius: 5px;
+  color: rgba(255,255,255,.6); cursor: pointer; font-size: 0.85rem; padding: 1px 6px;
+}
+.play-alt-swap:hover { border-color: var(--accent); color: #6ed4c0; }
 .play-nav-btn {
   background: none; border: none; cursor: pointer;
   font-size: 1.6rem; line-height: 1;
@@ -2674,17 +2682,24 @@ function renderSetDetail() {
   // hidden exactly like a collapsed one, but sl.items itself is never touched, so it's not a
   // real removal (unlike Songs tab's filter, which also just narrows a display list, not
   // stored data).
-  let collapsed = false, nested = false, shownCount = 0;
+  //
+  // The number shown on each row (songNum) counts songs only, never section headers -- items[]
+  // indices (i, used for data-idx/selectItem/moveSlSong/etc. below) include every item type, so
+  // using i+1 as the displayed number used to jump every time a section header preceded a song.
+  // It still counts a song even while hidden by collapse/filter, so the numbering stays a
+  // stable "this is song N of the whole setlist" regardless of what the view narrows away.
+  let collapsed = false, nested = false, shownCount = 0, songNum = 0;
   const rowsHtml = !items.length
     ? '<div class="empty" style="padding:20px">No songs yet</div>'
     : items.map((it, i) => {
         if (it.type === 'section') { collapsed = !!it.collapsed; nested = true; return sectionBlock(it, i, items.length, items); }
         if (it.type === 'section-end') { collapsed = false; nested = false; return ''; }
-        if (collapsed) return '';
         const s = resolveItemSong(it);
+        const num = s ? ++songNum : null;
+        if (collapsed) return '';
         if (s && slCrdFilter !== 'all' && (slCrdFilter === 'with') !== !!s.crd) return '';
         if (s) shownCount++;
-        return slRow(it, i, items.length, nested);
+        return slRow(it, i, items.length, nested, num);
       }).join('');
   const filteredEmpty = items.length > 0 && slCrdFilter !== 'all' && shownCount === 0;
 
@@ -2804,7 +2819,7 @@ function altRow(item, i) {
   </div>`;
 }
 
-function slRow(item, i, total, nested) {
+function slRow(item, i, total, nested, num) {
   const s = resolveItemSong(item);
   if (!s) return '';
   if (slEditSongId === s.id) return slEditRow(s, i, nested);
@@ -2818,7 +2833,7 @@ function slRow(item, i, total, nested) {
   // long setlist -- tint the whole row too so a try-out slipping into a real setlist stands out.
   return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}${s.tryOut?' sl-tryout':''}" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
-    <span class="sl-num">${i+1}.</span>
+    <span class="sl-num">${num}.</span>
     <div class="sl-info">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
         ${titleEl}
@@ -3040,11 +3055,12 @@ function openAltModal(idx) {
 }
 
 // Same picker helpers as the Add Songs modal (renderPickList): "Hide songs already in this
-// setlist" (checked by default) and "Hide 🧪 Try outs" (off by default), plus the same
-// disabled-and-marked treatment for already-used songs rather than hiding them outright when
-// unchecked. The slot's own current song (item.songId) is always excluded outright -- it can
+// setlist" (checked by default) and "Hide 🧪 Try outs" (off by default). A song already used
+// elsewhere is only ever a "✓ In setlist" hint, never disabled -- a song can legitimately want
+// to be its own alternate slot too (or, in the Add Songs modal, appear twice in a setlist, e.g.
+// a reprise). The slot's own current song (item.songId) is the one hard exclusion, since it can
 // never be its own alternate -- and its *current* alt (if changing an existing one) is always
-// exempt from the "already in setlist" dimming so re-opening this modal still shows it picked.
+// exempt from the "already in setlist" hint so re-opening this modal still shows it picked.
 function renderAltPickList(q) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   const item = sl.items[altItemIdx]; if (!item) return;
@@ -3062,8 +3078,8 @@ function renderAltPickList(q) {
   el.innerHTML = list.map(s => {
     const already = have.has(s.id) && s.id !== item.altSongId;
     return `
-    <label class="song-pick-item${already ? ' pick-disabled' : ''}">
-      <input type="radio" name="alt-pick" value="${s.id}" ${item.altSongId===s.id?'checked':''} ${already?'disabled':''}>
+    <label class="song-pick-item">
+      <input type="radio" name="alt-pick" value="${s.id}" ${item.altSongId===s.id?'checked':''}>
       <div>
         <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
@@ -3314,8 +3330,9 @@ function openAddSongsModal() {
 // "Hide songs already in this setlist" (checked by default, so the picker's baseline stays
 // what it always was) and "Hide 🧪 Try outs" (off by default) are both optional narrowings on
 // top of the plain search -- that's the "helper on top of full search" the picker is for.
-// Unchecking "already in setlist" doesn't let you re-add one (its row stays disabled) -- it
-// only makes it visible, e.g. to double-check what's already there without leaving the modal.
+// Unchecking "already in setlist" doesn't hide anything, just reveals it marked "✓ In
+// setlist" -- it's still fully selectable, since a song can legitimately go into a setlist
+// twice (e.g. a reprise), not just once.
 function renderPickList(q) {
   const sl   = db.setlists.find(s => s.id === activeSetId);
   const have = setlistSongIds(sl);
@@ -3331,8 +3348,8 @@ function renderPickList(q) {
   el.innerHTML = list.map(s => {
     const already = have.has(s.id);
     return `
-    <label class="song-pick-item${already ? ' pick-disabled' : ''}">
-      <input type="checkbox" value="${s.id}" ${already ? 'disabled' : ''}>
+    <label class="song-pick-item">
+      <input type="checkbox" value="${s.id}">
       <div>
         <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
@@ -3344,9 +3361,8 @@ function renderPickList(q) {
 function confirmAddSongs() {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   sl.items = sl.items || [];
-  const have = setlistSongIds(sl);
   const checked = [...document.querySelectorAll('#pick-list input:checked')];
-  const toAdd = checked.filter(cb => !have.has(cb.value)).map(cb => ({ type: 'song', songId: cb.value }));
+  const toAdd = checked.map(cb => ({ type: 'song', songId: cb.value }));
   if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) {
     sl.items.splice(selectedItemIdx + 1, 0, ...toAdd);
   } else {
@@ -3374,32 +3390,46 @@ function doPrint() {
   const inclHarp = document.getElementById('print-harp').checked;
   closeModal('print-modal');
 
-  let songs, title;
-  if (_printTarget === 'setlist') {
-    const sl = db.setlists.find(s => s.id === activeSetId);
-    if (!sl) return;
-    songs = resolvePlayableSongs(sl);
-    title = sl.name;
-  } else {
-    songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
-    title = 'Songs';
-  }
-
   const extraCol = inclCapo || inclHarp;
-  const rows = songs.map((s, i) => {
+  const songRow = (s, num, nested) => {
     let extras = '';
     if (inclCapo && s.capo) extras += `<span class="badge">${esc(capoText(s.capo))}</span>`;
     if (inclHarp && s.harp) extras += `<span class="badge harp">Harp ${s.harp}</span>`;
     return `<tr>
-      <td class="num">${i + 1}</td>
-      <td class="ttl">${s.title}</td>
+      <td class="num">${num}</td>
+      <td class="ttl${nested ? ' indent' : ''}">${esc(s.title)}</td>
       <td class="key">${s.key || ''}</td>
       ${extraCol ? `<td class="ext">${extras}</td>` : ''}
     </tr>`;
-  }).join('');
+  };
 
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+  let title, rows;
+  if (_printTarget === 'setlist') {
+    const sl = db.setlists.find(s => s.id === activeSetId);
+    if (!sl) return;
+    title = sl.name;
+    // Printed sheets always show every section fully expanded and tabbed out under its
+    // heading, regardless of whether it's currently collapsed on screen -- collapsing is a
+    // screen-space convenience, not something that should hide songs from a physical setlist.
+    // Numbering counts songs only (not section headers), running straight through section
+    // boundaries, same as the on-screen "# songs" total.
+    let num = 0, nested = false;
+    rows = (sl.items || []).map(it => {
+      if (it.type === 'section') {
+        nested = true;
+        return `<tr class="section-row"><td></td><td colspan="${extraCol ? 3 : 2}">${esc(it.name || 'Section')}</td></tr>`;
+      }
+      if (it.type === 'section-end') { nested = false; return ''; }
+      const s = resolveItemSong(it);
+      return s ? songRow(s, ++num, nested) : '';
+    }).join('');
+  } else {
+    const songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
+    title = 'Songs';
+    rows = songs.map((s, i) => songRow(s, i + 1, false)).join('');
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${title}</title>
 <style>
   body { font-family: Georgia, serif; margin: 36px 48px; color: #000; }
@@ -3409,12 +3439,15 @@ function doPrint() {
        border-bottom: 1px solid #000; padding: 4px 8px; }
   td { padding: 7px 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
   .num { color: #888; width: 28px; text-align: right; padding-right: 12px; }
+  .ttl.indent { padding-left: 24px; }
   .key { font-weight: 700; width: 36px; }
   .ext { width: 140px; }
   .badge { display: inline-block; padding: 1px 7px; border-radius: 4px;
            font-size: 0.78rem; margin-right: 4px; border: 1px solid #bbb; font-family: sans-serif; }
   .harp { border-color: #6a0; color: #3a0; }
-  @media print { body { margin: 16px 24px; } }
+  .section-row td { border-bottom: 1px solid #000; padding-top: 16px;
+                     font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
+  .section-row:first-child td { padding-top: 7px; }
 </style></head><body>
 <h1>${title}</h1>
 <table>
@@ -3424,9 +3457,25 @@ function doPrint() {
   </tr></thead>
   <tbody>${rows}</tbody>
 </table>
-</body></html>`);
-  w.document.close();
-  setTimeout(() => w.print(), 250);
+</body></html>`;
+
+  // Printed via a hidden iframe rather than window.open(): standalone "Add to Home Screen"
+  // iPad Safari has no browser chrome at all -- no tabs, no back button -- and window.open()
+  // there can navigate the app's own single window away to the print document instead of
+  // opening a separate one, leaving no way back short of relaunching the app from the home
+  // screen icon. An iframe never touches the top-level document, so the app is always still
+  // there underneath once the native print/share sheet is dismissed.
+  const ifr = document.createElement('iframe');
+  ifr.setAttribute('aria-hidden', 'true');
+  ifr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  ifr.onload = () => {
+    try { ifr.contentWindow.addEventListener('afterprint', () => ifr.remove()); } catch {}
+    ifr.contentWindow.focus();
+    ifr.contentWindow.print();
+  };
+  document.body.appendChild(ifr);
+  ifr.srcdoc = html;
+  setTimeout(() => { if (ifr.parentNode) ifr.remove(); }, 60000); // fallback if afterprint never fires
 }
 
 // Click-outside-to-close for every overlay *except* the full-page CRD editor: that one's a
@@ -3468,9 +3517,41 @@ function closePlay() {
   playSetId = null; playOpenedUG = false;
 }
 
-function getPlaySongs() {
+// Play mode's flat per-slot list -- like resolvePlayableSongs (every song, section or not,
+// collapsed or not, in setlist order), but richer: each entry also carries the section it's
+// nested under (if any) and its *inactive* alternate (if the slot has one), plus the item's
+// real index in sl.items so a swap can be applied back to the actual setlist. Everywhere else
+// that only needs the song list itself still goes through resolvePlayableSongs via
+// getPlaySongs() below.
+function getPlayEntries() {
   const sl = db.setlists.find(s => s.id === playSetId);
-  return sl ? resolvePlayableSongs(sl) : [];
+  const items = sl?.items || [];
+  let sectionName = null;
+  const entries = [];
+  items.forEach((it, itemIdx) => {
+    if (it.type === 'section') { sectionName = it.name || 'Section'; return; }
+    if (it.type === 'section-end') { sectionName = null; return; }
+    const song = resolveItemSong(it); if (!song) return;
+    const altId = it.altSongId ? (it.useAlt ? it.songId : it.altSongId) : null;
+    const altSong = altId ? db.songs.find(s => s.id === altId) : null;
+    entries.push({ song, sectionName, altSong, itemIdx });
+  });
+  return entries;
+}
+
+function getPlaySongs() {
+  return getPlayEntries().map(e => e.song);
+}
+
+// Swap a slot's active/alternate song right from Play mode, same effect as the setlist row's
+// ⇄ button (toggleAltUse) -- useful mid-gig without leaving the performance view. Keyed off
+// playSetId, not activeSetId: Play mode can in principle stay open after the underlying
+// setlist selection elsewhere changes, so it must never touch the wrong setlist's items.
+function togglePlayAlt(itemIdx) {
+  const sl = db.setlists.find(s => s.id === playSetId); if (!sl) return;
+  const item = sl.items[itemIdx]; if (!item || !item.altSongId) return;
+  item.useAlt = !item.useAlt;
+  save(); renderPlayList(false); renderSetDetail();
 }
 
 function stepPlay(dir) {
@@ -3480,8 +3561,8 @@ function stepPlay(dir) {
 }
 
 function renderPlayList(autoScroll = true) {
-  const songs = getPlaySongs(); if (!songs.length) return;
-  document.getElementById('play-progress').textContent = `${playIdx + 1} / ${songs.length}`;
+  const entries = getPlayEntries(); if (!entries.length) return;
+  document.getElementById('play-progress').textContent = `${playIdx + 1} / ${entries.length}`;
 
   const list = document.getElementById('play-list');
   // Padding so first and last items can scroll to center
@@ -3489,9 +3570,15 @@ function renderPlayList(autoScroll = true) {
   list.style.paddingTop    = pad + 'px';
   list.style.paddingBottom = pad + 'px';
 
-  list.innerHTML = songs.map((s, i) => {
+  list.innerHTML = entries.map(({ song: s, sectionName, altSong, itemIdx }, i) => {
     const cur    = i === playIdx;
     const badges = cur ? kchBadges(s) : '';
+    const sectionTag = sectionName ? `<span class="play-section-tag">[${esc(sectionName)}]</span> ` : '';
+    // The section tag and alt line only ever attach to the *current* row -- every .play-song
+    // has a fixed height for the scroll-snap math (PLAY_ITEM_H) to work, so a non-current row
+    // can only grow via its single text line (the tag prepended inline, same line, same
+    // height), never a whole extra line, the way the current row's badges already don't
+    // either until it becomes current.
     const title  = cur
       ? songTitleLink(s, { crdStop: true, ugOnclick: 'playOpenedUG=true' })
       : esc(s.title);
@@ -3499,12 +3586,17 @@ function renderPlayList(autoScroll = true) {
       ? `<div class="play-title-row">
           <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(-1)" title="Previous" ${i===0?'disabled':''}>↑</button>
           <div class="play-title-text">${title}</div>
-          <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(1)" title="Next" ${i===songs.length-1?'disabled':''}>↓</button>
+          <button class="play-nav-btn" onclick="event.stopPropagation();stepPlay(1)" title="Next" ${i===entries.length-1?'disabled':''}>↓</button>
         </div>`
-      : `<div class="play-title-text">${title}</div>`;
+      : `<div class="play-title-text">${sectionTag}${title}</div>`;
+    const altHtml = (cur && altSong) ? `<div class="play-alt">
+        <button class="play-alt-swap" onclick="event.stopPropagation();togglePlayAlt(${itemIdx})" title="Swap to ${esc(altSong.title)}">⇄</button>
+        alt: ${esc(altSong.title)}
+      </div>` : '';
     return `<div class="play-song${cur ? ' play-current' : ''}" data-idx="${i}" onclick="handlePlayClick(event,${i})">
-      ${cur ? `<div class="play-num">${i + 1}.</div>` : ''}
+      ${cur ? `<div class="play-num">${i + 1}.${sectionTag ? ' · '+sectionTag : ''}</div>` : ''}
       ${titleEl}
+      ${altHtml}
       ${cur && badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </div>`;
   }).join('');
