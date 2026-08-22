@@ -3400,13 +3400,14 @@ function doPrint() {
   closeModal('print-modal');
 
   const extraCol = inclCapo || inclHarp;
-  const songRow = (s, num, nested) => {
+  const songRow = (s, num, nested, altSong) => {
     let extras = '';
     if (inclCapo && s.capo) extras += `<span class="badge">${esc(capoText(s.capo))}</span>`;
     if (inclHarp && s.harp) extras += `<span class="badge harp">Harp ${s.harp}</span>`;
+    const altLine = altSong ? `<div class="alt-line">alt: ${esc(altSong.title)}</div>` : '';
     return `<tr>
       <td class="num">${num}</td>
-      <td class="ttl${nested ? ' indent' : ''}">${esc(s.title)}</td>
+      <td class="ttl${nested ? ' indent' : ''}">${esc(s.title)}${altLine}</td>
       <td class="key">${s.key || ''}</td>
       ${extraCol ? `<td class="ext">${extras}</td>` : ''}
     </tr>`;
@@ -3421,7 +3422,9 @@ function doPrint() {
     // heading, regardless of whether it's currently collapsed on screen -- collapsing is a
     // screen-space convenience, not something that should hide songs from a physical setlist.
     // Numbering counts songs only (not section headers), running straight through section
-    // boundaries, same as the on-screen "# songs" total.
+    // boundaries, same as the on-screen "# songs" total. A slot's *inactive* alternate, if it
+    // has one, prints as a small "alt: Title" line under the active song -- same info Play
+    // mode shows, so a band member with only the paper sheet still knows a swap is available.
     let num = 0, nested = false;
     rows = (sl.items || []).map(it => {
       if (it.type === 'section') {
@@ -3429,8 +3432,10 @@ function doPrint() {
         return `<tr class="section-row"><td></td><td colspan="${extraCol ? 3 : 2}">${esc(it.name || 'Section')}</td></tr>`;
       }
       if (it.type === 'section-end') { nested = false; return ''; }
-      const s = resolveItemSong(it);
-      return s ? songRow(s, ++num, nested) : '';
+      const s = resolveItemSong(it); if (!s) return '';
+      const altId = it.altSongId ? (it.useAlt ? it.songId : it.altSongId) : null;
+      const altSong = altId ? db.songs.find(x => x.id === altId) : null;
+      return songRow(s, ++num, nested, altSong);
     }).join('');
   } else {
     const songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
@@ -3449,6 +3454,7 @@ function doPrint() {
   td { padding: 7px 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
   .num { color: #888; width: 28px; text-align: right; padding-right: 12px; }
   .ttl.indent { padding-left: 24px; }
+  .alt-line { font-size: 0.78rem; font-style: italic; color: #666; margin-top: 2px; }
   .key { font-weight: 700; width: 36px; }
   .ext { width: 140px; }
   .badge { display: inline-block; padding: 1px 7px; border-radius: 4px;
