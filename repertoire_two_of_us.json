@@ -1536,9 +1536,7 @@
         },
         {
           "type": "song",
-          "songId": "s29",
-          "altSongId": "s30",
-          "useAlt": false
+          "songId": "s03"
         },
         {
           "type": "song",
@@ -1546,6 +1544,12 @@
         },
         {
           "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "s29",
+          "altSongId": "s30",
+          "useAlt": false
         },
         {
           "type": "section",
@@ -1582,7 +1586,9 @@
         },
         {
           "type": "song",
-          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee",
+          "altSongId": "fccb7d11-ae07-4874-aec2-17c29e060147",
+          "useAlt": false
         },
         {
           "type": "section-end"
@@ -1594,7 +1600,7 @@
         {
           "type": "song",
           "songId": "s07",
-          "altSongId": "s06",
+          "altSongId": "mobwzwj4octlr",
           "useAlt": false
         },
         {
@@ -1602,12 +1608,26 @@
           "songId": "s34"
         },
         {
+          "type": "section",
+          "name": "More Bowie",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
+        },
+        {
+          "type": "section-end"
+        },
+        {
           "type": "song",
           "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
         },
         {
           "type": "song",
-          "songId": "s11"
+          "songId": "s11",
+          "altSongId": "mobx10bto98vo",
+          "useAlt": false
         },
         {
           "type": "song",
@@ -1626,7 +1646,31 @@
         },
         {
           "type": "song",
-          "songId": "mobwys0zxdtab"
+          "songId": "mobwys0zxdtab",
+          "altSongId": "s22",
+          "useAlt": false
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Italiana",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s20",
+          "altSongId": "55d7c441-336e-4f1e-98ff-d58eeda0811b",
+          "useAlt": false
         },
         {
           "type": "section-end"
@@ -1634,6 +1678,34 @@
         {
           "type": "song",
           "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "section",
+          "name": "More Classic Dylan",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s26",
+          "altSongId": "mobx4gbien69s",
+          "useAlt": false
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059",
+          "altSongId": "s06",
+          "useAlt": false
         },
         {
           "type": "song",
@@ -1660,11 +1732,9 @@
         },
         {
           "type": "song",
-          "songId": "mobwy45ykmxg3"
-        },
-        {
-          "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+          "songId": "mobwy45ykmxg3",
+          "altSongId": "mobwz3ketsbt7",
+          "useAlt": false
         },
         {
           "type": "song",
@@ -1677,84 +1747,16 @@
           "useAlt": true
         },
         {
+          "type": "song",
+          "songId": "mobwnzg39cdvz",
+          "altSongId": "s41",
+          "useAlt": true
+        },
+        {
           "type": "section-end"
         },
         {
-          "type": "section",
-          "name": "Songs to place",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s03"
-        },
-        {
-          "type": "song",
-          "songId": "s25"
-        },
-        {
-          "type": "song",
-          "songId": "s26"
-        },
-        {
-          "type": "song",
-          "songId": "s41"
-        },
-        {
-          "type": "song",
-          "songId": "mobwnzg39cdvz"
-        },
-        {
-          "type": "song",
-          "songId": "mobx4gbien69s"
-        },
-        {
-          "type": "song",
-          "songId": "s19"
-        },
-        {
-          "type": "song",
-          "songId": "s20"
-        },
-        {
-          "type": "song",
-          "songId": "s21"
-        },
-        {
-          "type": "song",
-          "songId": "s22"
-        },
-        {
-          "type": "song",
-          "songId": "s24"
-        },
-        {
-          "type": "song",
-          "songId": "s38"
-        },
-        {
-          "type": "song",
-          "songId": "mobwz3ketsbt7"
-        },
-        {
-          "type": "song",
-          "songId": "mobwzwj4octlr"
-        },
-        {
-          "type": "song",
-          "songId": "mobx10bto98vo"
-        },
-        {
-          "type": "song",
-          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
-        },
-        {
-          "type": "song",
-          "songId": "fccb7d11-ae07-4874-aec2-17c29e060147"
-        },
-        {
-          "type": "song",
-          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+          "type": "section-end"
         }
       ],
       "type": "generic"
