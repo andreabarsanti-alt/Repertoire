@@ -1592,7 +1592,12 @@
           "songId": "mobwy45ykmxg3"
         },
         {
-          "type": "section-end"
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
         },
         {
           "type": "section",
@@ -1614,12 +1619,7 @@
           "songId": "mobwys0zxdtab"
         },
         {
-          "type": "song",
-          "songId": "s04"
-        },
-        {
-          "type": "song",
-          "songId": "s05"
+          "type": "section-end"
         }
       ],
       "type": "generic"
