@@ -206,20 +206,6 @@ nav { display: flex; gap: 3px; flex: 1; }
   text-shadow: 0 1px 4px rgba(0,0,0,.5);
   position: relative; z-index: 1;
 }
-.bubble-type-badge {
-  font-size: 0.55rem; opacity: .65; margin-top: 2px; letter-spacing: .06em;
-  text-transform: uppercase; position: relative; z-index: 1;
-}
-.bubble.artist-bubble {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18),
-              0 10px 36px rgba(0,0,0,.55),
-              0 0 0 1px rgba(196,158,50,.3);
-}
-.bubble.artist-bubble.active-bubble {
-  box-shadow: 0 0 0 3px rgba(196,158,50,.9),
-              0 0 28px rgba(196,158,50,.4),
-              inset 0 1px 0 rgba(255,255,255,.18);
-}
 
 /* ── VIZ TOOLBAR ──────────────────────────── */
 #viz-toolbar {
@@ -493,7 +479,7 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   border: 1px solid transparent; transition: border-color .15s, background .15s;
 }
 .sl-row:hover { border-color: rgba(61,158,140,.2); }
-/* 🧪 Try out songs get a whole-row tint, not just the small kch badge -- easy to miss one
+/* ❓ Try out songs get a whole-row tint, not just the small kch badge -- easy to miss one
    scanning a long setlist otherwise. Sits under .selected/.drag-over, which only touch
    border-color, so both cues stay visible together. */
 .sl-row.sl-tryout { background: rgba(224,168,74,.10); border-color: rgba(224,168,74,.28); }
@@ -956,7 +942,7 @@ select.fi { cursor: pointer; }
       <select class="profile-select" id="songs-scope-select" onchange="setSongsScopeFilter(this.value)" title="Filter by repertoire status">
         <option value="all">Any song</option>
         <option value="repertoire">In repertoire</option>
-        <option value="tryout">🧪 Try out</option>
+        <option value="tryout">❓ Try out</option>
       </select>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
@@ -986,7 +972,7 @@ select.fi { cursor: pointer; }
   <div class="modal">
     <h2 id="song-modal-title">Add Song</h2>
     <div class="fg"><label>Title *</label><input class="fi" id="f-title" type="text" placeholder="Song title"></div>
-    <div class="fg"><label>Artists (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, The Beatles"></div>
+    <div class="fg"><label>Tags (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, rock, acoustic"></div>
     <div class="fg-row">
       <div class="fg"><label>Key</label><input class="fi" id="f-key" type="text" placeholder="G"></div>
       <div class="fg"><label id="lbl-f-capo">Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
@@ -995,7 +981,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="f-tryout"> 🧪 Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
+        <input type="checkbox" id="f-tryout"> ❓ Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
       </label>
     </div>
     <div class="fg">
@@ -1057,7 +1043,7 @@ select.fi { cursor: pointer; }
       <input type="checkbox" id="pick-hide-existing" checked onchange="renderPickList(document.getElementById('pick-search').value)"> Hide songs already in this setlist
     </label>
     <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
-      <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide 🧪 Try outs
+      <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide ❓ Try outs
     </label>
     <div class="song-pick-list" id="pick-list"></div>
     <div class="modal-footer">
@@ -1076,7 +1062,7 @@ select.fi { cursor: pointer; }
       <input type="checkbox" id="alt-hide-existing" checked onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide songs already in this setlist
     </label>
     <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
-      <input type="checkbox" id="alt-hide-tryout" onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide 🧪 Try outs
+      <input type="checkbox" id="alt-hide-tryout" onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide ❓ Try outs
     </label>
     <div class="song-pick-list" id="alt-pick-list"></div>
     <div class="modal-footer">
@@ -1206,7 +1192,7 @@ select.fi { cursor: pointer; }
     </div>
     <div id="ug-import-preview" style="display:none;padding:10px 13px;background:var(--surface2);border-radius:var(--radius);margin-bottom:4px;font-size:0.82rem;color:var(--text-dim)"></div>
     <div class="fg">
-      <label>Artists (comma separated)</label>
+      <label>Tags (comma separated)</label>
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
     <div class="modal-footer">
@@ -1650,16 +1636,8 @@ const PALETTE = [
   ['rgba(176,80,90,0.82)','rgba(130,40,52,0.72)'],
   ['rgba(60,150,148,0.82)','rgba(32,100,98,0.72)'],
 ];
-const ARTIST_PALETTE = [
-  ['rgba(196,148,50,0.82)','rgba(148,100,20,0.72)'],
-  ['rgba(200,110,58,0.82)','rgba(152,70,26,0.72)'],
-  ['rgba(188,80,100,0.82)','rgba(142,44,62,0.72)'],
-  ['rgba(178,158,48,0.82)','rgba(130,112,18,0.72)'],
-  ['rgba(202,120,68,0.82)','rgba(154,78,30,0.72)'],
-  ['rgba(184,88,130,0.82)','rgba(136,50,88,0.72)'],
-];
-function bubbleColor(i, isArtist) {
-  return isArtist ? ARTIST_PALETTE[i % ARTIST_PALETTE.length] : PALETTE[i % PALETTE.length];
+function bubbleColor(i) {
+  return PALETTE[i % PALETTE.length];
 }
 
 // ─────────────────────────────────────────
@@ -1751,8 +1729,7 @@ function renderBubbles() {
   const BUBBLE_MIN_R = narrow ? 44 : 38, BUBBLE_ADD_R = narrow ? 46 : 52;
   const items = keys.map((key, i) => ({
     key, count: groups[key].length, i,
-    r: Math.round(BUBBLE_MIN_R + (groups[key].length / max) * BUBBLE_ADD_R),
-    artist: key !== 'Untagged'
+    r: Math.round(BUBBLE_MIN_R + (groups[key].length / max) * BUBBLE_ADD_R)
   }));
 
   packBubbles(items);
@@ -1770,14 +1747,14 @@ function renderBubbles() {
   wrap.style.height = (packH + 2 * PAD) + 'px';
 
   wrap.innerHTML = items.map(c => {
-    const [c1, c2] = bubbleColor(c.i, c.artist);
+    const [c1, c2] = bubbleColor(c.i);
     const dur   = (3.4 + (c.i % 7) * 0.38).toFixed(2);
     const delay = -((c.i * 0.41) % 4);
     const sel   = activeBubble === c.key;
     const left  = Math.round(c.x + offsetX - c.r);
     const top   = Math.round(c.y + offsetY - c.r);
     const size  = c.r * 2;
-    return `<div class="bubble${sel ? ' active-bubble' : ''}${c.artist ? ' artist-bubble' : ''}"
+    return `<div class="bubble${sel ? ' active-bubble' : ''}"
       style="width:${size}px;height:${size}px;left:${left}px;top:${top}px;
              background:radial-gradient(circle at 38% 38%, ${c1}, ${c2});
              --bdur:${dur}s;animation-delay:${delay}s"
@@ -1785,7 +1762,6 @@ function renderBubbles() {
       onclick="clickBubble(this.dataset.key)">
       <span class="bubble-name">${esc(c.key)}</span>
       <span class="bubble-count">${c.count} song${c.count !== 1 ? 's' : ''}</span>
-      ${c.artist ? '<span class="bubble-type-badge">artist</span>' : ''}
     </div>`;
   }).join('');
 
@@ -1833,7 +1809,7 @@ function kchBadges(s) {
   if (s.key)  parts.push(`<span class="kch">${esc(s.key)}</span>`);
   if (s.capo) parts.push(`<span class="kch">${esc(capoText(s.capo))}</span>`);
   if (s.harp) parts.push(`<span class="kch harp">Harp ${esc(s.harp)}</span>`);
-  if (s.tryOut) parts.push(`<span class="kch tryout">🧪 Try out</span>`);
+  if (s.tryOut) parts.push(`<span class="kch tryout">❓ Try out</span>`);
   return parts.join('');
 }
 
@@ -1872,7 +1848,7 @@ function renderSongsHeader() {
   const cls = c => sortCol === c ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
   document.getElementById('songs-thead').innerHTML = `<tr>
     <th class="${cls('title')}"  data-col="title"  onclick="sortBy('title')">Title</th>
-    <th class="${cls('tags')}"   data-col="tags"   onclick="sortBy('tags')">Artists</th>
+    <th class="${cls('tags')}"   data-col="tags"   onclick="sortBy('tags')">Tags</th>
     <th class="${cls('ugLink')}" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
     <th></th>
   </tr>`;
@@ -1916,7 +1892,7 @@ function renderSongs() {
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     const emptyMsg = q ? 'No songs match your search'
-      : songsScopeFilter === 'tryout' ? 'No songs checked 🧪 Try out yet'
+      : songsScopeFilter === 'tryout' ? 'No songs checked ❓ Try out yet'
       : songsScopeFilter === 'repertoire' && songsCrdFilter === 'with' ? 'No repertoire songs with chords yet'
       : songsScopeFilter === 'repertoire' && songsCrdFilter === 'without' ? 'No repertoire songs without chords'
       : songsScopeFilter === 'repertoire' ? 'No songs in the repertoire yet'
@@ -1933,7 +1909,7 @@ function renderSongs() {
 }
 
 function songDisplayRow(s) {
-  const artists = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
+  const tagChips = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
                  .map(t => `<span class="tag-chip">${esc(t)}</span>`).join('');
   const ug = s.ugLink
     ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank">↗ UG</a>`
@@ -1945,11 +1921,11 @@ function songDisplayRow(s) {
       ${titleEl}
       ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
     </td>
-    <td>${artists}</td>
+    <td>${tagChips}</td>
     <td>${ug}</td>
     <td><div class="row-actions">
-      <label class="row-tryout" title="🧪 Try out" onclick="event.stopPropagation()">
-        <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> 🧪
+      <label class="row-tryout" title="❓ Try out" onclick="event.stopPropagation()">
+        <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> ❓
       </label>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="deleteSong('${s.id}')"      title="Delete">✕</button>
@@ -1968,10 +1944,10 @@ function songEditRow(s) {
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
       <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
-        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> 🧪 Try out
+        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> ❓ Try out
       </label>
     </td>
-    <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}></td>
+    <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}></td>
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
@@ -2838,7 +2814,7 @@ function slRow(item, i, total, nested, num) {
     ? altRow(item, i)
     : `<button class="sl-alt-add" onclick="event.stopPropagation();openAltModal(${i})">+ alternate</button>`;
   const selected = i === selectedItemIdx;
-  // kchBadges already appends a small "🧪 Try out" chip, but that's easy to miss scanning a
+  // kchBadges already appends a small "❓ Try out" chip, but that's easy to miss scanning a
   // long setlist -- tint the whole row too so a try-out slipping into a real setlist stands out.
   return `<div class="sl-row drag-item${nested?' sl-nested':''}${selected?' selected':''}${s.tryOut?' sl-tryout':''}" data-idx="${i}" onclick="selectItem(${i})" title="Click to select — new songs and sections are inserted right after the selected item">
     <span class="drag-handle">⠿</span>
@@ -2881,9 +2857,9 @@ function slEditRow(s, i, nested) {
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
     <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
-      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> 🧪 Try out
+      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> ❓ Try out
     </label>
-    <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Artists" ${k}>
+    <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}>
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
     <div>
       <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('sl-ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
@@ -3064,7 +3040,7 @@ function openAltModal(idx) {
 }
 
 // Same picker helpers as the Add Songs modal (renderPickList): "Hide songs already in this
-// setlist" (checked by default) and "Hide 🧪 Try outs" (off by default). A song already used
+// setlist" (checked by default) and "Hide ❓ Try outs" (off by default). A song already used
 // elsewhere is only ever a "✓ In setlist" hint, never disabled -- a song can legitimately want
 // to be its own alternate slot too (or, in the Add Songs modal, appear twice in a setlist, e.g.
 // a reprise). The slot's own current song (item.songId) is the one hard exclusion, since it can
@@ -3090,7 +3066,7 @@ function renderAltPickList(q) {
     <label class="song-pick-item">
       <input type="radio" name="alt-pick" value="${s.id}" ${item.altSongId===s.id?'checked':''}>
       <div>
-        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
     </label>`;
@@ -3337,7 +3313,7 @@ function openAddSongsModal() {
 }
 
 // "Hide songs already in this setlist" (checked by default, so the picker's baseline stays
-// what it always was) and "Hide 🧪 Try outs" (off by default) are both optional narrowings on
+// what it always was) and "Hide ❓ Try outs" (off by default) are both optional narrowings on
 // top of the plain search -- that's the "helper on top of full search" the picker is for.
 // Unchecking "already in setlist" doesn't hide anything, just reveals it marked "✓ In
 // setlist" -- it's still fully selectable, since a song can legitimately go into a setlist
@@ -3360,7 +3336,7 @@ function renderPickList(q) {
     <label class="song-pick-item">
       <input type="checkbox" value="${s.id}">
       <div>
-        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">🧪 Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
     </label>`;
