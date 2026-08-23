@@ -352,6 +352,8 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
   cursor: pointer; font-size: 0.85rem; padding: 0 4px; min-height: 36px;
 }
 .row-tryout input { width: 15px; height: 15px; cursor: pointer; accent-color: #e0c060; }
+.tryout-icon { color: var(--text-dim); font-weight: 700; }
+input:checked + .tryout-icon { color: #e0c060; }
 .editing-row td { background: rgba(212,144,30,.05) !important; vertical-align: top; padding-top: 8px; }
 .inline-fi {
   width: 100%; padding: 6px 9px;
@@ -890,7 +892,6 @@ select.fi { cursor: pointer; }
       <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
         <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
       </label>
-      <a class="btn btn-secondary btn-sm" href="https://tabs.ultimate-guitar.com/" target="_blank" title="Ultimate Guitar">UG</a>
       <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer">
         Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
@@ -981,7 +982,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="f-tryout"> ❓ Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
+        <input type="checkbox" id="f-tryout"> <span class="tryout-icon">?</span> Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
       </label>
     </div>
     <div class="fg">
@@ -1137,7 +1138,7 @@ select.fi { cursor: pointer; }
           <div id="crd-meta"></div>
         </div>
         <div class="crd-reader-actions">
-          <a class="btn btn-secondary btn-sm" id="crd-ug-link" href="#" target="_blank" title="Open on Ultimate Guitar">↗ UG</a>
+          <a class="btn btn-secondary btn-sm" id="crd-ug-link" href="#" target="_blank" title="Open link">↗</a>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdEditSong()" title="Edit song">✎</button>
         </div>
       </div>
@@ -1912,7 +1913,7 @@ function songDisplayRow(s) {
   const tagChips = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
                  .map(t => `<span class="tag-chip">${esc(t)}</span>`).join('');
   const ug = s.ugLink
-    ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank">↗ UG</a>`
+    ? `<a class="ug-link" href="${esc(s.ugLink)}" target="_blank" title="Open link">↗</a>`
     : '<span style="color:var(--text-dim)">—</span>';
   const badges = kchBadges(s);
   const titleEl = songTitleLink(s, { cls: 'tbl-title', wrap: 'strong' });
@@ -1925,7 +1926,7 @@ function songDisplayRow(s) {
     <td>${ug}</td>
     <td><div class="row-actions">
       <label class="row-tryout" title="❓ Try out" onclick="event.stopPropagation()">
-        <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> ❓
+        <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> <span class="tryout-icon">?</span>
       </label>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="deleteSong('${s.id}')"      title="Delete">✕</button>
@@ -1944,7 +1945,7 @@ function songEditRow(s) {
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
       <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
-        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> ❓ Try out
+        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
       </label>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}></td>
@@ -2857,7 +2858,7 @@ function slEditRow(s, i, nested) {
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
     <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
-      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> ❓ Try out
+      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
     </label>
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}>
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
