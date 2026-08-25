@@ -1574,13 +1574,13 @@
           "songId": "s28"
         },
         {
-          "type": "section-end"
-        },
-        {
           "type": "song",
           "songId": "s29",
           "altSongId": "s30",
           "useAlt": true
+        },
+        {
+          "type": "section-end"
         },
         {
           "type": "section",
@@ -1687,7 +1687,7 @@
         {
           "type": "section",
           "name": "Italiana",
-          "collapsed": true
+          "collapsed": false
         },
         {
           "type": "song",
@@ -1791,6 +1791,62 @@
         }
       ],
       "type": "generic"
+    },
+    {
+      "id": "94a1167c-d993-4629-bb72-fccdd3c8b48c",
+      "name": "Tinto",
+      "type": "live",
+      "items": [
+        {
+          "type": "song",
+          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
+        },
+        {
+          "type": "song",
+          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
+        },
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        }
+      ],
+      "date": "2026-09-11"
     }
   ],
   "tuneUp": true
