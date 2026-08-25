@@ -1835,6 +1835,10 @@
         },
         {
           "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
           "songId": "s34"
         },
         {
@@ -1843,7 +1847,52 @@
         },
         {
           "type": "song",
-          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "section",
+          "name": "Encore",
+          "collapsed": false
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
         }
       ],
       "date": "2026-09-11"
