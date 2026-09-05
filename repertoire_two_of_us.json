@@ -392,12 +392,13 @@
     {
       "id": "s23",
       "title": "32-20 Blues",
-      "key": "G",
+      "key": "A",
       "capo": "1",
       "harp": "",
       "tags": "Robert Johnson",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/robert-johnson/32-20-blues-chords-2952212",
-      "tryOut": false
+      "tryOut": false,
+      "crd": "\n[Intro]\nA\n\n\n[Verse 1]\nA\nI send for my baby, and she don't come\n  D                                   A\nI send for my baby, man, and she don't come\n         E                                           A\nAll the doctors in Hot Springs sure can't help her none\n\n\n[Verse 2]\nA\nAnd if she gets unruly, thinks she don't wan' do\n            D                                    A\nAnd if she gets unruly and thinks she don't wan' do\n         E                                A   E\nTake my .32-20, now, and cut her half in two\n\n\n[Verse 3]\nA\nShe got a .38 special but I believe it's most too light\n            D                                    A\nShe got a .38 special but I believe it's most too light\n         E                                A   E\nI got a .32-20, got to make the caps alright\n\n\n[Verse 4]\nA\nIf I send for my baby, man, and she don't come\n            D\nIf I send for my baby, man, and she don't come\n         E                                           A\nAll the doctors in Hot Springs sure can't help her none\n\n\n[Verse 5]\nA\nI'm gonna shoot my pistol, gonna shoot my gatling gun\n            D                                    A\nI'm gonna shoot my pistol, gotta shoot my gatling gun\n    E                                   A    E\nYou made me love you, now your man have come\n\n\n[Verse 6]\nA\nAhoh, baby, where you stayed last night\nD                                 A\nAhah, baby, where you stayed last night\n         E                                           A    E\nYou got your hair all tangled and you ain't talking right\n\n\n[Verse 7]\nA\nHer .38 special, boys, it do very well\n      D                            A\nHer .38 special, boys, it do very well\n         E                         A   E\nI got a .32-20 now, and it's a burning\n\n\n[Verse 8]\nA\nIf I send for my baby, man, and she don't come\n     D                                    A\nIf I send for my baby, man, and she don't come\n         E                                           A\nAll the doctors in Wisconsin sure can't help her none\n\n\n[Verse 9]\nA\nHey, hey, baby, where you stayed last night\nD                                      A\nHey, hey, baby, where you stayed last night\n    E                                           A\nYou didn't come home until the sun was shining bright\n\n\n[Verse 10]\nA\nAhoh boy, I just can't take my rest\n           D7                   A\nAhoh boy, I just can't take my rest\n          E7      D7                   A     A7\nWith this .32-20 laying up and down my breast"
     },
     {
       "id": "s24",
@@ -706,24 +707,15 @@
       "tryOut": true
     },
     {
-      "id": "5a9762e8-c64c-4d91-b008-e89481e45845",
-      "title": "39",
-      "tags": "Queen",
-      "key": "",
-      "capo": "1",
-      "harp": "",
-      "ugLink": "https://tabs.ultimate-guitar.com/tab/queen/39-official-2605497",
-      "tryOut": true
-    },
-    {
       "id": "3832b033-68a0-40c2-9953-aaf1e82dcd9d",
       "title": "All My Loving",
       "tags": "The Beatles",
-      "key": "C#",
-      "capo": "1",
+      "key": "Fm",
+      "capo": "",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/all-my-loving-official-1945855",
-      "tryOut": true
+      "tryOut": true,
+      "crd": "[Verse 1]\n               Fm              Bb\nClose your eyes   and I'll kiss you\n  Eb              Cm\nTomorrow I'll miss   you\n  G#          Fm        C#\nRemember I'll always be true\nBb7        Fm            Bb\n  And then while I'm away\n           Eb            Cm\nI'll write home every day\n         G#          Bb           Eb\nAnd I'll send all my loving to you\n\n\n[Verse 2]\n            Fm             Bb\nI'll pretend   that I'm kissing\n    Eb           Cm\nThe lips I am missing\n    G#           Fm               C#\nAnd hope that my dreams will come true\nBb7        Fm            Bb\n  And then while I'm away\n           Eb            Cm\nI'll write home every day\n         G#          Bb           Eb\nAnd I'll send all my loving to you\n\n\n[Chorus]\n       Cm      Baug                Eb\nAll my loving I    will send to you\n         Cm       Baug             Eb\nAll my loving, darling I'll be true\n\n\n[Solo]\nG# Eb Bb7 Eb              Fm              Bb\n        Close your eyes   and I'll kiss you\n\n\n[Verse 3]\n  Eb              Cm\nTomorrow I'll miss   you\n  G#          Fm        C#\nRemember I'll always be true\nBb7        Fm            Bb\n  And then while I'm away\n           Eb            Cm\nI'll write home every day\n         G#          Bb           Eb\nAnd I'll send all my loving to you\n\n\n[Chorus]\n       Cm       Baug            Eb\nAll my loving I will send to you\n         Cm       Baug             Eb\nAll my loving, darling I'll be true\n\n\n[Outro]\n       Cm               Eb\nAll my loving, all my loving ooh\n       Cm                       Eb\nAll my loving I will send to you"
     },
     {
       "id": "a5209902-b598-48ed-8f34-e5dd9a5b2b44",
@@ -780,11 +772,11 @@
       "id": "5e051375-d77f-4dab-b610-9dba96aaa638",
       "title": "(I Can’t Get No) Satisfaction",
       "tags": "The Rolling Stones",
-      "key": "",
+      "key": "E",
       "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-rolling-stones/i-cant-get-no-satisfaction-official-1940667",
-      "crd": "",
+      "crd": "[Intro]\nE A D A E A D A\nE A D A E A\nD A\n\n\n[Verse 1]\nE              A\n I can't get no satisfaction\nE              A\n I can't get no satisfaction\n\n\n[Pre-Chorus]\n            E          B7\n'Cause I try and I try and\n  E         A           E      A\nI try and I try I can't get no,\n\n\n[Chorus]\nD       A E     A\n I can't  get no\nD        A E             A  D\n When I'm  drivin' in my car\n         A   E              A  D A\nAnd that man comes on the radio\n    E               A        D\nAnd he's tellin' me more and more\n      A       E           A   D\nAbout some useless information\n         A       E         A   D\nSupposed to fire my imagination\n        A   E     A D     A E\nI can't get no, oh   no no  no\n\n\n[Bridge]\n            E A D           A  E  A D A\nHey hey hey,     that's what I say\n\n\n[Verse 2]\nE              A            E\n I can't get no satisfaction\n              A\nI can't get no satisfaction\n            E\n'Cause I try and\n\n\n[Pre-Chorus]\n     B7         E         A\nI try  and I try and I try\n\n\n[Chorus]\n        E      A D       A E     A\nI can't get no,   I can't  get no\nD        A E             A D        A\n When I'm  watchin' my TV   And that\nE               A      D\nman comes on to tell me\n    A        E            A D\nHow white my shirts can be\n    A        E        A        D             A\nBut he can't be a man 'cause he doesn't smoke\n    E                   A D\nThe same cigarrettes as me\n  A     E      A D     A E\nI can't get no,   oh no  no no\n\n\n[Bridge]\n            E A D             A   E A D A\nHey hey hey ,    that's what I say\n\n\n[Verse 3]\nE                 A\n I can't get no satisfaction\nE              A\n I can't get no girl reaction\n\n\n[Pre-Chorus]\n           E         B7\nCause I try and I try  and\n  E            A            E  A\nI try and I try I can't get no,\n\n\n[Chorus]\nD       A E     A\n I can't  get no\nD        A E                A    D       A\n When I'm  ridin' round the world And I'm\nE                  A       D\ndoin' this and I'm signing that\n    A   E                  A\nAnd I'm tryin' to make some girl\nD A         E                             A    D          A\n  Who tells me baby better come back later next week Cause\n    E                       A D\nyou see I'm on losing streak\n  A     E      A D     A E\nI can't get no,   oh no  no no\n\n\n[Bridge 3]\n            E A D             A   E A\nHey hey hey,     that's what I say\n\n\n[Chorus]\nD       A E      A D       A E     A\n I can't  get no,   I can't  get no\nD       A E     A D     A E     A\n I can't  get no   satis_faction\nD        A E      A D        A E      A D        A E     A\n No satis_faction,   no satis_faction,   no satis_faction\n\n\n[Fade Out]\nD A E A D A",
       "tryOut": true
     },
     {
@@ -918,7 +910,8 @@
       "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-official-2238415",
-      "tryOut": true
+      "tryOut": true,
+      "crd": "[Intro]\nEm\n(2nd tasto 3a e 6a D6add9/F#)\n\nOn the first part of the journey\nI was lookin' at all the life\nThere were plants and birds and rocks and things\nThere was sand and hills and rings\nThe first thing I met was a fly with a buzz\nAnd the sky with no clouds\nThe heat was hot and the ground was dry\nBut the air was full of sound\n\nI've been through the desert on a horse with no name\nIt felt good to be out of the rain\nIn the desert, you can remember your name\n'Cause there ain't no one for to give you no pain\n\n\n[Interlude]\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la\n\nEm\n(2nd tasto 3a e 6a D6add9/F#)\n\nAfter two days in the desert sun\nMy skin began to turn red\nAfter three days in the desert fun\nI was lookin' at a river bed\nAnd the story it told of a river that flowed\nMade me sad to think it was dead\nYou see, I've been through the desert on a horse with no name\nIt felt good to be out of the rain\nIn the desert, you can remember your name\nBecause there ain't no one for to give you no pain\n\n\n[Interlude]\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la\n\nEm\n(2nd tasto 3a e 6a D6add9/F#)\n\n\nAfter nine days, I let the horse run free\n'Cause the desert had turned to sea\nThere were plants and birds and rocks and things\nThere was sand and hills and rings\nThe ocean is a desert with it's life underground\nAnd a perfect disguise above\nUnder the cities lies a heart made of ground\nBut the humans will give no love\nYou see, I've been through the desert on a horse with no name\nIt felt good to be out of the rain\nIn the desert, you can remember your name\n'Cause there ain't no one for to give you no pain\n\n\n[Interlude]\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la\nEm      D6add9/F#               Em      D6add9/F#\nLa la la         la la la la la la la la"
     },
     {
       "id": "7f2dfdcf-5ca1-47a7-b4f3-7871da1d90b1",
