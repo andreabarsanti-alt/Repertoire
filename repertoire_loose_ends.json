@@ -644,18 +644,6 @@
         },
         {
           "type": "song",
-          "songId": "d71447c3-9bb0-4ad4-9e7b-b76577feead5"
-        },
-        {
-          "type": "song",
-          "songId": "2a389f5c-899f-4619-873c-c600d4ef0a82"
-        },
-        {
-          "type": "song",
-          "songId": "23ce5d43-6915-4c0e-ad0a-26350a779e8d"
-        },
-        {
-          "type": "song",
           "songId": "00095ef3-9c51-47d0-8e1b-fa74da4a2ade"
         },
         {
@@ -703,7 +691,7 @@
         },
         {
           "type": "song",
-          "songId": "c9cb07ba-18f9-4d2d-b721-6e84b74a49ce"
+          "songId": "5a43733b-bae3-45d8-92c3-bb4729697be2"
         },
         {
           "type": "song",
@@ -711,7 +699,7 @@
         },
         {
           "type": "song",
-          "songId": "5a43733b-bae3-45d8-92c3-bb4729697be2"
+          "songId": "62eba8b7-4420-46d1-b9d8-f8e61d5903d1"
         }
       ],
       "date": "2026-09-18"
