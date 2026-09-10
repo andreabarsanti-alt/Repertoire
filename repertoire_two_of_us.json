@@ -1910,11 +1910,11 @@
         },
         {
           "type": "song",
-          "songId": "s35"
+          "songId": "s37"
         },
         {
           "type": "song",
-          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
+          "songId": "s33"
         },
         {
           "type": "song",
@@ -1926,19 +1926,15 @@
         },
         {
           "type": "song",
-          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+          "songId": "s35"
         },
         {
           "type": "song",
-          "songId": "s33"
+          "songId": "s34"
         },
         {
           "type": "song",
-          "songId": "s16"
-        },
-        {
-          "type": "song",
-          "songId": "s14"
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
         },
         {
           "type": "song",
@@ -1954,23 +1950,7 @@
         },
         {
           "type": "song",
-          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
-        },
-        {
-          "type": "song",
-          "songId": "s34"
-        },
-        {
-          "type": "song",
-          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
-        },
-        {
-          "type": "song",
-          "songId": "s11"
-        },
-        {
-          "type": "song",
-          "songId": "s04"
+          "songId": "12836013-3483-4122-a342-218470148f7d"
         },
         {
           "type": "song",
@@ -1978,11 +1958,7 @@
         },
         {
           "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "song",
-          "songId": "e10f61fb-77b0-4b57-a7c8-d0467306c9b8"
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
           "type": "song",
@@ -1990,7 +1966,15 @@
         },
         {
           "type": "song",
-          "songId": "s37"
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
         },
         {
           "type": "section",
@@ -1999,7 +1983,23 @@
         },
         {
           "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "s14"
+        },
+        {
+          "type": "song",
+          "songId": "e10f61fb-77b0-4b57-a7c8-d0467306c9b8"
+        },
+        {
+          "type": "song",
+          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
         },
         {
           "type": "song",
@@ -2016,6 +2016,10 @@
         {
           "type": "song",
           "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
         }
       ],
       "date": "2026-09-11"
