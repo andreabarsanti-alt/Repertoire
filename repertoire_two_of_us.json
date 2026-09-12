@@ -2023,6 +2023,46 @@
         }
       ],
       "date": "2026-09-11"
+    },
+    {
+      "id": "8b5cab33-8a3d-4437-8dd1-e949f44bfdcb",
+      "name": "Vaso Bastardo",
+      "type": "live",
+      "items": [
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "s30"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
+        }
+      ],
+      "date": "2026-09-12"
     }
   ],
   "tuneUp": true
