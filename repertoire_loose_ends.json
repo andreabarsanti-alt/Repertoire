@@ -631,7 +631,9 @@
         },
         {
           "type": "song",
-          "songId": "8d432b9e-a307-4af4-ba25-0fd4fd518111"
+          "songId": "8d432b9e-a307-4af4-ba25-0fd4fd518111",
+          "altSongId": "5a43733b-bae3-45d8-92c3-bb4729697be2",
+          "useAlt": true
         },
         {
           "type": "song",
@@ -696,7 +698,9 @@
         },
         {
           "type": "song",
-          "songId": "5a43733b-bae3-45d8-92c3-bb4729697be2"
+          "songId": "5a43733b-bae3-45d8-92c3-bb4729697be2",
+          "altSongId": "8d432b9e-a307-4af4-ba25-0fd4fd518111",
+          "useAlt": true
         },
         {
           "type": "song",
