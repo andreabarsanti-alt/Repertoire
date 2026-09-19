@@ -102,7 +102,7 @@
       "id": "s37",
       "title": "Two of us",
       "key": "F#",
-      "capo": "",
+      "capo": "1",
       "harp": "",
       "tags": "The Beatles",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/the-beatles/two-of-us-official-2148807",
@@ -1034,7 +1034,7 @@
       "title": "Love Is Blindness",
       "tags": "U2,",
       "key": "Bbm",
-      "capo": "",
+      "capo": "1",
       "harp": "",
       "ugLink": "https://tabs.ultimate-guitar.com/tab/u2/love-is-blindness-official-4414715",
       "crd": "[Intro]\nBbm Ab Gbmaj7 Ebm\nBbm F Bbm Ab\nGb Ebm Bbm F\nBbm\n        Bbm\nLove is blindness\n\n\n[Chorus]\n        Ab\nI don't want to see\n          Gb\nWon't you wrap the night\n Ebm\nAround me?\nBbm        F\n   Oh my heart\n        Bbm\nLove is blindness\n     Bbm\nIn a parked car\n\n\n[Verse 1]\n     Ab\nIn a crowded street\n    Gb\nYou see your love\nEbm\nMade complete\n          Bbm\nThread is ripping\n            F\nThe knot is slipping\n        Bbm\nLove is blindness\n        Bbm\nLove is clockworks\n\n\n[Verse 2]\n    Ab\nAnd cold steel\nGb          Ebm\nFingers too numb to feel\n            Bbm\nSqueeze the handle\n             F\nBlow out the candle\n        Bbm\nLove is blindness\n        Bbm\nLove is blindness\n\n\n[Chorus]\n        Ab\nI don't want to see\n          Gb\nWon't you wrap the night\n Ebm\nAround me?\nBbm        F\n   Oh my love\nBbm\nBlindness\n         B\nA little death\n\n\n[Bridge]\n        Bbm\nWithout mourning\n   F\nNo call\n       Bbm\nAnd no warning\n        B            Bbm\nBaby, a dangerous idea  \n     F\nThat almost makes sense\n\n\n[Solo 1]\nBbm Ab Gb Ebm\nBbm F Bbm\n        Bbm\nLove is drowning\n\n\n[Verse 3]\n     Ab\nIn a deep well\n        Gb\nAll the secrets\n    Ebm\nAnd no one to tell\n     Bbm\nTake the money\nF\nHoney\nBbm\nBlindness\n        Bbm\nLove is blindness\n\n\n[Chorus]\n        Ab\nI don't want to see\n          Gb\nWon't you wrap the night\n Ebm\nAround me?\nBbm        F\n   Oh my love\nBbm\nBlindness\n\n\n[Solo 2]\nBbm Ab Gb Ebm\nBbm F Bbm\n\n\n[Outro]\nBbm Ab Gb Ebm\nBbm F Bbm\n\n\n[Outro (Fade Out)]\nBbm Ab Gb Ebm\nBbm F Bbm",
@@ -1045,7 +1045,7 @@
       "title": "Who’ll stop the rain",
       "tags": "",
       "key": "",
-      "capo": "",
+      "capo": "1",
       "harp": "",
       "ugLink": "",
       "crd": "",
@@ -1056,7 +1056,7 @@
       "title": "Make it rain",
       "tags": "",
       "key": "",
-      "capo": "",
+      "capo": "1",
       "harp": "",
       "ugLink": "",
       "crd": "",
@@ -1631,116 +1631,34 @@
     },
     {
       "id": "983913fb-d9e4-4bbc-aa7b-dd798d299bd1",
-      "name": "Scaletta",
+      "name": "Top Songs",
       "items": [
         {
-          "type": "song",
-          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
-        },
-        {
-          "type": "song",
-          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
-        },
-        {
-          "type": "song",
-          "songId": "8b195afc-2191-4028-976a-b77044a54478"
-        },
-        {
-          "type": "song",
-          "songId": "s35"
-        },
-        {
-          "type": "song",
-          "songId": "s16",
-          "altSongId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6",
-          "useAlt": false
-        },
-        {
-          "type": "section",
-          "name": "More Folk Dylan",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s18",
-          "altSongId": "mobx3suewssgb",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "s17",
-          "altSongId": "9cdfb7ce-5974-4ac1-aca2-12434efbba91",
-          "useAlt": true
+          "type": "section-end"
         },
         {
           "type": "section-end"
         },
         {
-          "type": "song",
-          "songId": "s01",
-          "altSongId": "s02",
-          "useAlt": false
-        },
-        {
-          "type": "section",
-          "name": "More Neil Young",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s03"
-        },
-        {
-          "type": "song",
-          "songId": "s28"
-        },
-        {
-          "type": "song",
-          "songId": "s29",
-          "altSongId": "s30",
-          "useAlt": true
+          "type": "section-end"
         },
         {
           "type": "section-end"
         },
         {
-          "type": "section",
-          "name": "More S & G",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s33",
-          "altSongId": "mobx34z6fdygx",
-          "useAlt": true
+          "type": "section-end"
         },
         {
           "type": "section-end"
         },
         {
-          "type": "song",
-          "songId": "s15"
+          "type": "section-end"
         },
         {
-          "type": "song",
-          "songId": "s32"
+          "type": "section-end"
         },
         {
-          "type": "section",
-          "name": "More S & G",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee",
-          "altSongId": "fccb7d11-ae07-4874-aec2-17c29e060147",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "s13",
-          "altSongId": "s14",
-          "useAlt": false
+          "type": "section-end"
         },
         {
           "type": "section-end"
@@ -1748,167 +1666,6 @@
         {
           "type": "song",
           "songId": "s12"
-        },
-        {
-          "type": "song",
-          "songId": "s07",
-          "altSongId": "mobwzwj4octlr",
-          "useAlt": true
-        },
-        {
-          "type": "song",
-          "songId": "s34"
-        },
-        {
-          "type": "section",
-          "name": "More Bowie",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "song",
-          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
-        },
-        {
-          "type": "song",
-          "songId": "s11",
-          "altSongId": "mobx10bto98vo",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "mobxcagv7zvgk"
-        },
-        {
-          "type": "section",
-          "name": "More Blues",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s23",
-          "altSongId": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "mobwys0zxdtab",
-          "altSongId": "s22",
-          "useAlt": false
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "section",
-          "name": "Italiana",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s21"
-        },
-        {
-          "type": "song",
-          "songId": "s19"
-        },
-        {
-          "type": "song",
-          "songId": "s20",
-          "altSongId": "55d7c441-336e-4f1e-98ff-d58eeda0811b",
-          "useAlt": false
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "song",
-          "songId": "s24"
-        },
-        {
-          "type": "section",
-          "name": "More Classic Dylan",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "s26",
-          "altSongId": "mobx4gbien69s",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "s25"
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059",
-          "altSongId": "s06",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "s05"
-        },
-        {
-          "type": "song",
-          "songId": "s04"
-        },
-        {
-          "type": "song",
-          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe",
-          "altSongId": "s36",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "s37"
-        },
-        {
-          "type": "section",
-          "name": "Encore",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "mobwy45ykmxg3",
-          "altSongId": "mobwz3ketsbt7",
-          "useAlt": false
-        },
-        {
-          "type": "song",
-          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
-        },
-        {
-          "type": "song",
-          "songId": "s39",
-          "altSongId": "mobvrnnwqd8gq",
-          "useAlt": true
-        },
-        {
-          "type": "song",
-          "songId": "mobwnzg39cdvz",
-          "altSongId": "s41",
-          "useAlt": true
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "section-end"
         }
       ],
       "type": "generic"
