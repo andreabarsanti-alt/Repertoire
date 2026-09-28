@@ -1888,15 +1888,15 @@
         },
         {
           "type": "song",
-          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
-        },
-        {
-          "type": "song",
           "songId": "s24"
         },
         {
           "type": "song",
           "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
         },
         {
           "type": "song",
@@ -1960,6 +1960,14 @@
         },
         {
           "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
           "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
         },
         {
@@ -1976,11 +1984,27 @@
         },
         {
           "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+          "songId": "s21"
         },
         {
           "type": "song",
           "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "s38"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
           "type": "section",
@@ -1989,23 +2013,7 @@
         },
         {
           "type": "song",
-          "songId": "s38"
-        },
-        {
-          "type": "song",
-          "songId": "mobwz3ketsbt7"
-        },
-        {
-          "type": "song",
           "songId": "s39"
-        },
-        {
-          "type": "song",
-          "songId": "mobvrnnwqd8gq"
-        },
-        {
-          "type": "song",
-          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
         },
         {
           "type": "song",
@@ -2018,10 +2026,6 @@
           "type": "section",
           "name": "Italiana",
           "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "s21"
         },
         {
           "type": "song",
@@ -2083,10 +2087,6 @@
         {
           "type": "song",
           "songId": "s16"
-        },
-        {
-          "type": "song",
-          "songId": "s36"
         },
         {
           "type": "song",
