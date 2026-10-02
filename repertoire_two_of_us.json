@@ -2192,11 +2192,17 @@
         },
         {
           "type": "song",
-          "songId": "s39"
+          "songId": "s39",
+          "altSongId": "mobvrnnwqd8gq",
+          "useAlt": false
         },
         {
           "type": "song",
           "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         }
       ],
       "date": "2026-10-02"
