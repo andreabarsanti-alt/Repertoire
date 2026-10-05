@@ -2206,6 +2206,149 @@
         }
       ],
       "date": "2026-10-02"
+    },
+    {
+      "id": "86077510-d546-495c-a9de-cd29f6108329",
+      "name": "Repertoire",
+      "type": "generic",
+      "items": [
+        {
+          "type": "section",
+          "name": "Neil Young ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "e9e7e2b8-920f-4092-815f-45f8f03f42d0"
+        },
+        {
+          "type": "song",
+          "songId": "s30"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Neil Young",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s02"
+        },
+        {
+          "type": "song",
+          "songId": "s03"
+        },
+        {
+          "type": "song",
+          "songId": "s28"
+        },
+        {
+          "type": "song",
+          "songId": "s29"
+        },
+        {
+          "type": "song",
+          "songId": "e10f61fb-77b0-4b57-a7c8-d0467306c9b8"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Pink Floyd ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "section",
+          "name": "Pink Floyd",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "s39"
+        },
+        {
+          "type": "section",
+          "name": "The Beatles ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "The Beatles",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
+        },
+        {
+          "type": "song",
+          "songId": "3832b033-68a0-40c2-9953-aaf1e82dcd9d"
+        },
+        {
+          "type": "song",
+          "songId": "a5209902-b598-48ed-8f34-e5dd9a5b2b44"
+        },
+        {
+          "type": "song",
+          "songId": "72855055-6f25-4472-baaf-df56e543fdda"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section-end"
+        }
+      ]
     }
   ],
   "tuneUp": true
