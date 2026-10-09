@@ -2347,6 +2347,59 @@
         },
         {
           "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Dylan & Co.",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "song",
+          "songId": "s41"
+        },
+        {
+          "type": "song",
+          "songId": "mobwnzg39cdvz"
+        },
+        {
+          "type": "song",
+          "songId": "mobx3suewssgb"
+        },
+        {
+          "type": "song",
+          "songId": "mobx4gbien69s"
+        },
+        {
+          "type": "song",
+          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
+        },
+        {
+          "type": "song",
+          "songId": "9cdfb7ce-5974-4ac1-aca2-12434efbba91"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
+        },
+        {
+          "type": "song",
+          "songId": "s17"
+        },
+        {
+          "type": "song",
+          "songId": "s18"
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "s26"
         }
       ]
     }
