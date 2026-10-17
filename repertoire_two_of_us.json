@@ -2273,28 +2273,6 @@
         },
         {
           "type": "section",
-          "name": "Pink Floyd ⭐️",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "section",
-          "name": "Pink Floyd",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "mobvrnnwqd8gq"
-        },
-        {
-          "type": "song",
-          "songId": "s39"
-        },
-        {
-          "type": "section",
           "name": "The Beatles ⭐️",
           "collapsed": true
         },
@@ -2349,6 +2327,10 @@
         {
           "type": "song",
           "songId": "72855055-6f25-4472-baaf-df56e543fdda"
+        },
+        {
+          "type": "song",
+          "songId": "e5e9893b-db1c-4de1-8f78-459f69a8f613"
         },
         {
           "type": "section-end"
@@ -2484,6 +2466,211 @@
         {
           "type": "song",
           "songId": "9cdfb7ce-5974-4ac1-aca2-12434efbba91"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "70s ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "70s",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "s39"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "96b1f45b-00fd-4dad-b7e7-f625e28ddbed"
+        },
+        {
+          "type": "song",
+          "songId": "b559d6a4-c0bb-442f-bf93-5990ebac751e"
+        },
+        {
+          "type": "song",
+          "songId": "mobwzwj4octlr"
+        },
+        {
+          "type": "song",
+          "songId": "s06"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "80s ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "section",
+          "name": "80s",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "3e6e1b70-f3f7-4102-8462-8c6b4bee55e8"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "90s ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "48059d27-3a58-415f-8814-1199e07162e4"
+        },
+        {
+          "type": "song",
+          "songId": "s38"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "90s",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "86b59268-5f33-4c3a-be96-a3099959ca4e"
+        },
+        {
+          "type": "song",
+          "songId": "b79c9194-0cd6-4314-a72e-ceb4a5ddc064"
+        },
+        {
+          "type": "song",
+          "songId": "fde76324-becf-4df7-8c8b-17e03d8c8c1e"
+        },
+        {
+          "type": "song",
+          "songId": "e3705959-1ac6-4dc7-b76f-6eee2e1fee61"
+        },
+        {
+          "type": "song",
+          "songId": "mobxcagv7zvgk"
+        },
+        {
+          "type": "song",
+          "songId": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc"
+        },
+        {
+          "type": "song",
+          "songId": "4f4fa897-b1ba-428a-aa84-cc6756cf8682"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "21st Century",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s07"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Italiana ⭐️",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Italiana",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section-end"
         },
         {
           "type": "section-end"
