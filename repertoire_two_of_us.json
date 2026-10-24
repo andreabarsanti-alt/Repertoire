@@ -969,7 +969,7 @@
     {
       "id": "19696b65-49a2-429c-971e-6ab1851b6a11",
       "title": "Dead flowers",
-      "tags": "",
+      "tags": "The Rolling Stones,",
       "key": "D",
       "capo": "1",
       "harp": "",
@@ -980,7 +980,7 @@
     {
       "id": "9b03507e-3e6d-459c-9c96-8ee0f76fcc26",
       "title": "Viva las vegas",
-      "tags": "",
+      "tags": "Elvis Presley",
       "key": "",
       "capo": "1",
       "harp": "",
@@ -2552,7 +2552,7 @@
         {
           "type": "section",
           "name": "70s",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -2604,7 +2604,7 @@
         {
           "type": "section",
           "name": "80s",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -2644,7 +2644,7 @@
         {
           "type": "section",
           "name": "90s",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -2717,6 +2717,9 @@
         {
           "type": "song",
           "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+        },
+        {
+          "type": "section-end"
         },
         {
           "type": "section-end"
