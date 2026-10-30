@@ -2872,7 +2872,7 @@
         },
         {
           "type": "section",
-          "name": "More NeilY",
+          "name": "More Neil Young (In caso)",
           "collapsed": true
         },
         {
@@ -2917,11 +2917,15 @@
         {
           "type": "section",
           "name": "Encore",
-          "collapsed": true
+          "collapsed": false
         },
         {
           "type": "song",
           "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
         },
         {
           "type": "song",
@@ -2940,16 +2944,12 @@
           "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
-          "type": "song",
-          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
-        },
-        {
           "type": "section-end"
         },
         {
           "type": "section",
-          "name": "Italiana",
-          "collapsed": true
+          "name": "Italiana (Vediamo dove e quali)",
+          "collapsed": false
         },
         {
           "type": "song",
