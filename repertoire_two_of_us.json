@@ -2987,6 +2987,97 @@
         }
       ],
       "date": "2026-10-31"
+    },
+    {
+      "id": "bbf3b80e-2818-41c6-a35d-d0a6f028503a",
+      "name": "New Ones",
+      "type": "generic",
+      "items": [
+        {
+          "type": "song",
+          "songId": "86b59268-5f33-4c3a-be96-a3099959ca4e"
+        },
+        {
+          "type": "song",
+          "songId": "b5f5de41-59b0-4fec-aedd-5014761404c5"
+        },
+        {
+          "type": "song",
+          "songId": "b79c9194-0cd6-4314-a72e-ceb4a5ddc064"
+        },
+        {
+          "type": "song",
+          "songId": "fde76324-becf-4df7-8c8b-17e03d8c8c1e"
+        },
+        {
+          "type": "song",
+          "songId": "214bf23d-b10c-4475-b93c-8608d81ca91d"
+        },
+        {
+          "type": "song",
+          "songId": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9"
+        },
+        {
+          "type": "song",
+          "songId": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc"
+        },
+        {
+          "type": "song",
+          "songId": "e3705959-1ac6-4dc7-b76f-6eee2e1fee61"
+        },
+        {
+          "type": "song",
+          "songId": "cd672d55-d11a-49ec-90a7-97dcbcdbdf24"
+        },
+        {
+          "type": "song",
+          "songId": "257f454f-d2de-4aaf-aeb1-ee9e035a7e2f"
+        },
+        {
+          "type": "song",
+          "songId": "a76603ba-15dd-4c03-8cfc-bade22efa0f5"
+        },
+        {
+          "type": "song",
+          "songId": "b559d6a4-c0bb-442f-bf93-5990ebac751e"
+        },
+        {
+          "type": "song",
+          "songId": "5da23387-ec23-4bdb-87e1-f798aa0484bf"
+        },
+        {
+          "type": "song",
+          "songId": "19f275fa-8289-4e7e-9842-38372cd628b0"
+        },
+        {
+          "type": "song",
+          "songId": "9298f7f0-2809-41f2-89ad-60ccc8b3f269"
+        },
+        {
+          "type": "song",
+          "songId": "5515c491-abc2-43a8-99a8-4c2d5471822c"
+        },
+        {
+          "type": "song",
+          "songId": "b2446f66-0c97-495b-8bf4-b155a6a5de93"
+        },
+        {
+          "type": "song",
+          "songId": "c27a4fbc-1e3c-4b78-9501-a007fbb91398"
+        },
+        {
+          "type": "song",
+          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
+        },
+        {
+          "type": "song",
+          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
+        },
+        {
+          "type": "song",
+          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
+        }
+      ]
     }
   ],
   "tuneUp": true
