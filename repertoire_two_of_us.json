@@ -1321,7 +1321,7 @@
     {
       "id": "bb8f7695-7028-4240-af53-f03bab19a1da",
       "title": "Lyin Eyes",
-      "tags": "",
+      "tags": "Eagles,",
       "key": "F#",
       "capo": "5",
       "harp": "",
@@ -1350,6 +1350,17 @@
       "ugLink": "https://tabs.ultimate-guitar.com/tab/nirvana/polly-official-1910947",
       "crd": "",
       "tryOut": false
+    },
+    {
+      "id": "d1262654-af9b-4570-98df-06ac965de7d2",
+      "title": "One Of Us",
+      "tags": "Joan Osborne,",
+      "key": "Em",
+      "capo": "1",
+      "harp": "",
+      "ugLink": "https://tabs.ultimate-guitar.com/tab/joan-osborne/one-of-us-official-2107081",
+      "crd": "[Intro]\nEm C G D Em C G D\nEm C G D Em C G D\nEm C G D Em C G D\nEm C G D\nEm C\n\n\n[Verse 1]\nG D   Em            C G              D\n   If God had a name   what would it be?\n              Em             C\nAnd would you call it to his face?\nG            D                 Em      C\n If you were faced with Him in all His glory\nG               D              Em       C\n What would you ask if you had just one question?\nG D    Cmaj7       Gmaj7/D\n   And yeah, yeah, God    is great\nCmaj7       Gmaj7/D\nYeah, yeah, God    is good\nCmaj7       Gmaj7/D\nyeah, yeah, yeah   yeah yeah\n\n\n[Chorus]\n        Em      C         G D\nWhat if God was one of us?\n       Em        C        G D\nJust a slob like one of us\n       Em       C         G\nJust a stranger on the bus\n          D            Em   C G D\nTryin' to make his way home?\n\n\n[Verse 2]\n   Em            C G              D\nIf God had a face   what would it look like?\n          Em          C  G           D\nAnd would you want to see if, seeing meant\n               Em      C      G               D\nThat you would have to believe in things like heaven\n       Em            C           G          D\nAnd in Jesus and the saints, and all the prophets?\n    Cmaj7       Gmaj7/D\nAnd yeah, yeah, God    is great\nCmaj7       Gmaj7/D\nYeah, yeah, God    is good\nCmaj7       Gmaj7/D\nyeah, yeah, yeahyeahyeah\n\n\n[Chorus]\n        Em      C         G D\nWhat if God was one of us?\n       Em        C        G D\nJust a slob like one of us\n       Em       C         G\nJust a stranger on the bus\n          D            Em   C\nTryin' to make his way home?\nG D Em               C            G   D\n      Just tryin' to make his way home\nEm           C           G   D\n  Back up to heaven all alone\nEm       C              G    D\n  Nobody calling on the phone\nCmaj7                            Gmaj7/D\n     'Cept for the Pope maybe in Rome   \nCmaj7 Gmaj7/D Cmaj7 Gmaj7/D\n\n\n[Solo]\nEm C G D Em C G D\nEm C G D Em C\nG D    Cmaj7       Gmaj7/D\n   And yeah, yeah, God    is great\nCmaj7       Gmaj7/D\nYeah, yeah, God    is good\nCmaj7       Gmaj7/D\nyeah, yeah, yeah   yeah yeah\n\n\n[Chorus]\n        Em      C         G D\nWhat if God was one of us?\n       Em        C        G D\nJust a slob like one of us\n       Em       C         G\nJust a stranger on the bus\n          D            Em   C\nTryin' to make his way home?\nG D Em               C            G   D\n      Just tryin' to make his way home\nEm          C          G    D\n  Like Ð° holy rolling stone\nEm           C           G   D\n  Back up to heaven all alone\n\n\n[Outro]\nCmaj7\n     Just tryin' to make his way home\nNobody calling on the phone\n'Cept for the Pope maybe in Rome",
+      "tryOut": true
     }
   ],
   "tagMeta": {
@@ -2429,7 +2440,7 @@
     },
     {
       "id": "86077510-d546-495c-a9de-cd29f6108329",
-      "name": "Repertoire",
+      "name": "Masters",
       "type": "generic",
       "items": [
         {
@@ -3110,81 +3121,13 @@
       "date": "2026-10-31"
     },
     {
-      "id": "bbf3b80e-2818-41c6-a35d-d0a6f028503a",
-      "name": "New Ones",
+      "id": "3a32390b-c215-487e-b16a-33eb9ce4d3c7",
+      "name": "Challengers",
       "type": "generic",
       "items": [
         {
           "type": "song",
-          "songId": "20e8b656-fd0b-4b06-8364-c2dc41bae4bf"
-        },
-        {
-          "type": "song",
-          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
-        },
-        {
-          "type": "song",
-          "songId": "86b59268-5f33-4c3a-be96-a3099959ca4e"
-        },
-        {
-          "type": "song",
-          "songId": "fde76324-becf-4df7-8c8b-17e03d8c8c1e"
-        },
-        {
-          "type": "song",
-          "songId": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9"
-        },
-        {
-          "type": "song",
-          "songId": "6ebe9805-dd40-4558-b135-b57e59fb7fec"
-        },
-        {
-          "type": "song",
-          "songId": "822a080b-8de9-4b6c-bb26-d29fb1d19ffc"
-        },
-        {
-          "type": "song",
-          "songId": "46347c8e-e369-488d-9309-453d14245bc0"
-        },
-        {
-          "type": "song",
-          "songId": "5515c491-abc2-43a8-99a8-4c2d5471822c"
-        },
-        {
-          "type": "song",
-          "songId": "cd672d55-d11a-49ec-90a7-97dcbcdbdf24"
-        },
-        {
-          "type": "song",
-          "songId": "645b295b-438d-482b-b0be-3bcf9701d070"
-        },
-        {
-          "type": "song",
-          "songId": "e3705959-1ac6-4dc7-b76f-6eee2e1fee61"
-        },
-        {
-          "type": "song",
-          "songId": "257f454f-d2de-4aaf-aeb1-ee9e035a7e2f"
-        },
-        {
-          "type": "song",
-          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
-        },
-        {
-          "type": "song",
-          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
-        },
-        {
-          "type": "song",
-          "songId": "c4e66ad8-b23c-44b1-8369-cd6542e383e6"
-        },
-        {
-          "type": "song",
-          "songId": "3d48115a-5251-4dcd-8cf3-7cdd155be7d7"
-        },
-        {
-          "type": "song",
-          "songId": "a060161f-e55e-4592-aaf6-c7024184ba38"
+          "songId": "d1262654-af9b-4570-98df-06ac965de7d2"
         }
       ]
     }
