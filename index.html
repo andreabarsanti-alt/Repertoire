@@ -2599,6 +2599,7 @@ function setItemRow(sl) {
     </div>
     <div class="set-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Edit">✎</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();duplicateSetlist('${sl.id}')" title="Duplicate">⧉</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
     </div>
   </div>`;
@@ -3283,6 +3284,18 @@ function saveSetlist() {
   save(); renderSets(); renderSetDetail(); renderBubbles();
   closeModal('setlist-modal');
   toast(editSetId ? 'Setlist updated' : 'Setlist created');
+}
+
+function duplicateSetlist(id) {
+  const src = db.setlists.find(s => s.id === id);
+  if (!src) return;
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id   = uid();
+  copy.name = src.name + ' (copy)';
+  db.setlists.push(copy);
+  activeSetId = copy.id;
+  save(); renderSets(); renderSetDetail(); renderBubbles();
+  toast('Setlist duplicated');
 }
 
 function deleteSetlist(id) {
