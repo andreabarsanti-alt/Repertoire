@@ -1151,6 +1151,13 @@ select.fi { cursor: pointer; }
           <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo, or rewrite the sheet into a new root key" disabled>💾 Save capo</button>
         </div>
         <div class="crd-toolbar-right">
+          <span class="crd-toolbar-label">Auto</span>
+          <button class="btn btn-secondary btn-sm" id="crd-auto-btn" onclick="crdAutoToggle()" title="Start / stop auto-scroll (Space)">▶ Play</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-5)" title="Slower">−</button>
+          <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed (pixels per second)">30</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(5)" title="Faster">+</button>
+        </div>
+        <div class="crd-toolbar-right">
           <span class="crd-toolbar-label">Scroll</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdScrollPctStep(-5)" title="Less scroll per key press">−</button>
           <span id="crd-scroll-pct-label" class="crd-transpose-val">35%</span>
@@ -2237,6 +2244,8 @@ function openCrdReader(id) {
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
   renderCrdBody();
   crdUpdateScrollPctLabel();
+  crdAutoStop();
+  crdAutoUpdateUI();
   openModal('crd-reader');
   document.getElementById('crd-scroll').scrollTop = 0;
 }
@@ -2305,6 +2314,7 @@ function crdUpdateStoreBtn() {
 }
 
 function closeCrdReader() {
+  crdAutoStop();
   closeModal('crd-reader');
   crdSongId = null;
 }
@@ -2561,6 +2571,68 @@ function crdUpdateScrollPctLabel() {
   if (el) el.textContent = crdScrollPct + '%';
 }
 
+// ── Auto-scroll ──
+// Hands-free scrolling at a steady speed (pixels per second, saved in this browser). Touching,
+// wheeling or using the arrow keys pauses it for a moment so you can reposition, then it
+// carries on from wherever you left the page. It stops by itself at the end of the sheet.
+let crdAutoSpeed = Math.max(5, Math.min(200, parseInt(localStorage.getItem('rep_crd_auto_speed') || '30', 10) || 30));
+let crdAutoOn = false, crdAutoRaf = 0, crdAutoLast = 0, crdAutoPos = 0, crdAutoHoldUntil = 0, crdAutoTouching = false;
+
+function crdAutoUpdateUI() {
+  const btn = document.getElementById('crd-auto-btn');
+  if (btn) {
+    btn.textContent = crdAutoOn ? '⏸ Pause' : '▶ Play';
+    btn.classList.toggle('btn-primary', crdAutoOn);
+    btn.classList.toggle('btn-secondary', !crdAutoOn);
+  }
+  const lab = document.getElementById('crd-auto-speed-label');
+  if (lab) lab.textContent = crdAutoSpeed;
+}
+function crdAutoStart() {
+  const el = document.getElementById('crd-scroll');
+  if (!el) return;
+  crdAutoOn = true; crdAutoPos = el.scrollTop; crdAutoLast = 0;
+  crdAutoUpdateUI();
+  cancelAnimationFrame(crdAutoRaf);
+  crdAutoRaf = requestAnimationFrame(crdAutoTick);
+}
+function crdAutoStop() {
+  crdAutoOn = false;
+  cancelAnimationFrame(crdAutoRaf);
+  crdAutoUpdateUI();
+}
+function crdAutoToggle() { crdAutoOn ? crdAutoStop() : crdAutoStart(); }
+function crdAutoNudge() { crdAutoHoldUntil = performance.now() + 1500; }
+function crdAutoSpeedStep(delta) {
+  crdAutoSpeed = Math.max(5, Math.min(200, crdAutoSpeed + delta));
+  localStorage.setItem('rep_crd_auto_speed', crdAutoSpeed);
+  crdAutoUpdateUI();
+}
+function crdAutoTick(ts) {
+  if (!crdAutoOn) return;
+  const el = document.getElementById('crd-scroll');
+  if (!el) { crdAutoStop(); return; }
+  const dt = crdAutoLast ? Math.min(ts - crdAutoLast, 100) : 0;
+  crdAutoLast = ts;
+  if (crdAutoTouching || ts < crdAutoHoldUntil) {
+    crdAutoPos = el.scrollTop;                 // follow any manual movement
+  } else {
+    crdAutoPos += crdAutoSpeed * dt / 1000;    // fractional position, so slow speeds stay smooth
+    el.scrollTop = crdAutoPos;
+    if (crdAutoPos >= el.scrollHeight - el.clientHeight - 1) { crdAutoStop(); return; }
+  }
+  crdAutoRaf = requestAnimationFrame(crdAutoTick);
+}
+(function () {
+  const el = document.getElementById('crd-scroll');
+  if (!el) return;
+  el.addEventListener('wheel', crdAutoNudge, { passive: true });
+  el.addEventListener('touchstart', () => { crdAutoTouching = true; }, { passive: true });
+  const release = () => { crdAutoTouching = false; crdAutoNudge(); };
+  el.addEventListener('touchend', release, { passive: true });
+  el.addEventListener('touchcancel', release, { passive: true });
+})();
+
 // Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
 document.addEventListener('keydown', (e) => {
   const reader = document.getElementById('crd-reader');
@@ -2569,10 +2641,15 @@ document.addEventListener('keydown', (e) => {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault();
+    crdAutoNudge();
     document.getElementById('crd-scroll').scrollBy({ top: crdScrollStep(), behavior: 'smooth' });
   } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
     e.preventDefault();
+    crdAutoNudge();
     document.getElementById('crd-scroll').scrollBy({ top: -crdScrollStep(), behavior: 'smooth' });
+  } else if (e.key === ' ' && tag !== 'BUTTON') {
+    e.preventDefault();
+    crdAutoToggle();
   } else if (e.key === 'Escape') {
     closeCrdReader();
   }
