@@ -125,6 +125,16 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .thanks .big { font-size: 3rem; margin-bottom: 8px; }
 .thanks h2 { color: var(--accent); margin-bottom: 6px; }
 .thanks p { color: var(--text-dim); margin-bottom: 18px; }
+.ig {
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 18px 0 0;
+  padding: 14px 16px; border-radius: 14px; text-decoration: none; color: #fff;
+  background: linear-gradient(135deg, #f58529, #dd2a7b 50%, #8134af);
+  box-shadow: 0 6px 18px rgba(0,0,0,.45);
+}
+.ig-icon { font-size: 1.8rem; line-height: 1; }
+.ig-text { display: flex; flex-direction: column; text-align: left; }
+.ig-text b { font-size: 1.05rem; }
+.ig-text span { font-size: 0.9rem; opacity: .95; }
 </style>
 </head>
 <body>
@@ -143,6 +153,10 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <div id="bubbles"></div>
     <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Altro? Chiedi una canzone qualsiasi</button>
   </div>
+  <a id="ig" class="ig hidden" target="_blank" rel="noopener">
+    <span class="ig-icon">📸</span>
+    <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
+  </a>
   <footer>Richieste di canzoni · niente promesse, ma faremo del nostro meglio</footer>
 </div>
 
@@ -163,6 +177,16 @@ textarea.fi { resize: vertical; min-height: 70px; }
 // ── Where to read/write: ?db=<host>&g=<gig> ──
 const params = new URLSearchParams(location.search);
 const GIG = (params.get('g') || '').trim();
+// Instagram handle per gig (profile), shown as a "Filmaci e taggaci!" link card.
+const INSTAGRAM = { two_of_us: 'twoofus_7478' };
+(() => {
+  const ig = INSTAGRAM[GIG];
+  if (!ig) return;
+  const a = document.getElementById('ig');
+  a.href = `https://www.instagram.com/${ig}/`;
+  document.getElementById('ig-handle').textContent = `Instagram @${ig}`;
+  a.classList.remove('hidden');
+})();
 const DB_BASE = (() => {
   const raw = (params.get('db') || '').trim().replace(/\/+$/, '');
   // Only a Firebase Realtime Database host (or a local test server) — never an arbitrary site.

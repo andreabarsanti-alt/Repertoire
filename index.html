@@ -76,8 +76,6 @@ body {
   #print-area .qp-sub { font-size: 18px; margin: 10px 0 24px; }
   #print-area .qp-qr svg { width: 110mm; height: 110mm; }
   #print-area .qp-url { font-size: 14px; color: #555; margin-top: 10px; }
-  #print-area .qp-ig { font-size: 26px; font-weight: 700; margin-top: 50px; line-height: 1.5; }
-  #print-area .qp-ig a { color: #000; font-weight: 400; text-decoration: none; }
   @page { margin: 12mm 14mm; }
 }
 
@@ -5707,8 +5705,6 @@ function liveFillQr(elId) {
              .catch(() => { el.textContent = 'QR code needs an internet connection — share the link instead'; });
 }
 function liveShowBigQr() { openModal('live-qr-big'); liveFillQr('live-qr-big-svg'); }
-// Instagram handle per profile, printed on the QR poster ("Filmaci e taggaci"). Public anyway.
-const LIVE_INSTAGRAM = { two_of_us: 'twoofus_7478' };
 // "⤢ Show big" -> a printable A4 QR poster for the audience, in Italian (like request.html):
 // the same two print paths as doPrint (PDF to the share sheet in the home-screen app, in-page
 // window.print() in a browser tab). Both libraries start loading when the QR card renders.
@@ -5719,11 +5715,9 @@ function liveQrPoster() {
     return;
   }
   const url = liveShareUrl();
-  const ig = LIVE_INSTAGRAM[LIVE_GIG] || '';
-  const igUrl = ig ? `https://www.instagram.com/${ig}/` : '';
   const name = (getProfiles().find(p => p.id === PROFILE) || {}).name || '';
   if (PRINT_STANDALONE) {
-    pdfShareFlow(() => buildQrPosterPdf(url, name, ig, igUrl), pdfFileName(`QR richieste ${name}`.trim()));
+    pdfShareFlow(() => buildQrPosterPdf(url, name), pdfFileName(`QR richieste ${name}`.trim()));
     return;
   }
   const area = document.getElementById('print-area');
@@ -5733,14 +5727,13 @@ function liveQrPoster() {
     <div class="qp-sub">Inquadra il QR code con la fotocamera del telefono</div>
     <div class="qp-qr">${qrSvg(url)}</div>
     <div class="qp-url">${esc(url.replace(/^https?:\/\//, ''))}</div>
-    ${ig ? `<div class="qp-ig">Filmaci e taggaci!<br><a href="${esc(igUrl)}">Instagram @${esc(ig)}</a></div>` : ''}
   </div>`;
   const prevTitle = document.title;
   document.title = `QR richieste ${name}`.trim();
   window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
   window.print();
 }
-function buildQrPosterPdf(url, name, ig, igUrl) {
+function buildQrPosterPdf(url, name) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
@@ -5760,16 +5753,6 @@ function buildQrPosterPdf(url, name, ig, igUrl) {
   y += size + 26;
   doc.setFontSize(13); doc.setTextColor(90);
   doc.text(url.replace(/^https?:\/\//, ''), cx, y, { align: 'center' }); doc.setTextColor(0);
-  if (ig) {
-    y += 70;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(28);
-    doc.text('Filmaci e taggaci!', cx, y, { align: 'center' }); y += 34;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(22);
-    const t = `Instagram @${ig}`;
-    doc.text(t, cx, y, { align: 'center' });
-    const tw = doc.getTextWidth(t);
-    doc.link(cx - tw / 2, y - 20, tw, 26, { url: igUrl });
-  }
   return doc;
 }
 function liveCopyLink() {
