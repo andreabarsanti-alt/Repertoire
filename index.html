@@ -909,7 +909,7 @@ select.fi { cursor: pointer; }
       <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
         <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
       </label>
-      <label class="tune-toggle" title="For a foot pedal that sends Up/Down keys. Off: the pedal scrolls the chord sheet. On: a short tap of either key plays/pauses auto-scroll, and holding it scrolls up/down">
+      <label class="tune-toggle" title="For a foot pedal that sends Up/Down keys. Off: the pedal scrolls the chord sheet. On: a short tap of either key plays/pauses auto-scroll; holding Down speeds it up, holding Up slows it down">
         <input type="checkbox" id="pedal-auto-toggle" onchange="togglePedalAutoMode()"> Pedal Auto-scroll
       </label>
       <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
@@ -1357,7 +1357,7 @@ let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false };
 let keyboardMode = localStorage.getItem('rep_keyboard_mode') === '1';
 // Pedal auto-scroll mode — a per-browser setting like Keyboard Mode. Off: arrow/page keys scroll the
 // chord sheet as always. On: a short tap of Up/Down (or PageUp/PageDown) plays/pauses auto-scroll,
-// holding the key scrolls up/down. See the Auto-scroll section by the CRD reader.
+// holding Down speeds auto-scroll up, holding Up slows it down. See the Auto-scroll section by the CRD reader.
 let pedalAutoMode = localStorage.getItem('rep_pedal_auto') === '1';
 let activeBubble  = null;
 let inlineEditId  = null;
@@ -2903,7 +2903,7 @@ function crdAutoUpdateUI() {
   if (badge) {
     badge.style.display = pedalAutoMode ? '' : 'none';
     badge.classList.toggle('on', crdAutoOn);
-    badge.textContent = crdAutoOn ? `▶ Auto ${crdAutoSpeed}` : '⏸ Paused';
+    badge.textContent = crdAutoOn ? `▶ Auto ${crdAutoSpeed}` : `⏸ Paused ${crdAutoSpeed}`;
   }
 }
 // Shows/hides the auto-scroll controls according to the mode (off = the reader is exactly as
@@ -2984,15 +2984,16 @@ function crdAutoTick(ts) {
 // Presses within CRD_CHAIN_MS of each other form one gesture; if a gesture turns out to be a
 // hold, any play/pause its first taps already did is undone (a repeat stream usually starts
 // with a lone press, then a pause, then the fast repeats).
-// A hold does the old-style big jump: one "Scroll %" step up (Up) or down (Down) straight away,
-// then another every CRD_HOLD_JUMP_MS while it's still held. Auto-scroll waits while you hold
-// and carries on from the new position afterwards.
+// A hold changes the auto-scroll speed: Down (forward) makes it faster, Up (back) slower — one
+// level straight away, then another every CRD_HOLD_STEP_MS while it's still held (1–60). The
+// sheet keeps scrolling during the hold so you feel the new speed; a hold while paused stays
+// paused (the new level shows in the status pill and applies on Play).
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
 const CRD_REPEAT_GAP_MS = 150;
 const CRD_CHAIN_MS      = 800;
 const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
-const CRD_HOLD_JUMP_MS  = 700;
+const CRD_HOLD_STEP_MS  = 300;
 let crdPedal = null;   // gesture in progress: { key, dir, down, last, autoWas, holding, holdTimer, jumpTimer, endTimer }
 
 function crdPedalDown(key, dir) {
@@ -3024,27 +3025,24 @@ function crdPedalHoldStart() {
   clearTimeout(p.holdTimer);
   p.holding = true;
   if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }  // undo taps that were the start of this hold
-  crdPedalJump();
-  p.jumpTimer = setInterval(crdPedalJump, CRD_HOLD_JUMP_MS);
+  crdPedalSpeedStep();
+  p.jumpTimer = setInterval(crdPedalSpeedStep, CRD_HOLD_STEP_MS);
   crdPedalKeepHold();
 }
-function crdPedalJump() {
-  const p = crdPedal, el = document.getElementById('crd-scroll');
-  if (!p || !el) return;
-  crdAutoForgetPause();
-  crdAutoNudge();
-  crdJump(p.dir);                                  // stops at the top / end of the song
+function crdPedalSpeedStep() {
+  const p = crdPedal;
+  if (!p) return;
+  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (clamped 1–60)
 }
 // Keeps a hold alive while the key is still down or presses keep streaming in; ends it otherwise.
 function crdPedalKeepHold() {
   const p = crdPedal;
   if (!p) return;
-  crdAutoNudge();
   clearTimeout(p.endTimer);
   p.endTimer = setTimeout(() => {
     if (crdPedal !== p) return;
     if (p.down || performance.now() - p.last < CRD_HOLD_IDLE_MS) crdPedalKeepHold();
-    else { crdPedalCancel(); crdAutoNudge(); }
+    else crdPedalCancel();
   }, CRD_HOLD_IDLE_MS);
 }
 function crdPedalCancel() {
