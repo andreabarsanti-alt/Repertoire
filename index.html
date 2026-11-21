@@ -5628,7 +5628,7 @@ function renderLive() {
           </div>
         </div>` : ''}
         <div class="live-venue">${(() => { const v = getVenueLoc(); return v
-          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · in the audience = within ${LIVE_NEAR_M} m${v.acc ? ` (GPS ±${fmtDist(v.acc)})` : ''}`
+          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
           : '📍 Venue location not set — requests can\'t be checked'; })()}
           <button class="btn btn-secondary btn-sm" onclick="liveCaptureVenue(true)" title="Use this iPad's current position as the venue">Set here</button></div>
         <h3>Requests <span id="live-req-count"></span></h3>
