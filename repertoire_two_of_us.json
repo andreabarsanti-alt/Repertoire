@@ -3132,23 +3132,6 @@
           "songId": "d1262654-af9b-4570-98df-06ac965de7d2"
         }
       ]
-    },
-    {
-      "id": "e076b2d0-81c2-4520-b16c-9b1db8333fea",
-      "name": "Soundcheck 21 nov 2026",
-      "type": "live",
-      "liveType": "soundcheck",
-      "date": "2026-11-21",
-      "items": [
-        {
-          "type": "song",
-          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
-        },
-        {
-          "type": "song",
-          "songId": "be434788-9015-4578-82f6-04a1c20fb579"
-        }
-      ]
     }
   ],
   "tuneUp": true
