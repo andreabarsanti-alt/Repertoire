@@ -46,6 +46,33 @@ body {
   overflow-x: hidden;
 }
 
+/* Print sheet (doPrint): filled just before window.print(); only it is printed. */
+#print-area { display: none; }
+@media print {
+  html, body { background: #fff !important; color: #000 !important; min-height: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block; font-family: Georgia, serif; color: #000; font-size: 16px; }
+  #print-area h1 { font-size: 1.4rem; margin: 0 0 18px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  #print-area table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  #print-area th, #print-area td, #print-area tr { background: none !important; position: static; }
+  #print-area th { color: #000; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em;
+                   border-bottom: 1px solid #000; padding: 4px 8px; }
+  #print-area td { padding: 7px 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+  #print-area tr { break-inside: avoid; }
+  #print-area .num { color: #888; width: 28px; text-align: right; padding-right: 12px; }
+  #print-area .ttl.indent { padding-left: 24px; }
+  #print-area .alt-line { font-size: 0.78rem; font-style: italic; color: #666; margin-top: 2px; }
+  #print-area .key { font-weight: 700; width: 36px; }
+  #print-area .ext { width: 140px; }
+  #print-area .badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.78rem;
+                       margin-right: 4px; border: 1px solid #bbb; font-family: sans-serif; white-space: nowrap; }
+  #print-area .harp { border-color: #6a0; color: #3a0; }
+  #print-area .section-row td { border-bottom: 1px solid #000; padding-top: 16px; font-weight: 700;
+                                text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
+  #print-area .section-row:first-child td { padding-top: 7px; }
+  @page { margin: 12mm 14mm; }
+}
+
 /* Grain overlay */
 .grain {
   position: fixed; inset: 0; pointer-events: none; z-index: 9000;
@@ -4435,57 +4462,26 @@ function doPrint() {
     rows = songs.map((s, i) => songRow(s, i + 1, false)).join('');
   }
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>${title}</title>
-<style>
-  body { font-family: Georgia, serif; margin: 36px 48px; color: #000; }
-  h1 { font-size: 1.4rem; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 6px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-  th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em;
-       border-bottom: 1px solid #000; padding: 4px 8px; }
-  td { padding: 7px 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
-  .num { color: #888; width: 28px; text-align: right; padding-right: 12px; }
-  .ttl.indent { padding-left: 24px; }
-  .alt-line { font-size: 0.78rem; font-style: italic; color: #666; margin-top: 2px; }
-  .key { font-weight: 700; width: 36px; }
-  .ext { width: 140px; }
-  .badge { display: inline-block; padding: 1px 7px; border-radius: 4px;
-           font-size: 0.78rem; margin-right: 4px; border: 1px solid #bbb; font-family: sans-serif; }
-  .harp { border-color: #6a0; color: #3a0; }
-  .section-row td { border-bottom: 1px solid #000; padding-top: 16px;
-                     font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
-  .section-row:first-child td { padding-top: 7px; }
-  /* Standalone "Add to Home Screen" iPad Safari has no browser chrome at all -- no tabs, no
-     back button -- so this window would otherwise be a dead end once the print sheet (or its
-     Cancel) closes. window.close() only works on a window script opened, which this is, so a
-     plain in-page button is enough to get back. Hidden from the actual printed output. */
-  .no-print { margin-bottom: 18px; }
-  .no-print button { font: inherit; font-family: sans-serif; font-size: 0.85rem; padding: 6px 14px;
-                      border: 1px solid #888; border-radius: 5px; background: #fff; color: #000; }
-  @media print { .no-print { display: none; } }
-</style></head><body>
-<div class="no-print"><button onclick="window.close()">← Close</button></div>
-<h1>${title}</h1>
+  // Printed in place, in this same page: the sheet goes into #print-area and an @media print
+  // rule hides everything else. window.open() + print() on the new window never showed the
+  // iOS print menu on the iPad (the home-screen web app has no second window to print from, and
+  // the delayed print() lost the tap that started it), so window.print() is called right here,
+  // still inside the Print button's tap. No second window means no "← Close" button is needed.
+  const area = document.getElementById('print-area');
+  area.innerHTML = `<h1>${esc(title)}</h1>
 <table>
   <thead><tr>
     <th class="num">#</th><th>Title</th><th>Key</th>
     ${extraCol ? '<th></th>' : ''}
   </tr></thead>
   <tbody>${rows}</tbody>
-</table>
-</body></html>`;
-
-  // window.open() + document.write()/close(), same mechanism the app always used for print --
-  // an iframe (tried instead, to solve the "no way back" problem below) turned out to be an
-  // unreliable place to call print() from: WebKit doesn't consistently scope printing to an
-  // iframe's own content, so the print preview could come out blank rather than showing the
-  // sheet. A real new window, printed the ordinary way, doesn't have that problem -- so the
-  // "no way back" issue is solved with an explicit in-page "← Close" button (window.close())
-  // instead, which works because the window was opened by this script.
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => w.print(), 250);
+</table>`;
+  const prevTitle = document.title;
+  document.title = title;  // suggested file name when saving as PDF
+  // The sheet stays in #print-area (invisible on screen) until the next print, rather than
+  // being cleared on afterprint -- if iOS fired that before taking its snapshot, it'd print blank.
+  window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
+  window.print();
 }
 
 // Click-outside-to-close for every overlay *except* the full-page CRD editor: that one's a
@@ -5712,5 +5708,6 @@ function liveInit() {
 boot();
 </script>
 
+<div id="print-area"></div>
 </body>
 </html>
