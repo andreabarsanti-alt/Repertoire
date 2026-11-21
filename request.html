@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Request a song</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  Audience song-request page (see CLAUDE.md, "Audience requests"). Opened from the QR code shown
+  in the app's Live tab: request.html?db=<firebase database host>&g=<profile id>.
+  Reads only the public gigs/<g>/info and gigs/<g>/songs nodes (titles and tags — no chords or
+  anything else from the repertoire) and can only create requests; it never sees other people's
+  requests, names or messages. Plain REST, no SDK; polls instead of streaming so a full room
+  doesn't use up the free plan's simultaneous-connection limit.
+-->
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #080b12; --surface: #0d1118; --surface2: #141b26; --border: #1e2a3a;
+  --accent: #3d9e8c; --accent2: #c45a5a; --text: #d8e3f0; --text-dim: #6a7f9a;
+  --success: #3aaa7e;
+  --fd: 'Inter', system-ui, -apple-system, sans-serif;
+}
+body {
+  background: var(--bg); color: var(--text); font-family: var(--fd);
+  min-height: 100dvh; font-size: 16px; -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  background-image: radial-gradient(ellipse at 50% -10%, rgba(61,158,140,.10) 0%, transparent 55%);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }
+header { text-align: center; margin-bottom: 16px; }
+header h1 { font-size: 1.6rem; font-weight: 700; color: var(--accent); letter-spacing: -.02em; }
+header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
+.banner {
+  text-align: center; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.9rem;
+  background: rgba(196,90,90,.14); border: 1px solid rgba(196,90,90,.4); color: #ffb0b0;
+}
+.hidden { display: none !important; }
+.board { margin-bottom: 14px; }
+.board h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin: 10px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 0.8rem; padding: 5px 11px; border-radius: 999px;
+  background: var(--surface2); border: 1px solid var(--border);
+}
+.chip.played { color: #8fe0bf; border-color: rgba(58,170,126,.4); background: rgba(58,170,126,.1); }
+.chip.req b { color: #ff9a9a; font-weight: 600; margin-left: 3px; }
+.hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
+#bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
+.bubble {
+  position: absolute; border-radius: 50%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 10px;
+  cursor: pointer; overflow: hidden; user-select: none; -webkit-user-select: none;
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 30px rgba(0,0,0,.5);
+  animation: floatBubble var(--bdur, 4s) ease-in-out infinite;
+  transition: transform .2s;
+}
+.bubble::before {
+  content: ''; position: absolute; top: 7%; left: 10%; width: 58%; height: 44%;
+  background: radial-gradient(ellipse, rgba(255,255,255,.2) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+.bubble:active { transform: scale(1.08) !important; }
+@keyframes floatBubble { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.bubble-name { font-weight: 700; font-size: 0.82rem; line-height: 1.2; max-width: 90%; text-shadow: 0 1px 6px rgba(0,0,0,.6); position: relative; }
+.bubble-count { font-size: 0.68rem; opacity: .75; margin-top: 2px; position: relative; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 0.95rem; font-weight: 600; min-height: 46px;
+}
+.btn-primary { background: var(--accent); color: #f0fffb; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn:disabled { opacity: .4; }
+.btn-wide { width: 100%; }
+.center-msg { text-align: center; padding: 70px 16px; color: var(--text-dim); }
+.center-msg .big { font-size: 2.6rem; margin-bottom: 12px; }
+.center-msg h2 { color: var(--text); font-size: 1.15rem; margin-bottom: 6px; }
+footer { text-align: center; font-size: 0.7rem; color: var(--text-dim); margin-top: 26px; opacity: .7; }
+
+/* Bottom sheets */
+.sheet-bg {
+  position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.7);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  background: var(--surface); width: 100%; max-width: 560px; max-height: 85dvh; overflow-y: auto;
+  border-radius: 18px 18px 0 0; border: 1px solid var(--border); border-bottom: none;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  animation: up .2s ease-out;
+}
+@keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.sheet-head h2 { font-size: 1.1rem; color: var(--accent); overflow-wrap: anywhere; }
+.x { background: none; border: none; color: var(--text-dim); font-size: 1.6rem; line-height: 1; padding: 4px 10px; cursor: pointer; }
+.song {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 13px 12px; margin-bottom: 6px; border-radius: 10px; cursor: pointer;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text); font: inherit;
+}
+.song-title { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.song.played .song-title { opacity: .5; }
+.tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.played { color: #8fe0bf; background: rgba(58,170,126,.12); }
+.tag.req { color: #ff9a9a; background: rgba(196,90,90,.15); }
+.tag.mine { color: var(--accent); background: rgba(61,158,140,.15); }
+.fg { margin-bottom: 12px; }
+.fg label { display: block; font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+.fi {
+  width: 100%; padding: 12px 13px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font: inherit; font-size: 16px; /* 16px: no iOS zoom on focus */
+}
+.fi:focus { outline: none; border-color: var(--accent); }
+textarea.fi { resize: vertical; min-height: 70px; }
+.form-err { color: #ff9a9a; font-size: 0.85rem; min-height: 1.2em; margin-bottom: 8px; }
+.thanks { text-align: center; padding: 16px 4px 6px; }
+.thanks .big { font-size: 3rem; margin-bottom: 8px; }
+.thanks h2 { color: var(--accent); margin-bottom: 6px; }
+.thanks p { color: var(--text-dim); margin-bottom: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Request a song</h1>
+    <p id="subtitle">Tap a bubble, pick a song, send it to the band</p>
+  </header>
+
+  <div id="state-msg" class="center-msg"><div class="big">🎵</div><h2>Loading…</h2></div>
+
+  <div id="main" class="hidden">
+    <div id="closed" class="banner hidden">Requests are closed right now — you can still look around</div>
+    <div class="board" id="board"></div>
+    <div id="bubbles"></div>
+    <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Something else? Ask for any song</button>
+  </div>
+  <footer>Song requests · no promises, but we'll do our best</footer>
+</div>
+
+<div class="sheet-bg hidden" id="list-sheet" onclick="if(event.target===this)closeSheet('list-sheet')">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="list-title"></h2><button class="x" onclick="closeSheet('list-sheet')" aria-label="Close">×</button></div>
+    <div id="list-songs"></div>
+  </div>
+</div>
+
+<div class="sheet-bg hidden" id="form-sheet" onclick="if(event.target===this)closeSheet('form-sheet')">
+  <div class="sheet" id="form-body"></div>
+</div>
+
+<script>
+'use strict';
+
+// ── Where to read/write: ?db=<host>&g=<gig> ──
+const params = new URLSearchParams(location.search);
+const GIG = (params.get('g') || '').trim();
+const DB_BASE = (() => {
+  const raw = (params.get('db') || '').trim().replace(/\/+$/, '');
+  // Only a Firebase Realtime Database host (or a local test server) — never an arbitrary site.
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.(firebaseio\.com|firebasedatabase\.app)$/i.test(raw)) return 'https://' + raw;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(raw)) return raw;
+  return null;
+})();
+const POLL_MS = 15000;
+const COOLDOWN_MS = 20000;
+const MINE_KEY = 'rq_mine_' + GIG;
+const LAST_KEY = 'rq_last_' + GIG;
+
+let info = null, songs = [], songsV = null, pollTimer = null, failCount = 0;
+
+const PALETTE = [
+  ['rgba(61,158,140,0.82)','rgba(34,108,96,0.72)'],  ['rgba(70,130,180,0.82)','rgba(38,88,140,0.72)'],
+  ['rgba(130,80,168,0.82)','rgba(88,46,128,0.72)'],  ['rgba(48,158,108,0.82)','rgba(26,108,70,0.72)'],
+  ['rgba(80,148,190,0.82)','rgba(44,100,148,0.72)'], ['rgba(168,80,108,0.82)','rgba(120,40,70,0.72)'],
+  ['rgba(58,140,160,0.82)','rgba(30,96,116,0.72)'],  ['rgba(110,80,176,0.82)','rgba(68,42,136,0.72)'],
+  ['rgba(46,168,128,0.82)','rgba(24,116,84,0.72)'],  ['rgba(88,126,176,0.82)','rgba(50,82,138,0.72)'],
+  ['rgba(176,80,90,0.82)','rgba(130,40,52,0.72)'],   ['rgba(60,150,148,0.82)','rgba(32,100,98,0.72)'],
+];
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Same key mapping the app uses for info.played / info.requested.
+function fbKey(id) { return String(id).replace(/[.#$\[\]\/]/g, '_'); }
+function getMine() { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; } }
+function addMine(id) { try { const m = getMine(); if (!m.includes(id)) m.push(id); localStorage.setItem(MINE_KEY, JSON.stringify(m)); } catch {} }
+function lastSent() { try { return +localStorage.getItem(LAST_KEY) || 0; } catch { return 0; } }
+function setLastSent() { try { localStorage.setItem(LAST_KEY, String(Date.now())); } catch {} }
+
+function showState(icon, title, text) {
+  document.getElementById('main').classList.add('hidden');
+  const el = document.getElementById('state-msg');
+  el.classList.remove('hidden');
+  el.innerHTML = `<div class="big">${icon}</div><h2>${esc(title)}</h2>${text ? `<p>${esc(text)}</p>` : ''}`;
+}
+
+async function getJSON(path) {
+  const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/${path}.json`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function poll() {
+  clearTimeout(pollTimer);
+  try {
+    const i = await getJSON('info');
+    failCount = 0;
+    if (!i) {
+      info = null; songs = []; songsV = null;
+      showState('🌙', 'Nothing on right now', 'Requests open when the band is playing — check back then.');
+    } else {
+      if (i.songsV !== songsV || !songs.length) {
+        const list = await getJSON('songs');
+        songs = Array.isArray(list) ? list.filter(Boolean) : Object.values(list || {});
+        songsV = i.songsV;
+      }
+      info = i;
+      render();
+    }
+  } catch {
+    failCount++;
+    if (!info) showState('📡', "Can't reach the request service", 'Check your connection — retrying…');
+  }
+  if (!document.hidden) pollTimer = setTimeout(poll, failCount ? Math.min(60000, POLL_MS * (failCount + 1)) : POLL_MS);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); else clearTimeout(pollTimer); });
+
+function songById(id) { return songs.find(s => s.id === id); }
+function isPlayed(s) { return !!info?.played?.[s.k || fbKey(s.id)]; }
+function reqCount(s) { return +(info?.requested?.[s.k || fbKey(s.id)] || 0); }
+
+function groups() {
+  const g = {};
+  songs.forEach(s => {
+    // The database may hand an array back as an {0:…,1:…} object — accept both.
+    const g0 = Array.isArray(s.g) ? s.g : Object.values(s.g || {});
+    const tags = g0.length ? g0 : ['Other'];
+    tags.forEach(t => (g[t] = g[t] || []).push(s));
+  });
+  return g;
+}
+
+function render() {
+  document.getElementById('state-msg').classList.add('hidden');
+  document.getElementById('main').classList.remove('hidden');
+  document.getElementById('title').textContent = info.title || 'Request a song';
+  document.title = (info.title ? info.title + ' · ' : '') + 'Request a song';
+  const open = info.open === true;
+  document.getElementById('closed').classList.toggle('hidden', open);
+  document.getElementById('other-btn').disabled = !open;
+  document.getElementById('subtitle').textContent = open ? 'Tap a bubble, pick a song, send it to the band' : 'Have a look at what\'s on tonight';
+  renderBoard();
+  renderBubbles();
+  // An open song list refreshes in place with the new played/requested state.
+  if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
+}
+
+function renderBoard() {
+  const played = songs.filter(isPlayed).sort((a, b) => info.played[b.k || fbKey(b.id)] - info.played[a.k || fbKey(a.id)]);
+  const reqd = songs.filter(s => reqCount(s) && !isPlayed(s)).sort((a, b) => reqCount(b) - reqCount(a));
+  document.getElementById('board').innerHTML =
+    (reqd.length ? `<h2>Requested</h2><div class="chips">${reqd.map(s => `<span class="chip req">${esc(s.t)}${reqCount(s) > 1 ? `<b>×${reqCount(s)}</b>` : ''}</span>`).join('')}</div>` : '') +
+    (played.length ? `<h2>Played tonight</h2><div class="chips">${played.map(s => `<span class="chip played">✓ ${esc(s.t)}</span>`).join('')}</div>` : '');
+}
+
+// Circle packing — the same approach as the app's Visualizer (largest first, each new circle at
+// the free spot closest to the centre), then scaled down to fit the phone's width.
+function twoCircleIntersect(x1, y1, r1, x2, y2, r2) {
+  const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy);
+  if (d > r1 + r2 || d < Math.abs(r1 - r2) || d < 1e-9) return [];
+  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
+  const mx = x1 + a * dx / d, my = y1 + a * dy / d;
+  return [{ x: mx + h * dy / d, y: my - h * dx / d }, { x: mx - h * dy / d, y: my + h * dx / d }];
+}
+function packBubbles(items) {
+  if (!items.length) return;
+  items.sort((a, b) => b.r - a.r);
+  items[0].x = 0; items[0].y = 0;
+  const GAP = 6;
+  for (let i = 1; i < items.length; i++) {
+    const c = items[i], placed = items.slice(0, i), cands = [];
+    for (const p of placed) {
+      const d = p.r + c.r + GAP;
+      for (let a = 0; a < 32; a++) { const an = a / 32 * Math.PI * 2; cands.push({ x: p.x + d * Math.cos(an), y: p.y + d * Math.sin(an) }); }
+    }
+    for (let a = 0; a < placed.length; a++) for (let b = a + 1; b < placed.length; b++)
+      cands.push(...twoCircleIntersect(placed[a].x, placed[a].y, placed[a].r + c.r + GAP, placed[b].x, placed[b].y, placed[b].r + c.r + GAP));
+    let best = null, bestD = Infinity;
+    for (const cand of cands) {
+      let ok = true;
+      for (const p of placed) if (Math.hypot(cand.x - p.x, cand.y - p.y) < p.r + c.r + GAP - 0.5) { ok = false; break; }
+      if (ok) { const d = Math.hypot(cand.x, cand.y * 1.15); if (d < bestD) { bestD = d; best = cand; } }
+    }
+    c.x = best ? best.x : i * (c.r * 2 + GAP); c.y = best ? best.y : 0;
+  }
+}
+let lastBubbleSig = '';
+function renderBubbles() {
+  const wrap = document.getElementById('bubbles');
+  const g = groups(), keys = Object.keys(g).sort();
+  const sig = JSON.stringify([keys.map(k => [k, g[k].length]), wrap.clientWidth]);
+  if (sig === lastBubbleSig) return;    // unchanged: don't restart the float animation on every poll
+  lastBubbleSig = sig;
+  if (!keys.length) { wrap.innerHTML = ''; wrap.style.height = ''; return; }
+  const max = Math.max(...keys.map(k => g[k].length));
+  const items = keys.map((key, i) => ({ key, i, count: g[key].length, r: Math.round(42 + (g[key].length / max) * 46) }));
+  packBubbles(items);
+  const PAD = 8;
+  const minX = Math.min(...items.map(c => c.x - c.r)), maxX = Math.max(...items.map(c => c.x + c.r));
+  const minY = Math.min(...items.map(c => c.y - c.r)), maxY = Math.max(...items.map(c => c.y + c.r));
+  const W = wrap.clientWidth || (window.innerWidth - 32);
+  const scale = Math.min(1, (W - 2 * PAD) / (maxX - minX));
+  const offX = PAD + Math.max(0, (W - 2 * PAD - (maxX - minX) * scale) / 2);
+  wrap.style.height = Math.ceil((maxY - minY) * scale + 2 * PAD + 8) + 'px';
+  wrap.innerHTML = items.map(c => {
+    const [c1, c2] = PALETTE[c.i % PALETTE.length];
+    const size = Math.round(c.r * 2 * scale);
+    const left = Math.round(offX + (c.x - c.r - minX) * scale), top = Math.round(PAD + 8 + (c.y - c.r - minY) * scale);
+    const fs = Math.max(0.62, Math.min(0.9, size / 120));
+    return `<div class="bubble" data-key="${esc(c.key)}" onclick="openList(this.dataset.key)"
+      style="width:${size}px;height:${size}px;left:${left}px;top:${top}px;
+             background:radial-gradient(circle at 38% 38%, ${c1}, ${c2});
+             --bdur:${(3.4 + (c.i % 7) * 0.38).toFixed(2)}s;animation-delay:${-((c.i * 0.41) % 4)}s">
+      <span class="bubble-name" style="font-size:${fs}rem">${esc(c.key)}</span>
+      <span class="bubble-count">${c.count} song${c.count !== 1 ? 's' : ''}</span>
+    </div>`;
+  }).join('');
+}
+let _rz;
+window.addEventListener('resize', () => { clearTimeout(_rz); _rz = setTimeout(() => info && renderBubbles(), 150); });
+
+let currentTag = null;
+function openList(tag) {
+  currentTag = tag;
+  renderList(tag);
+  document.getElementById('list-sheet').classList.remove('hidden');
+}
+function renderList(tag) {
+  const list = (groups()[tag] || []).slice().sort((a, b) => a.t.localeCompare(b.t));
+  const mine = getMine();
+  document.getElementById('list-title').textContent = tag;
+  document.getElementById('list-songs').innerHTML = list.map(s => {
+    const tags = [];
+    if (isPlayed(s)) tags.push('<span class="tag played">✓ Played</span>');
+    else if (reqCount(s)) tags.push(`<span class="tag req">Requested${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
+    if (mine.includes(s.id)) tags.push('<span class="tag mine">You asked</span>');
+    return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
+      <span class="song-title">${esc(s.t)}</span>${tags.join('')}
+    </button>`;
+  }).join('') || '<p class="hint">No songs here</p>';
+}
+function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
+
+let formSongId = null;
+function openForm(songId) {
+  if (!info) return;
+  formSongId = songId;
+  closeSheet('list-sheet');   // one sheet at a time
+  const s = songId ? songById(songId) : null;
+  const body = document.getElementById('form-body');
+  if (info.open !== true) {
+    body.innerHTML = `<div class="thanks"><div class="big">🔒</div><h2>Requests are closed</h2><p>The band isn't taking requests right now.</p>
+      <button class="btn btn-secondary btn-wide" onclick="closeSheet('form-sheet')">OK</button></div>`;
+  } else {
+    body.innerHTML = `
+      <div class="sheet-head"><h2>${s ? esc(s.t) : 'Ask for any song'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Close">×</button></div>
+      ${s && isPlayed(s) ? '<p class="hint" style="text-align:left;margin-bottom:10px">Already played tonight — you can still ask for it again.</p>' : ''}
+      ${s ? '' : `<div class="fg"><label>Song (and artist)</label><input class="fi" id="rq-text" maxlength="100" placeholder="e.g. Harvest Moon – Neil Young"></div>`}
+      <div class="fg"><label>Your name (optional)</label><input class="fi" id="rq-name" maxlength="40" autocomplete="given-name"></div>
+      <div class="fg"><label>Message for the band (optional)</label><textarea class="fi" id="rq-msg" maxlength="200" placeholder="A dedication, a birthday…"></textarea></div>
+      <div class="form-err" id="rq-err"></div>
+      <button class="btn btn-primary btn-wide" id="rq-send" onclick="sendRequest()">Send request</button>`;
+  }
+  document.getElementById('form-sheet').classList.remove('hidden');
+  setTimeout(() => document.getElementById(s ? 'rq-name' : 'rq-text')?.focus(), 50);
+}
+
+async function sendRequest() {
+  const err = document.getElementById('rq-err');
+  const btn = document.getElementById('rq-send');
+  const text = formSongId ? '' : (document.getElementById('rq-text').value || '').trim().slice(0, 100);
+  const name = (document.getElementById('rq-name').value || '').trim().slice(0, 40);
+  const msg  = (document.getElementById('rq-msg').value || '').trim().slice(0, 200);
+  if (!formSongId && !text) { err.textContent = 'Type the song you\'d like to hear'; return; }
+  const wait = COOLDOWN_MS - (Date.now() - lastSent());
+  if (wait > 0) { err.textContent = `Just a moment — you can send another in ${Math.ceil(wait / 1000)} s`; return; }
+  const body = { at: { '.sv': 'timestamp' } };
+  if (formSongId) body.songId = formSongId; else body.text = text;
+  if (name) body.name = name;
+  if (msg) body.msg = msg;
+  btn.disabled = true; err.textContent = '';
+  try {
+    const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/requests.json`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (r.status === 401 || r.status === 403) { err.textContent = 'Requests are closed right now'; btn.disabled = false; poll(); return; }
+    if (!r.ok) throw new Error();
+  } catch {
+    err.textContent = "Couldn't send — check your connection and try again";
+    btn.disabled = false; return;
+  }
+  setLastSent();
+  if (formSongId) {
+    addMine(formSongId);
+    // Show it on the Requested board straight away; the next poll brings the real count.
+    const s = songById(formSongId);
+    if (s && info) { info.requested = info.requested || {}; const k = s.k || fbKey(s.id); info.requested[k] = (+info.requested[k] || 0) + 1; render(); }
+  }
+  document.getElementById('form-body').innerHTML = `<div class="thanks"><div class="big">🙌</div><h2>Request sent!</h2>
+    <p>Thanks — the band can see it now. No promises, but we'll do our best.</p>
+    <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">Back to the songs</button></div>`;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeSheet('form-sheet'); closeSheet('list-sheet'); }
+});
+
+if (!DB_BASE || !GIG) showState('🤔', 'This link is incomplete', 'Scan the QR code again, or ask the band for the link.');
+else poll();
+</script>
+</body>
+</html>

@@ -909,6 +909,79 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 select.inline-fi { cursor: pointer; }
 select.fi { cursor: pointer; }
 
+
+/* ══════════════════════════════════════════
+   LIVE TAB — audience song requests
+══════════════════════════════════════════ */
+.tab-badge {
+  display: inline-block; min-width: 18px; padding: 1px 6px; margin-left: 6px;
+  border-radius: 999px; background: var(--accent2); color: #fff;
+  font-size: 0.68rem; font-weight: 700; line-height: 1.4; text-align: center;
+}
+.tab-badge.hidden { display: none; }
+#tab-live { padding: 18px; min-height: calc(100dvh - var(--hdr-h)); }
+.live-card {
+  max-width: 560px; margin: 10px auto; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px; padding: 22px;
+}
+.live-card h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 10px; }
+.live-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 14px; }
+.live-card a { color: var(--accent); }
+.live-card .modal-footer { justify-content: space-between; align-items: center; }
+.live-err { color: var(--danger); font-size: 0.8rem; min-height: 1.2em; }
+.live-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.live-bar .profile-select { max-width: 260px; }
+.live-bar-right { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.live-status { font-size: 0.75rem; font-family: var(--fm); color: var(--text-dim); white-space: nowrap; }
+.live-status.live { color: var(--success); }
+.live-status.connecting { color: #e0c060; }
+.live-status.error { color: var(--danger); }
+.live-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.live-col h3 {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.live-col h3 .btn { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.live-req {
+  display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 8px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+}
+.live-req.fresh { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(61,158,140,.35); }
+.live-req.done { opacity: .5; }
+.live-req-main { flex: 1; min-width: 0; }
+.live-req-title { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.live-req-title a { color: var(--text); }
+.live-req-title .live-free { color: #e0c060; }
+.live-req-from { font-size: 0.8rem; color: var(--text); opacity: .8; margin-top: 3px; overflow-wrap: anywhere; }
+.live-req-time { font-size: 0.68rem; color: var(--text-dim); font-family: var(--fm); margin-top: 3px; }
+.live-req-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+.live-req-state { font-size: 0.72rem; color: var(--text-dim); }
+.live-song {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  border-bottom: 1px solid var(--border); font-size: 0.85rem;
+}
+.live-song-num { width: 22px; text-align: right; color: var(--text-dim); font-family: var(--fm); font-size: 0.72rem; flex-shrink: 0; }
+.live-song-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.live-song-title a { color: var(--text); }
+.live-song.played .live-song-title { opacity: .45; text-decoration: line-through; }
+.live-count { font-family: var(--fm); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: rgba(196,90,90,.2); color: #ff9a9a; border: 1px solid rgba(196,90,90,.45); }
+.live-played-btn { min-width: 36px; }
+.live-played-btn.on { background: var(--success); color: #fff; border-color: var(--success); }
+.live-qr-card { margin-top: 16px; padding: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+.live-qr-svg { width: 180px; height: 180px; margin: 0 auto 10px; background: #fff; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.75rem; }
+.live-qr-svg svg { width: 100%; height: 100%; display: block; }
+.live-qr-url { display: block; font-family: var(--fm); font-size: 0.68rem; color: var(--accent); overflow-wrap: anywhere; margin-bottom: 10px; }
+.live-qr-card .btn { margin: 2px; }
+#live-qr-big { z-index: 1450; flex-direction: column; gap: 16px; cursor: pointer; }
+#live-qr-big .live-qr-svg { width: min(80vw, 70dvh); height: min(80vw, 70dvh); padding: 14px; }
+#live-qr-big .live-qr-caption { color: #fff; font-size: 1.2rem; font-weight: 600; text-align: center; }
+@media (max-width: 760px) {
+  .live-cols { grid-template-columns: 1fr; }
+  .live-bar-right { margin-left: 0; }
+}
 </style>
 </head>
 <body>
@@ -923,6 +996,7 @@ select.fi { cursor: pointer; }
     <button class="tab-btn active" data-tab="viz">Visualizer</button>
     <button class="tab-btn" data-tab="songs">Songs</button>
     <button class="tab-btn" data-tab="sets">Setlists</button>
+    <button class="tab-btn" data-tab="live" title="Audience song requests">Live<span class="tab-badge hidden" id="live-badge"></span></button>
   </nav>
   <div class="hdr-actions">
     <div class="hdr-more" id="hdr-more">
@@ -1010,6 +1084,16 @@ select.fi { cursor: pointer; }
   <div class="set-detail" id="set-detail">
     <div class="empty"><div class="empty-icon">♪</div>Select or create a setlist</div>
   </div>
+</div>
+
+<!-- ══ LIVE (audience song requests) ══ -->
+<div id="tab-live" class="tab">
+  <div id="live-root"></div>
+</div>
+<div class="overlay hidden" id="live-qr-big" onclick="closeModal('live-qr-big')">
+  <div class="live-qr-caption">Scan to request a song</div>
+  <div class="live-qr-svg" id="live-qr-big-svg"></div>
+  <div class="live-qr-caption" style="font-size:0.8rem;opacity:.6">Tap to close</div>
 </div>
 
 <!-- ══ SONG MODAL ══ -->
@@ -1507,6 +1591,7 @@ async function boot() {
   renderProfileSelect();
   renderAll();
   loadLiveRec(); renderLiveRec();   // a live started before the app was closed carries on
+  liveInit();                       // Live tab: audience requests (reconnects if a setlist is published)
   syncHeaderHeight();
   // Inter/DM Mono load async from Google Fonts (see <head>) and can nudge the header's
   // wrapped height slightly once they swap in — resync once that settles.
@@ -1763,9 +1848,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'live') renderLive();
 }));
 
-function renderAll() { renderBubbles(); renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); }
+function renderAll() { renderBubbles(); renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); renderLiveLists(); }
 
 // ─────────────────────────────────────────
 // BUBBLE COLOURS — warm, semi-transparent for glass
@@ -2656,6 +2742,7 @@ function openCrdReader(id) {
   document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
   liveRecNote(id);                                 // "Start a live" recording, if one is running
+  liveAutoPlayed(id);                              // ...and marks it played on the audience page
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
@@ -4835,6 +4922,567 @@ document.addEventListener('focusout', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && tagAcEl.style.display !== 'none') { hideTagAc(); e.stopPropagation(); }
 });
+
+// ─────────────────────────────────────────
+// LIVE TAB — audience song requests
+// ─────────────────────────────────────────
+// The audience opens request.html (a separate small page on main, reached through a QR code) and
+// sees one published setlist as tag bubbles; requests land here in real time. GitHub Pages is
+// static and the audience must never get the GitHub token, so this goes through a free Firebase
+// Realtime Database instead, spoken to over its plain REST API (no SDK, no build step):
+//   gigs/<profile>/info      public  { title, open, songsV, updatedAt, played:{key:ms}, requested:{key:n} }
+//   gigs/<profile>/songs     public  [ { id, k, t, g:[tags] } ] — title and tags only, never chords/key/capo
+//   gigs/<profile>/requests  owner-only read; anyone may create one while info.open is true
+// Only this app (signed in with Andrea's Firebase email/password account) writes info/songs or
+// reads requests; the database rules (FIREBASE_SETUP.md) enforce that. The gig id is the profile
+// id, so each profile's audience link/QR code never changes and can be printed once.
+const FB_CFG_KEY   = 'rep_firebase';                 // { apiKey, dbUrl, email, refreshToken } — device-local, shared by all profiles
+const LIVE_SET_KEY = 'rep_live_set_' + PROFILE;      // setlist chosen in the Live tab
+const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
+const LIVE_GIG     = PROFILE;
+const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
+const QR_LIB_URLS  = ['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
+                      'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'];
+
+let fbIdToken = null, fbIdExp = 0;
+let liveReqs = {};              // request id -> { songId?, text?, name?, msg?, at, status? }
+let liveInfo = null;            // last known info node (what the audience sees)
+let liveES = null, liveESState = 'off', liveTokenTimer = null, liveRetryTimer = null;
+let liveSeen = null;            // request ids already seen; null until the first snapshot (no alert for old ones)
+let liveFresh = new Set();      // highlighted until handled
+let liveShowDone = false, liveEditingSetup = false;
+let liveBoardTimer = null, liveBoardLast = null;
+let liveAudio = null;
+
+function getFbConfig() { try { return JSON.parse(localStorage.getItem(FB_CFG_KEY) || 'null'); } catch { return null; } }
+function saveFbConfig(c) { if (c) localStorage.setItem(FB_CFG_KEY, JSON.stringify(c)); else localStorage.removeItem(FB_CFG_KEY); }
+function normDbUrl(u) {
+  u = (u || '').trim().replace(/\/+$/, '');
+  if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u;
+}
+function livePubIds() { try { return JSON.parse(localStorage.getItem(LIVE_PUB_KEY) || 'null'); } catch { return null; } }
+function livePublished() { return Array.isArray(livePubIds()); }
+function setLivePub(ids) { ids ? localStorage.setItem(LIVE_PUB_KEY, JSON.stringify(ids)) : localStorage.removeItem(LIVE_PUB_KEY); }
+function liveSignedIn() { const c = getFbConfig(); return !!(c?.apiKey && c?.dbUrl && c?.refreshToken); }
+// Database keys can't contain . # $ [ ] / — song ids are normally UUIDs, this is just a guard.
+// request.html applies the same mapping.
+function fbKey(id) { return String(id).replace(/[.#$\[\]\/]/g, '_'); }
+
+// ── Firebase Auth (REST) ──
+function fbAuthError(j) {
+  const m = j?.error?.message || '';
+  if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND|INVALID_EMAIL/.test(m)) return 'Wrong email or password';
+  if (/API key not valid|API_KEY_INVALID/i.test(m)) return 'The Web API key is not valid — check it under Firebase settings';
+  if (/OPERATION_NOT_ALLOWED|PASSWORD_LOGIN_DISABLED/.test(m)) return 'Email/Password sign-in is not enabled in Firebase (Authentication → Sign-in method)';
+  if (/TOO_MANY_ATTEMPTS/.test(m)) return 'Too many attempts — try again in a few minutes';
+  return m || 'Sign-in failed';
+}
+async function fbSignIn(email, password) {
+  const cfg = getFbConfig();
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(cfg.apiKey)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(fbAuthError(j));
+  fbIdToken = j.idToken; fbIdExp = Date.now() + (+j.expiresIn || 3600) * 1000;
+  saveFbConfig({ ...cfg, email, refreshToken: j.refreshToken });
+}
+// A fresh ID token (they last an hour), from the saved refresh token. A refused refresh token
+// (password changed, user deleted) signs out; a network failure just throws.
+async function fbToken() {
+  if (fbIdToken && Date.now() < fbIdExp - 60000) return fbIdToken;
+  const cfg = getFbConfig();
+  if (!cfg?.refreshToken) throw new Error('Not signed in');
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(cfg.apiKey)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(cfg.refreshToken),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (r.status === 400) { saveFbConfig({ ...cfg, refreshToken: null }); liveDisconnect(); renderLive(); toast('Live: signed out of Firebase — sign in again'); }
+    throw new Error(fbAuthError(j));
+  }
+  fbIdToken = j.id_token; fbIdExp = Date.now() + (+j.expires_in || 3600) * 1000;
+  if (j.refresh_token && j.refresh_token !== cfg.refreshToken) saveFbConfig({ ...cfg, refreshToken: j.refresh_token });
+  return fbIdToken;
+}
+
+// ── Realtime Database (REST) ── path is relative to gigs/<profile>
+async function fbReq(method, path, body) {
+  const cfg = getFbConfig();
+  const token = await fbToken();
+  const opts = { method, cache: 'no-store' };
+  if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+  const r = await fetch(`${cfg.dbUrl}/gigs/${encodeURIComponent(LIVE_GIG)}/${path}.json?auth=${encodeURIComponent(token)}`, opts);
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((j && j.error) || `${method} ${r.status}`);
+  return j;
+}
+
+// ── Live connection: a server-sent-events stream on requests ──
+async function liveConnect() {
+  liveDisconnect();
+  const cfg = getFbConfig();
+  if (!liveSignedIn() || !livePublished()) { renderLiveStatus(); return; }
+  liveESState = 'connecting'; renderLiveStatus();
+  let token;
+  try { token = await fbToken(); }
+  catch { liveESState = 'error'; renderLiveStatus(); liveRetrySoon(); return; }
+  if (!livePublished()) return;   // unpublished meanwhile
+  const es = new EventSource(`${cfg.dbUrl}/gigs/${encodeURIComponent(LIVE_GIG)}/requests.json?auth=${encodeURIComponent(token)}`);
+  liveES = es;
+  const onData = kind => e => {
+    if (liveES !== es) return;
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m && typeof m.path === 'string') liveApply(kind, m.path, m.data);
+    if (liveESState !== 'live') { liveESState = 'live'; renderLiveStatus(); }
+  };
+  es.addEventListener('put', onData('put'));
+  es.addEventListener('patch', onData('patch'));
+  es.addEventListener('open', () => { if (liveES === es) { liveESState = 'live'; renderLiveStatus(); } });
+  es.addEventListener('auth_revoked', () => { fbIdExp = 0; liveConnect(); });   // token expired: reconnect with a fresh one
+  es.addEventListener('cancel', () => {
+    liveDisconnect(); liveESState = 'error'; renderLiveStatus();
+    toast('Live requests: permission denied — check the Firebase rules', 4500);
+  });
+  es.onerror = () => {
+    if (liveES !== es) return;
+    if (es.readyState === 2) { liveDisconnect(); liveESState = 'error'; liveRetrySoon(); }
+    else liveESState = 'connecting';
+    renderLiveStatus();
+  };
+  // Reconnect with a fresh token well before this one's hour runs out.
+  liveTokenTimer = setTimeout(() => { fbIdExp = 0; liveConnect(); }, 45 * 60 * 1000);
+  liveFetchInfo();
+}
+function liveDisconnect() {
+  clearTimeout(liveTokenTimer); clearTimeout(liveRetryTimer);
+  if (liveES) { const es = liveES; liveES = null; es.close(); }
+  liveESState = 'off';
+}
+function liveRetrySoon() {
+  clearTimeout(liveRetryTimer);
+  liveRetryTimer = setTimeout(liveConnect, 10000);
+}
+window.addEventListener('online', () => { if (liveSignedIn() && livePublished() && liveESState !== 'live') liveConnect(); });
+
+async function liveFetchInfo() {
+  try { liveInfo = await fbReq('GET', 'info'); } catch { return; }
+  if (!liveInfo && livePublished()) {
+    // Unpublished from another device (or the database was wiped): reflect that here.
+    setLivePub(null); liveDisconnect();
+  }
+  renderLive();
+}
+
+function fbSetPath(obj, parts, val) {
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!o[parts[i]] || typeof o[parts[i]] !== 'object') { if (val === null) return; o[parts[i]] = {}; }
+    o = o[parts[i]];
+  }
+  const last = parts[parts.length - 1];
+  if (val === null) delete o[last]; else o[last] = val;
+}
+function liveApply(kind, path, data) {
+  const parts = path.split('/').filter(Boolean);
+  if (kind === 'put') {
+    if (!parts.length) liveReqs = (data && typeof data === 'object') ? data : {};
+    else fbSetPath(liveReqs, parts, data);
+  } else {
+    Object.entries(data || {}).forEach(([k, v]) => fbSetPath(liveReqs, [...parts, ...k.split('/').filter(Boolean)], v));
+  }
+  liveOnReqsChanged();
+}
+function liveReqList() {
+  return Object.entries(liveReqs)
+    .filter(([, r]) => r && typeof r === 'object' && (r.songId || r.text))
+    .map(([id, r]) => ({ id, ...r }));
+}
+function liveOnReqsChanged() {
+  const list = liveReqList();
+  if (liveSeen === null) liveSeen = new Set(list.map(r => r.id));
+  else {
+    const fresh = list.filter(r => !liveSeen.has(r.id));
+    fresh.forEach(r => liveSeen.add(r.id));
+    const pending = fresh.filter(r => !r.status);
+    if (pending.length) liveAlert(pending);
+  }
+  list.forEach(r => { if (r.status) liveFresh.delete(r.id); });
+  renderLiveBadge();
+  renderLiveLists();
+  clearTimeout(liveBoardTimer); liveBoardTimer = setTimeout(liveSyncBoard, 800);
+}
+function liveReqLabel(r) {
+  if (r.text) return r.text;
+  return db.songs.find(s => s.id === r.songId)?.title || 'Unknown song';
+}
+function liveAlert(reqs) {
+  reqs.forEach(r => liveFresh.add(r.id));
+  liveBeep();
+  const r = reqs[reqs.length - 1];
+  toast(reqs.length > 1 ? `🙋 ${reqs.length} new song requests`
+                        : `🙋 Request: ${liveReqLabel(r)}${r.name ? ' — ' + r.name : ''}`, 5000);
+}
+// A short two-note chime. iPad Safari only lets audio start after a user gesture, so the context
+// is created/resumed on the first tap anywhere (liveUnlockAudio) and reused for every alert.
+function liveUnlockAudio() {
+  try {
+    liveAudio = liveAudio || new (window.AudioContext || window.webkitAudioContext)();
+    if (liveAudio.state === 'suspended') liveAudio.resume();
+  } catch {}
+}
+document.addEventListener('pointerdown', liveUnlockAudio, { capture: true });
+function liveBeep() {
+  try {
+    if (!liveAudio) return;
+    const ctx = liveAudio, t0 = ctx.currentTime;
+    [880, 1318.5].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + i * 0.16;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + 0.4);
+    });
+  } catch {}
+}
+
+// The audience page's "Requested" board: pending request counts per song, written to info.
+async function liveSyncBoard() {
+  if (!livePublished() || !liveSignedIn()) return;
+  const counts = {};
+  liveReqList().forEach(r => { if (r.songId && !r.status) counts[fbKey(r.songId)] = (counts[fbKey(r.songId)] || 0) + 1; });
+  const s = JSON.stringify(counts);
+  if (s === liveBoardLast) return;
+  try {
+    await fbReq('PUT', 'info/requested', Object.keys(counts).length ? counts : null);
+    liveBoardLast = s;
+    if (liveInfo) liveInfo.requested = counts;
+  } catch {}
+}
+
+// ── Actions ──
+function liveSetId() {
+  const id = localStorage.getItem(LIVE_SET_KEY);
+  return db.setlists.some(s => s.id === id) ? id : null;
+}
+function liveChooseSet(id) { localStorage.setItem(LIVE_SET_KEY, id); renderLive(); }
+function liveSetSongs(sl) {
+  const seen = new Set(), out = [];
+  resolvePlayableSongs(sl).forEach(s => { if (!seen.has(s.id)) { seen.add(s.id); out.push(s); } });
+  return out;
+}
+
+function liveSaveSetup() {
+  const apiKey = document.getElementById('live-api-key').value.trim();
+  const dbUrl  = normDbUrl(document.getElementById('live-db-url').value);
+  const err = document.getElementById('live-err');
+  if (!apiKey || !dbUrl) { err.textContent = 'Both fields are needed'; return; }
+  if (!/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.(firebaseio\.com|firebasedatabase\.app)$/i.test(dbUrl) &&
+      !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(dbUrl)) {
+    err.textContent = 'The Database URL should look like https://…firebasedatabase.app or https://…firebaseio.com';
+    return;
+  }
+  const old = getFbConfig() || {};
+  const same = old.apiKey === apiKey && old.dbUrl === dbUrl;
+  saveFbConfig({ apiKey, dbUrl, email: old.email || '', refreshToken: same ? old.refreshToken : null });
+  if (!same) { fbIdToken = null; liveDisconnect(); }
+  liveEditingSetup = false;
+  renderLive();
+}
+async function liveDoSignIn() {
+  const email = document.getElementById('live-email').value.trim();
+  const pw    = document.getElementById('live-password').value;
+  const err   = document.getElementById('live-err');
+  if (!email || !pw) { err.textContent = 'Enter your email and password'; return; }
+  err.textContent = 'Signing in…';
+  try { await fbSignIn(email, pw); }
+  catch (e) { err.textContent = e.message; return; }
+  toast('Signed in to Firebase');
+  renderLive();
+  if (livePublished()) liveConnect(); else liveFetchInfo();
+}
+function liveSignOut() {
+  if (!confirm('Sign out of Firebase on this device? The audience page stays as it is; you will not get requests here until you sign in again.')) return;
+  const cfg = getFbConfig();
+  saveFbConfig({ ...cfg, refreshToken: null });
+  fbIdToken = null; liveDisconnect(); renderLive();
+}
+
+async function livePublish() {
+  const sl = db.setlists.find(s => s.id === liveSetId());
+  if (!sl) { toast('Pick a setlist first'); return; }
+  const songs = liveSetSongs(sl);
+  if (!songs.length) { toast('That setlist has no songs'); return; }
+  const wasPub = livePublished();
+  const payload = songs.map(s => ({
+    id: s.id, k: fbKey(s.id), t: s.title || '',
+    g: (s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+  }));
+  const prof = getProfiles().find(p => p.id === PROFILE);
+  try {
+    await fbReq('PUT', 'songs', payload);
+    const patch = { title: prof?.name || PROFILE, songsV: Date.now(), updatedAt: Date.now() };
+    if (!wasPub || !liveInfo) patch.open = true;
+    await fbReq('PATCH', 'info', patch);
+  } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
+  setLivePub(songs.map(s => s.id));
+  toast(wasPub ? 'Audience page updated' : `Published "${sl.name}" — requests are open`);
+  if (!wasPub || liveESState !== 'live') liveConnect(); else liveFetchInfo();
+}
+async function liveUnpublish() {
+  if (!confirm('Take the setlist off the audience page? It will say nothing is on right now. Requests already sent stay here until you clear them.')) return;
+  try { await fbReq('DELETE', 'info'); await fbReq('DELETE', 'songs'); }
+  catch (e) { toast('Unpublish failed: ' + e.message, 4500); return; }
+  setLivePub(null); liveInfo = null; liveBoardLast = null; liveDisconnect();
+  renderLive(); toast('Audience page cleared');
+}
+async function liveSetOpen(open) {
+  try { await fbReq('PATCH', 'info', { open, updatedAt: Date.now() }); }
+  catch (e) { toast('Failed: ' + e.message); renderLive(); return; }
+  if (liveInfo) liveInfo.open = open;
+  toast(open ? 'Requests open' : 'Requests closed');
+}
+async function liveClearRequests() {
+  if (!confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested boards are emptied too.')) return;
+  try {
+    await fbReq('DELETE', 'requests');
+    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null });
+  } catch (e) { toast('Clear failed: ' + e.message, 4500); return; }
+  liveReqs = {}; liveSeen = new Set(); liveFresh.clear(); liveBoardLast = '{}';
+  if (liveInfo) { delete liveInfo.played; delete liveInfo.requested; }
+  renderLiveBadge(); renderLive(); toast('Requests cleared');
+}
+
+// Marks a song played (or not) on the audience board; marking it played also settles every
+// pending request for it.
+async function liveSetPlayed(songId, on) {
+  const k = fbKey(songId);
+  await fbReq('PATCH', 'info/played', { [k]: on ? Date.now() : null });
+  if (liveInfo) {
+    liveInfo.played = liveInfo.played || {};
+    if (on) liveInfo.played[k] = Date.now(); else delete liveInfo.played[k];
+  }
+  if (on) {
+    const pend = liveReqList().filter(r => r.songId === songId && !r.status);
+    if (pend.length) await fbReq('PATCH', 'requests', Object.fromEntries(pend.map(r => [`${r.id}/status`, 'played'])));
+  }
+  renderLiveLists();
+}
+async function liveToggleSongPlayed(songId) {
+  const on = !liveInfo?.played?.[fbKey(songId)];
+  try { await liveSetPlayed(songId, on); } catch (e) { toast('Failed: ' + e.message); }
+}
+async function liveMarkReq(id, status) {
+  const r = liveReqs[id];
+  if (!r) return;
+  liveFresh.delete(id);
+  try {
+    if (status === 'played' && r.songId) await liveSetPlayed(r.songId, true);
+    else {
+      await fbReq('PATCH', `requests/${encodeURIComponent(id)}`, { status: status || null });
+      if (!status && r.status === 'played' && r.songId && liveInfo?.played?.[fbKey(r.songId)]) await liveSetPlayed(r.songId, false);
+    }
+  } catch (e) { toast('Failed: ' + e.message); }
+}
+// "Start a live" tie-in (openCrdReader): opening a published song during a live marks it played.
+function liveAutoPlayed(id) {
+  if (!liveRec || !liveSignedIn()) return;
+  const ids = livePubIds();
+  if (!ids || !ids.includes(id) || liveInfo?.played?.[fbKey(id)]) return;
+  liveSetPlayed(id, true).catch(() => {});
+}
+
+// ── Audience link / QR ──
+function liveAudienceUrl() {
+  const cfg = getFbConfig();
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  const dbParam = cfg.dbUrl.replace(/^https:\/\//i, '');
+  return `${base}request.html?db=${encodeURIComponent(dbParam)}&g=${encodeURIComponent(LIVE_GIG)}`;
+}
+let _qrLib = null;
+function loadQrLib() {
+  if (window.qrcode) return Promise.resolve();
+  if (_qrLib) return _qrLib;
+  _qrLib = new Promise((resolve, reject) => {
+    const tryUrl = i => {
+      if (i >= QR_LIB_URLS.length) { _qrLib = null; reject(new Error('QR library unavailable')); return; }
+      const sc = document.createElement('script');
+      sc.src = QR_LIB_URLS[i];
+      sc.onload = () => window.qrcode ? resolve() : tryUrl(i + 1);
+      sc.onerror = () => { sc.remove(); tryUrl(i + 1); };
+      document.head.appendChild(sc);
+    };
+    tryUrl(0);
+  });
+  return _qrLib;
+}
+function qrSvg(text) {
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  const n = q.getModuleCount(), m = 2;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+function liveFillQr(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const url = liveAudienceUrl();
+  loadQrLib().then(() => { el.innerHTML = qrSvg(url); })
+             .catch(() => { el.textContent = 'QR code needs an internet connection — share the link instead'; });
+}
+function liveShowBigQr() { openModal('live-qr-big'); liveFillQr('live-qr-big-svg'); }
+function liveCopyLink() {
+  const url = liveAudienceUrl();
+  (navigator.clipboard?.writeText(url) || Promise.reject()).then(() => toast('Link copied'), () => prompt('Audience link:', url));
+}
+
+// ── Rendering ──
+function renderLiveBadge() {
+  const b = document.getElementById('live-badge');
+  if (!b) return;
+  const n = liveReqList().filter(r => !r.status).length;
+  b.textContent = n; b.classList.toggle('hidden', !n);
+}
+function renderLiveStatus() {
+  const el = document.getElementById('live-status');
+  if (!el) return;
+  const map = { live: '● Live', connecting: '● Connecting…', error: '● Offline — retrying', off: livePublished() ? '● Not connected' : '○ Not published' };
+  el.className = 'live-status ' + liveESState;
+  el.textContent = map[liveESState] || '';
+}
+function renderLive() {
+  const el = document.getElementById('live-root');
+  if (!el) return;
+  const cfg = getFbConfig();
+  if (!cfg?.apiKey || !cfg?.dbUrl || liveEditingSetup) {
+    el.innerHTML = `<div class="live-card">
+      <h2>Audience requests</h2>
+      <p>Show one setlist to your audience on their phones, as tag bubbles (they scan a QR code — no app or account needed), and get their song requests here, live. It needs a free Firebase project: a one-time setup of about 15 minutes, explained step by step in the <a href="${FB_SETUP_URL}" target="_blank" rel="noopener">setup guide</a>. Then paste the two values it gives you here.</p>
+      <div class="fg"><label>Web API key</label><input class="fi" id="live-api-key" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(cfg?.apiKey || '')}" placeholder="AIza…"></div>
+      <div class="fg"><label>Database URL</label><input class="fi" id="live-db-url" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(cfg?.dbUrl || '')}" placeholder="https://your-project-default-rtdb.europe-west1.firebasedatabase.app"></div>
+      <div class="live-err" id="live-err"></div>
+      <div class="modal-footer">
+        <span>${liveEditingSetup ? `<button class="btn btn-secondary" onclick="liveEditingSetup=false;renderLive()">Cancel</button>` : ''}</span>
+        <button class="btn btn-primary" onclick="liveSaveSetup()">Save</button>
+      </div>
+    </div>`;
+    return;
+  }
+  if (!cfg.refreshToken) {
+    el.innerHTML = `<div class="live-card">
+      <h2>Sign in to Firebase</h2>
+      <p>Use the email and password of the user you added in Firebase (Authentication → Users). You stay signed in on this device.</p>
+      <div class="fg"><label>Email</label><input class="fi" id="live-email" type="email" autocomplete="username" autocapitalize="off" value="${esc(cfg.email || '')}"></div>
+      <div class="fg"><label>Password</label><input class="fi" id="live-password" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')liveDoSignIn()"></div>
+      <div class="live-err" id="live-err"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" onclick="liveEditingSetup=true;renderLive()">Firebase settings</button>
+        <button class="btn btn-primary" onclick="liveDoSignIn()">Sign in</button>
+      </div>
+    </div>`;
+    return;
+  }
+  const pub = livePublished();
+  const setId = liveSetId();
+  const sets = [...db.setlists].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const open = liveInfo ? liveInfo.open === true : true;
+  el.innerHTML = `
+    <div class="live-bar">
+      <select class="profile-select" id="live-set-select" onchange="liveChooseSet(this.value)" title="Setlist to show the audience">
+        ${setId ? '' : '<option value="">Choose a setlist…</option>'}
+        ${sets.map(s => `<option value="${esc(s.id)}" ${s.id === setId ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
+      ${pub ? `<label class="tune-toggle"><input type="checkbox" id="live-open-toggle" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>
+               <button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
+      <span class="live-status" id="live-status"></span>
+      <span class="live-bar-right">
+        <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
+        <button class="btn btn-secondary btn-sm" onclick="liveSignOut()">Sign out</button>
+      </span>
+    </div>
+    <div class="live-cols">
+      <section class="live-col">
+        <h3>Requests <span id="live-req-count"></span></h3>
+        <div id="live-reqs"></div>
+      </section>
+      <section class="live-col">
+        <h3>Setlist${pub ? ' — tap ✓ when played' : ''}</h3>
+        <div id="live-songs"></div>
+        ${pub ? `<div class="live-qr-card">
+          <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>
+          <a class="live-qr-url" href="${esc(liveAudienceUrl())}" target="_blank" rel="noopener">${esc(liveAudienceUrl())}</a>
+          <button class="btn btn-secondary btn-sm" onclick="liveShowBigQr()">⤢ Show big</button>
+          <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
+        </div>` : ''}
+      </section>
+    </div>`;
+  renderLiveStatus();
+  renderLiveLists();
+  if (pub) liveFillQr('live-qr-svg');
+}
+function renderLiveLists() {
+  const reqEl = document.getElementById('live-reqs');
+  const songEl = document.getElementById('live-songs');
+  if (!reqEl || !songEl) return;
+  const pub = livePublished();
+  const list = liveReqList();
+  const pending = list.filter(r => !r.status).sort((a, b) => (a.at || 0) - (b.at || 0));
+  const done = list.filter(r => r.status).sort((a, b) => (b.at || 0) - (a.at || 0));
+  const time = ms => ms ? new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  const reqRow = r => {
+    const s = r.songId ? db.songs.find(x => x.id === r.songId) : null;
+    const title = r.text ? `<span class="live-free">✎ ${esc(r.text)}</span>`
+                : s ? songTitleLink(s) : 'Unknown song';
+    const from = [r.name ? '— ' + esc(r.name) : '', r.msg ? '“' + esc(r.msg) + '”' : ''].filter(Boolean).join(' ');
+    const actions = r.status
+      ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
+         <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
+      : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>
+         <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`;
+    return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
+      <div class="live-req-main">
+        <div class="live-req-title">${title}</div>
+        ${from ? `<div class="live-req-from">${from}</div>` : ''}
+        <div class="live-req-time">${time(r.at)}</div>
+      </div>
+      <div class="live-req-actions">${actions}</div>
+    </div>`;
+  };
+  reqEl.innerHTML =
+    (pending.length ? pending.map(reqRow).join('')
+                    : `<div class="empty" style="padding:24px 10px">${pub ? 'No requests waiting' : 'Publish a setlist to start taking requests'}</div>`) +
+    (done.length ? `<button class="btn btn-secondary btn-sm" style="margin:6px 0 10px" onclick="liveShowDone=!liveShowDone;renderLiveLists()">${liveShowDone ? 'Hide' : 'Show'} done (${done.length})</button>` +
+                   (liveShowDone ? done.map(reqRow).join('') : '') : '');
+  const cnt = document.getElementById('live-req-count');
+  if (cnt) cnt.textContent = pending.length ? `· ${pending.length} waiting` : '';
+
+  const sl = db.setlists.find(s => s.id === liveSetId());
+  if (!sl) { songEl.innerHTML = '<div class="empty" style="padding:24px 10px">Choose the setlist to show your audience</div>'; return; }
+  const counts = {};
+  pending.forEach(r => { if (r.songId) counts[r.songId] = (counts[r.songId] || 0) + 1; });
+  const played = liveInfo?.played || {};
+  songEl.innerHTML = liveSetSongs(sl).map((s, i) => {
+    const isPlayed = !!played[fbKey(s.id)];
+    return `<div class="live-song${isPlayed ? ' played' : ''}">
+      <span class="live-song-num">${i + 1}</span>
+      <span class="live-song-title">${songTitleLink(s)}</span>
+      ${counts[s.id] ? `<span class="live-count" title="Pending requests">×${counts[s.id]}</span>` : ''}
+      ${pub ? `<button class="btn btn-secondary btn-sm btn-icon live-played-btn${isPlayed ? ' on' : ''}" onclick="liveToggleSongPlayed('${esc(s.id)}')" title="${isPlayed ? 'Played — tap to undo' : 'Mark played'}">✓</button>` : ''}
+    </div>`;
+  }).join('') || '<div class="empty" style="padding:24px 10px">This setlist has no songs</div>';
+}
+
+function liveInit() {
+  renderLive(); renderLiveBadge();
+  if (liveSignedIn() && livePublished()) liveConnect();
+  else if (liveSignedIn()) liveFetchInfo();
+}
 
 boot();
 </script>

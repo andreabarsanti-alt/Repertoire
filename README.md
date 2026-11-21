@@ -40,6 +40,13 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Sections** — collapsible chapter headings within a setlist (e.g. "Set 1", "Encore"); add songs directly under a section, collapse it to a single row, expand/collapse all with one tap. Adding a section always starts it empty — songs already after your selection stay right where they were, they don't get swallowed into the new section
 - **Play mode** — scroll-snap drum-roll view (like iOS date picker): current song centered and large, others dimmed; auto-advances when returning from Ultimate Guitar
 
+### Live (audience requests)
+- A **Live** tab for taking song requests from the audience at a gig. Pick one setlist (e.g. the big list of everything you might play) and **📣 Publish to audience**. Your audience scans a QR code (shown in the tab; **⤢ Show big** fills the screen, or print it) and gets a phone page, `request.html`, showing that setlist as tag bubbles. They tap a bubble, then a song, add an optional name and message, and send. **Something else?** lets them ask for any song as free text. No app or account is needed on their side
+- Requests pop up in the Live tab in real time, with a chime, a toast and a red count on the tab button. **✓ Played** or **✕ Dismiss** each one; dismissed and played requests fold into a "Show done" list, with **↺** to undo
+- The audience page shows a **Requested** board (song counts) and a **Played tonight** board. Names, messages and free-text requests are only ever shown to you. Tap ✓ next to a song in the Live tab's setlist to mark it played. During a **● Start live**, opening a published song in the chord reader marks it played automatically
+- **Requests open** switch to pause and resume intake, **Unpublish** to take the page down, **Clear requests** before each gig. Each profile's audience link never changes, so a printed QR code keeps working
+- Only the published songs' titles and tags leave the app, never chords, keys or other data, and they go to a free Firebase database, not GitHub. One-time setup (about 15 minutes): see [FIREBASE_SETUP.md](FIREBASE_SETUP.md). Until it's set up, the rest of the app works exactly as before
+
 ### Data
 - **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match
 - **Keyboard Mode** — a header toggle (device-local, not saved with the data) that relabels every "Capo" as "Transpose" throughout the app, for players who don't use a capo. Fret counts over 6 are shown wrapped an octave down as the equivalent negative shift (capo 7 → Transpose -5, capo 11 → Transpose -1) — the underlying saved value is unchanged, only the display
@@ -55,7 +62,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 
 ## Hosting on GitHub Pages
 
-1. Push `index.html` to the `main` branch, and the `repertoire_<profile>.json` data files to a `data` branch (the app reads and writes them there via the GitHub API)
+1. Push `index.html` (and `request.html`, the audience request page) to the `main` branch, and the `repertoire_<profile>.json` data files to a `data` branch (the app reads and writes them there via the GitHub API)
 2. In the repo settings → **Pages** → set source to `main` / `root`
 3. Access at `https://<username>.github.io/<repo>/`
 
