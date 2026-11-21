@@ -1536,17 +1536,41 @@ function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 // ─────────────────────────────────────────
 // REPO SYNC CHECK
 // ─────────────────────────────────────────
+// Canonical form of any value for comparing local data with the repo file: object keys sorted,
+// "empty" values ('' / null / undefined / false / {} / []) dropped so a field that's missing on
+// one side and blank/false on the other doesn't count as a difference.
+function canonVal(v) {
+  if (Array.isArray(v)) { const a = v.map(canonVal); return a.length ? a : undefined; }
+  if (v && typeof v === 'object') {
+    const o = {};
+    Object.keys(v).sort().forEach(k => { const c = canonVal(v[k]); if (c !== undefined) o[k] = c; });
+    return Object.keys(o).length ? o : undefined;
+  }
+  if (v === '' || v === null || v === undefined || v === false) return undefined;
+  return v;
+}
+function canonSong(s) { return JSON.stringify(canonVal(s) || {}); }
+function canonSetlist(sl) {
+  // A repo file saved before the items[] migration still lists songIds — compare it as items.
+  if (!sl.items && Array.isArray(sl.songIds)) {
+    const { songIds, ...rest } = sl;
+    sl = { ...rest, items: songIds.map(id => ({ type: 'song', songId: id })) };
+  }
+  return JSON.stringify(canonVal(sl) || {});
+}
+// Fingerprint of *everything* in db: every song with every field (chord sheet, Try out, Lyrics
+// only, per-song speed, …), every setlist with its items/sections/alternates, tag colours and
+// the half-step tuning flag. Songs/setlists are keyed by id, so array order doesn't matter.
+// (It used to compare only each song's id/title/tags/key/capo/harp/UG link, so edits to
+// anything else — chord sheets, setlists, the newer song fields — never showed the banner.)
 function dbFingerprint(data) {
-  return JSON.stringify(
-    [...data.songs]
-      .sort((a, b) => a.id.localeCompare(b.id))
-      .map(s => ({
-        id: s.id, title: s.title || '',
-        tags: s.tags || '', key: s.key || '',
-        capo: s.capo || '', harp: s.harp || '',
-        ugLink: s.ugLink || ''
-      }))
-  );
+  const byId = (arr, f) => (arr || []).map(x => [x.id || '', f(x)]).sort((p, q) => p[0] < q[0] ? -1 : p[0] > q[0] ? 1 : 0);
+  return JSON.stringify({
+    songs: byId(data.songs, canonSong),
+    setlists: byId(data.setlists, canonSetlist),
+    tagMeta: canonVal(data.tagMeta) || null,
+    tuneUp: !!data.tuneUp,
+  });
 }
 
 async function checkRepoSync() {
@@ -1557,14 +1581,25 @@ async function checkRepoSync() {
     if (!Array.isArray(repoData.songs)) return;
     if (dbFingerprint(db) === dbFingerprint(repoData)) return;
 
-    const localIds = new Set(db.songs.map(s => s.id));
-    const repoIds  = new Set(repoData.songs.map(s => s.id));
-    const parts    = [];
-    const onlyRepo  = repoData.songs.filter(s => !localIds.has(s.id)).length;
-    const onlyLocal = db.songs.filter(s => !repoIds.has(s.id)).length;
-    if (onlyRepo)  parts.push(`${onlyRepo} song${onlyRepo  > 1 ? 's' : ''} only in repo`);
-    if (onlyLocal) parts.push(`${onlyLocal} song${onlyLocal > 1 ? 's' : ''} only local`);
-    if (!parts.length) parts.push('songs edited');
+    const parts = [];
+    const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+    const diffCounts = (loc, rep, canon) => {
+      const L = new Map((loc || []).map(x => [x.id, canon(x)]));
+      const R = new Map((rep || []).map(x => [x.id, canon(x)]));
+      let onlyRepo = 0, onlyLocal = 0, edited = 0;
+      R.forEach((v, id) => { if (!L.has(id)) onlyRepo++; else if (L.get(id) !== v) edited++; });
+      L.forEach((v, id) => { if (!R.has(id)) onlyLocal++; });
+      return { onlyRepo, onlyLocal, edited };
+    };
+    const sd = diffCounts(db.songs, repoData.songs, canonSong);
+    if (sd.onlyRepo)  parts.push(`${plural(sd.onlyRepo, 'song')} only in repo`);
+    if (sd.onlyLocal) parts.push(`${plural(sd.onlyLocal, 'song')} only local`);
+    if (sd.edited)    parts.push(`${plural(sd.edited, 'song')} edited`);
+    const ld = diffCounts(db.setlists, repoData.setlists, canonSetlist);
+    if (ld.onlyRepo)  parts.push(`${plural(ld.onlyRepo, 'setlist')} only in repo`);
+    if (ld.onlyLocal) parts.push(`${plural(ld.onlyLocal, 'setlist')} only local`);
+    if (ld.edited)    parts.push(`${plural(ld.edited, 'setlist')} edited`);
+    if (!parts.length) parts.push('settings differ (tag colours / tuning)');
 
     document.getElementById('sync-msg').textContent = `Repo differs — ${parts.join(', ')}.`;
     const banner = document.getElementById('sync-banner');
