@@ -2022,7 +2022,10 @@ function cancelInlineEdit() {
   renderSongs();
 }
 
-function openSongModal() {
+// Every Add Song open starts from a fully blank form (shared by the plain "+ Add" button and the
+// UG import, which then fills in what it parsed). The UG import used to reset only some fields,
+// so a cancelled earlier Add Song's Chord Sheet text / Try out tick leaked into the imported song.
+function resetSongForm() {
   document.getElementById('song-modal-title').textContent = 'Add Song';
   document.getElementById('f-title').value  = '';
   document.getElementById('f-tags').value   = '';
@@ -2032,6 +2035,9 @@ function openSongModal() {
   document.getElementById('f-uglink').value = '';
   document.getElementById('f-crd').value    = '';
   document.getElementById('f-tryout').checked = false;
+}
+function openSongModal() {
+  resetSongForm();
   openModal('song-modal');
   document.getElementById('f-title').focus();
 }
@@ -4194,12 +4200,9 @@ function confirmUGImport() {
   const tags   = document.getElementById('ug-import-tags').value.trim();
   const parsed = parseUGUrl(url);
   closeModal('ug-import-modal');
-  document.getElementById('song-modal-title').textContent = 'Add Song';
+  resetSongForm();
   document.getElementById('f-title').value  = parsed?.title  || '';
   document.getElementById('f-tags').value   = tags || (parsed?.artist ? parsed.artist + ', ' : '');
-  document.getElementById('f-key').value    = '';
-  document.getElementById('f-capo').value   = '';
-  document.getElementById('f-harp').value   = '';
   document.getElementById('f-uglink').value = parsed?.ugLink || url;
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
