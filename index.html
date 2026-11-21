@@ -5097,7 +5097,7 @@ let liveShowDone = true, liveEditingSetup = false;   // done requests shown by d
 // Venue location: where this iPad was when the live started (or when you tap "Set here"). Kept on
 // this device only, never sent to Firebase; each request's location is compared against it.
 const LIVE_LOC_KEY = 'rep_live_loc_' + PROFILE;     // {lat, lng, acc, at}
-const LIVE_NEAR_M = 300;                            // base radius counted as "in the audience"
+const LIVE_NEAR_M = 50;                             // base radius counted as "in the audience" (Andrea: 50 m)
 function getVenueLoc() { try { return JSON.parse(localStorage.getItem(LIVE_LOC_KEY) || 'null'); } catch { return null; } }
 function liveCaptureVenue(manual) {
   if (!navigator.geolocation) { if (manual) toast('Location isn\'t available on this device'); return; }
@@ -5628,7 +5628,7 @@ function renderLive() {
           </div>
         </div>` : ''}
         <div class="live-venue">${(() => { const v = getVenueLoc(); return v
-          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${v.acc ? ` (±${fmtDist(v.acc)})` : ''}`
+          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · in the audience = within ${LIVE_NEAR_M} m${v.acc ? ` (GPS ±${fmtDist(v.acc)})` : ''}`
           : '📍 Venue location not set — requests can\'t be checked'; })()}
           <button class="btn btn-secondary btn-sm" onclick="liveCaptureVenue(true)" title="Use this iPad's current position as the venue">Set here</button></div>
         <h3>Requests <span id="live-req-count"></span></h3>
