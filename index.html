@@ -656,6 +656,12 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .crd-transpose, .crd-toolbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .crd-transpose-val { font-family: var(--fm); font-size: 0.85rem; min-width: 28px; text-align: center; color: var(--text); }
 #crd-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#crd-auto-badge {
+  position: absolute; right: 14px; bottom: 14px; cursor: pointer;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.18); color: var(--text);
+  font-family: var(--fm); font-size: 0.85rem; padding: 6px 12px; border-radius: 999px;
+}
+#crd-auto-badge.on { background: var(--accent); color: #e8f8f5; border-color: var(--accent); }
 .crd-body {
   font-family: var(--fm); white-space: pre-wrap; word-break: break-word;
   color: var(--text); padding: 20px 20px 40vh;
@@ -891,6 +897,9 @@ select.fi { cursor: pointer; }
       </label>
       <label class="tune-toggle" title="Shows Capo as Transpose instead, for keyboard players — wraps fret counts over 6 down an octave (capo 7 → Transpose -5). Display only, doesn't change any saved data">
         <input type="checkbox" id="keyboard-mode-toggle" onchange="toggleKeyboardMode()"> Keyboard Mode
+      </label>
+      <label class="tune-toggle" title="For a foot pedal that sends Up/Down keys. Off: the pedal scrolls the chord sheet. On: a short tap of either key plays/pauses auto-scroll, and holding it scrolls up/down">
+        <input type="checkbox" id="pedal-auto-toggle" onchange="togglePedalAutoMode()"> Pedal Auto-scroll
       </label>
       <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer">
@@ -1150,12 +1159,12 @@ select.fi { cursor: pointer; }
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyReset()" title="Reset to this song's saved capo">↺</button>
           <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo, or rewrite the sheet into a new root key" disabled>💾 Save capo</button>
         </div>
-        <div class="crd-toolbar-right">
+        <div class="crd-toolbar-right" id="crd-auto-group" style="display:none">
           <span class="crd-toolbar-label">Auto</span>
           <button class="btn btn-secondary btn-sm" id="crd-auto-btn" onclick="crdAutoToggle()" title="Start / stop auto-scroll (Space)">▶ Play</button>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-5)" title="Slower">−</button>
-          <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed (pixels per second)">30</span>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(5)" title="Faster">+</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-1)" title="Slower">−</button>
+          <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed — 15 is about 3½ minutes for a full sheet">15</span>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(1)" title="Faster">+</button>
         </div>
         <div class="crd-toolbar-right">
           <span class="crd-toolbar-label">Scroll</span>
@@ -1170,6 +1179,7 @@ select.fi { cursor: pointer; }
     <div id="crd-scroll" onclick="toggleCrdChrome(event)">
       <pre id="crd-body" class="crd-body"></pre>
     </div>
+    <div id="crd-auto-badge" style="display:none" onclick="crdToggleChromeOnly()" title="Show / hide the toolbar"></div>
   </div>
 </div>
 
@@ -1328,6 +1338,10 @@ let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false };
 // (capo 7 → Transpose -5 … capo 11 → Transpose -1) so keyboard players see the shift they'd
 // actually play rather than a guitarist's fret count. See capoWord()/capoText().
 let keyboardMode = localStorage.getItem('rep_keyboard_mode') === '1';
+// Pedal auto-scroll mode — a per-browser setting like Keyboard Mode. Off: arrow/page keys scroll the
+// chord sheet as always. On: a short tap of Up/Down (or PageUp/PageDown) plays/pauses auto-scroll,
+// holding the key scrolls up/down. See the Auto-scroll section by the CRD reader.
+let pedalAutoMode = localStorage.getItem('rep_pedal_auto') === '1';
 let activeBubble  = null;
 let inlineEditId  = null;
 let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
@@ -2245,9 +2259,11 @@ function openCrdReader(id) {
   renderCrdBody();
   crdUpdateScrollPctLabel();
   crdAutoStop();
-  crdAutoUpdateUI();
+  crdPedalCancel();
+  crdApplyAutoMode();
   openModal('crd-reader');
   document.getElementById('crd-scroll').scrollTop = 0;
+  if (pedalAutoMode) crdAutoStart();               // auto-scroll mode: starts playing right away
 }
 
 function renderCrdBody() {
@@ -2315,12 +2331,18 @@ function crdUpdateStoreBtn() {
 
 function closeCrdReader() {
   crdAutoStop();
+  crdPedalCancel();
   closeModal('crd-reader');
   crdSongId = null;
 }
 
-function toggleCrdChrome() {
+function crdToggleChromeOnly() {
   document.getElementById('crd-chrome').classList.toggle('crd-hidden');
+}
+// Tapping the sheet: normally shows/hides the toolbar. In Pedal Auto-scroll mode it plays/pauses
+// instead (tap the status pill, bottom right, to show/hide the toolbar).
+function toggleCrdChrome() {
+  if (pedalAutoMode) crdAutoToggle(); else crdToggleChromeOnly();
 }
 
 // −/+ nudge the playing key by a semitone (handy one-handed); ↺ discards any pending playing-key
@@ -2349,6 +2371,8 @@ function syncTuneToggles() {
   if (a) a.checked = !!db.tuneUp;
   const k = document.getElementById('keyboard-mode-toggle');
   if (k) k.checked = keyboardMode;
+  const pa = document.getElementById('pedal-auto-toggle');
+  if (pa) pa.checked = pedalAutoMode;
   const lblF = document.getElementById('lbl-f-capo');
   if (lblF) lblF.textContent = capoWord();
   const lblP = document.getElementById('lbl-print-capo');
@@ -2572,10 +2596,13 @@ function crdUpdateScrollPctLabel() {
 }
 
 // ── Auto-scroll ──
-// Hands-free scrolling at a steady speed (pixels per second, saved in this browser). Touching,
-// wheeling or using the arrow keys pauses it for a moment so you can reposition, then it
-// carries on from wherever you left the page. It stops by itself at the end of the sheet.
-let crdAutoSpeed = Math.max(5, Math.min(200, parseInt(localStorage.getItem('rep_crd_auto_speed') || '30', 10) || 30));
+// Hands-free scrolling. Speed is a level from 1 to 60 (saved in this browser) relative to the
+// length of the sheet: level 15 is a full scroll in about 3½ minutes, 30 in half that, 8 in about
+// double. Touching, wheeling or using the arrow keys pauses it for a moment so you can
+// reposition, then it carries on from wherever you left the page. It stops by itself at the end
+// of the sheet.
+const CRD_AUTO_FULL_SECS_AT_15 = 210;
+let crdAutoSpeed = Math.max(1, Math.min(60, parseInt(localStorage.getItem('rep_crd_auto_level') || '15', 10) || 15));
 let crdAutoOn = false, crdAutoRaf = 0, crdAutoLast = 0, crdAutoPos = 0, crdAutoHoldUntil = 0, crdAutoTouching = false;
 
 function crdAutoUpdateUI() {
@@ -2587,11 +2614,32 @@ function crdAutoUpdateUI() {
   }
   const lab = document.getElementById('crd-auto-speed-label');
   if (lab) lab.textContent = crdAutoSpeed;
+  const badge = document.getElementById('crd-auto-badge');
+  if (badge) {
+    badge.style.display = pedalAutoMode ? '' : 'none';
+    badge.classList.toggle('on', crdAutoOn);
+    badge.textContent = crdAutoOn ? `▶ Auto ${crdAutoSpeed}` : '⏸ Paused';
+  }
+}
+// Shows/hides the auto-scroll controls according to the mode (off = the reader is exactly as
+// it was before auto-scroll existed).
+function crdApplyAutoMode() {
+  const g = document.getElementById('crd-auto-group');
+  if (g) g.style.display = pedalAutoMode ? '' : 'none';
+  crdAutoUpdateUI();
+}
+function togglePedalAutoMode() {
+  const cb = document.getElementById('pedal-auto-toggle');
+  pedalAutoMode = cb.checked;
+  localStorage.setItem('rep_pedal_auto', pedalAutoMode ? '1' : '0');
+  crdAutoStop();
+  crdPedalCancel();
+  crdApplyAutoMode();
 }
 function crdAutoStart() {
   const el = document.getElementById('crd-scroll');
   if (!el) return;
-  crdAutoOn = true; crdAutoPos = el.scrollTop; crdAutoLast = 0;
+  crdAutoOn = true; crdAutoPos = el.scrollTop; crdAutoLast = 0; crdAutoHoldUntil = 0;
   crdAutoUpdateUI();
   cancelAnimationFrame(crdAutoRaf);
   crdAutoRaf = requestAnimationFrame(crdAutoTick);
@@ -2604,8 +2652,8 @@ function crdAutoStop() {
 function crdAutoToggle() { crdAutoOn ? crdAutoStop() : crdAutoStart(); }
 function crdAutoNudge() { crdAutoHoldUntil = performance.now() + 1500; }
 function crdAutoSpeedStep(delta) {
-  crdAutoSpeed = Math.max(5, Math.min(200, crdAutoSpeed + delta));
-  localStorage.setItem('rep_crd_auto_speed', crdAutoSpeed);
+  crdAutoSpeed = Math.max(1, Math.min(60, crdAutoSpeed + delta));
+  localStorage.setItem('rep_crd_auto_level', crdAutoSpeed);
   crdAutoUpdateUI();
 }
 function crdAutoTick(ts) {
@@ -2617,9 +2665,11 @@ function crdAutoTick(ts) {
   if (crdAutoTouching || ts < crdAutoHoldUntil) {
     crdAutoPos = el.scrollTop;                 // follow any manual movement
   } else {
-    crdAutoPos += crdAutoSpeed * dt / 1000;    // fractional position, so slow speeds stay smooth
+    const max = el.scrollHeight - el.clientHeight;
+    const pxPerSec = max * crdAutoSpeed / (CRD_AUTO_FULL_SECS_AT_15 * 15);
+    crdAutoPos += pxPerSec * dt / 1000;        // fractional position, so slow speeds stay smooth
     el.scrollTop = crdAutoPos;
-    if (crdAutoPos >= el.scrollHeight - el.clientHeight - 1) { crdAutoStop(); return; }
+    if (crdAutoPos >= max - 1) { crdAutoStop(); return; }
   }
   crdAutoRaf = requestAnimationFrame(crdAutoTick);
 }
@@ -2633,12 +2683,65 @@ function crdAutoTick(ts) {
   el.addEventListener('touchcancel', release, { passive: true });
 })();
 
+// ── Pedal keys (Pedal Auto-scroll mode) ──
+// A foot pedal mapped as a keyboard sends Up/Down (or PageUp/PageDown). In this mode a short
+// press — released within CRD_HOLD_MS — plays/pauses auto-scroll (either key, same effect);
+// keeping it pressed scrolls up (Up) or down (Down) for as long as it's held, at twice the
+// "Scroll %" step per second. Auto-scroll waits while you hold and carries on afterwards.
+const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
+const CRD_HOLD_MS = 350;
+let crdPedal = null;   // the press in progress: { key, dir, holding, timer, raf, last, pos }
+
+function crdPedalDown(key, dir) {
+  if (crdPedal && crdPedal.key === key) return;   // already tracking this press (key repeat)
+  crdPedalCancel();
+  crdPedal = { key, dir, holding: false, timer: setTimeout(crdPedalHoldStart, CRD_HOLD_MS), raf: 0, last: 0, pos: 0 };
+}
+function crdPedalHoldStart() {
+  const p = crdPedal, el = document.getElementById('crd-scroll');
+  if (!p || !el) return;
+  p.holding = true; p.pos = el.scrollTop; p.last = 0;
+  p.raf = requestAnimationFrame(crdPedalHoldTick);
+}
+function crdPedalHoldTick(ts) {
+  const p = crdPedal;
+  if (!p || !p.holding) return;
+  const el = document.getElementById('crd-scroll');
+  if (!el) { crdPedalCancel(); return; }
+  const dt = p.last ? Math.min(ts - p.last, 100) : 0;
+  p.last = ts;
+  const max = el.scrollHeight - el.clientHeight;
+  p.pos = Math.max(0, Math.min(max, p.pos + p.dir * crdScrollStep() * 2 * dt / 1000));
+  el.scrollTop = p.pos;
+  crdAutoNudge();                                  // keep auto-scroll waiting while held
+  p.raf = requestAnimationFrame(crdPedalHoldTick);
+}
+function crdPedalUp(key) {
+  const p = crdPedal;
+  if (!p || p.key !== key) return;
+  const wasHold = p.holding;
+  crdPedalCancel();
+  if (!wasHold) crdAutoToggle();                   // short press = play / pause
+}
+function crdPedalCancel() {
+  if (!crdPedal) return;
+  clearTimeout(crdPedal.timer);
+  cancelAnimationFrame(crdPedal.raf);
+  crdPedal = null;
+}
+window.addEventListener('blur', crdPedalCancel);   // never leave a hold stuck if focus is lost
+
 // Keyboard scroll (Up/Down/PageUp/PageDown) + Escape to close, while the reader is open
 document.addEventListener('keydown', (e) => {
   const reader = document.getElementById('crd-reader');
   if (!reader || reader.classList.contains('hidden')) return;
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (pedalAutoMode && CRD_PEDAL_KEYS[e.key]) {
+    e.preventDefault();
+    crdPedalDown(e.key, CRD_PEDAL_KEYS[e.key]);
+    return;
+  }
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault();
     crdAutoNudge();
@@ -2647,12 +2750,20 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     crdAutoNudge();
     document.getElementById('crd-scroll').scrollBy({ top: -crdScrollStep(), behavior: 'smooth' });
-  } else if (e.key === ' ' && tag !== 'BUTTON') {
+  } else if (e.key === ' ' && pedalAutoMode && tag !== 'BUTTON') {
     e.preventDefault();
     crdAutoToggle();
   } else if (e.key === 'Escape') {
     closeCrdReader();
   }
+});
+
+document.addEventListener('keyup', (e) => {
+  if (!pedalAutoMode || !CRD_PEDAL_KEYS[e.key]) return;
+  const reader = document.getElementById('crd-reader');
+  if (!reader || reader.classList.contains('hidden')) return;
+  e.preventDefault();
+  crdPedalUp(e.key);
 });
 
 // ─────────────────────────────────────────
