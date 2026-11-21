@@ -41,6 +41,7 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 .hidden { display: none !important; }
 .hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
 .loc-hint { text-align: left; font-size: 0.75rem; margin: 0 0 10px; }
+#all-titles { margin: 4px 0 18px; }
 #bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
 /* Phone layout: tags as colourful chips flowing in rows instead of a tall column of bubbles. */
 #bubbles.chips-mode { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 0; height: auto !important; }
@@ -151,6 +152,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
     <div id="search-results" class="hidden"></div>
     <div id="bubbles"></div>
+    <div id="all-titles" class="hidden"></div>
     <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Altro? Chiedi una canzone qualsiasi</button>
   </div>
   <a id="ig" class="ig hidden" target="_blank" rel="noopener">
@@ -281,8 +283,10 @@ function render() {
   const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
-  document.getElementById('subtitle').textContent = open ? 'Scegli un artista o un genere, oppure cerca una canzone' : 'Dai un\'occhiata a cosa suoniamo stasera';
-  renderBubbles();
+  const titles = info.view === 'titles';
+  document.getElementById('subtitle').textContent = !open ? 'Dai un\'occhiata a cosa suoniamo stasera'
+    : titles ? 'Scegli una canzone, oppure cercala' : 'Scegli un artista o un genere, oppure cerca una canzone';
+  if (titles) renderTitles(); else renderBubbles();
   renderSearch();
   // An open song list refreshes in place with the new played/requested state.
   if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
@@ -395,10 +399,21 @@ function songRow(s, mine) {
   </button>`;
 }
 // Song search: matches titles and tags; while it has text, the results replace the bubbles.
+// "All titles" view (info.view === 'titles', chosen in the app when publishing): every song as a
+// row, in a random order that's drawn once per page load, so polling doesn't reshuffle it.
+const shuffleRank = {};
+function renderTitles() {
+  songs.forEach(s => { if (!(s.id in shuffleRank)) shuffleRank[s.id] = Math.random(); });
+  const mine = getMine();
+  document.getElementById('all-titles').innerHTML = [...songs].sort((a, b) => shuffleRank[a.id] - shuffleRank[b.id])
+    .map(s => songRow(s, mine)).join('');
+}
 function renderSearch() {
   const q = (document.getElementById('song-search').value || '').trim().toLowerCase();
   const res = document.getElementById('search-results');
-  document.getElementById('bubbles').classList.toggle('hidden', !!q);
+  const titles = info?.view === 'titles';
+  document.getElementById('bubbles').classList.toggle('hidden', !!q || titles);
+  document.getElementById('all-titles').classList.toggle('hidden', !!q || !titles);
   res.classList.toggle('hidden', !q);
   if (!q) return;
   const tagsOf = s => Array.isArray(s.g) ? s.g : Object.values(s.g || {});

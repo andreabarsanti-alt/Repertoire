@@ -5246,6 +5246,7 @@ document.addEventListener('keydown', e => {
 // id, so each profile's audience link/QR code never changes and can be printed once.
 const FB_CFG_KEY   = 'rep_firebase';                 // { apiKey, dbUrl, email, refreshToken } — device-local, shared by all profiles
 const LIVE_SET_KEY = 'rep_live_set_' + PROFILE;      // setlist chosen in the Live tab
+const LIVE_VIEW_KEY = 'rep_live_view_' + PROFILE;    // 'tags' (default) or 'titles': what the audience page shows
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
@@ -5577,7 +5578,7 @@ async function livePublish() {
   const prof = getProfiles().find(p => p.id === PROFILE);
   try {
     await fbReq('PUT', 'songs', payload);
-    const patch = { title: prof?.name || PROFILE, songsV: Date.now(), updatedAt: Date.now() };
+    const patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now() };
     if (!wasPub || !liveInfo) patch.open = true;
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
@@ -5585,6 +5586,14 @@ async function livePublish() {
   if (!getVenueLoc()) liveCaptureVenue(false);
   toast(wasPub ? 'Audience page updated' : `Published "${sl.name}" — requests are open`);
   if (!wasPub || liveESState !== 'live') liveConnect(); else liveFetchInfo();
+}
+// Audience page layout, picked next to Publish: tag bubbles, or every song title in random order.
+function liveView() { return localStorage.getItem(LIVE_VIEW_KEY) === 'titles' ? 'titles' : 'tags'; }
+async function liveSetView(v) {
+  localStorage.setItem(LIVE_VIEW_KEY, v === 'titles' ? 'titles' : 'tags');
+  if (!livePublished()) return;
+  try { await fbReq('PATCH', 'info', { view: liveView() }); toast(v === 'titles' ? 'Audience page now lists all song titles' : 'Audience page now shows tags'); }
+  catch (e) { toast('Update failed: ' + e.message, 4500); }
 }
 async function liveUnpublish() {
   if (!confirm('Take the setlist off the audience page? It will say nothing is on right now. Requests already sent stay here until you clear them.')) return;
@@ -5841,6 +5850,10 @@ function renderLive() {
   el.innerHTML = `
     <div class="live-bar">
       ${livePlayBar()}
+      <select class="profile-select" id="live-view-select" onchange="liveSetView(this.value)" title="What the audience page shows">
+        <option value="tags" ${liveView() === 'tags' ? 'selected' : ''}>Audience: tags</option>
+        <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Audience: all titles</option>
+      </select>
       <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
       ${pub ? `<label class="tune-toggle"><input type="checkbox" id="live-open-toggle" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>
                <button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
