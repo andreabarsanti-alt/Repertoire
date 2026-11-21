@@ -1451,6 +1451,16 @@ select.fi { cursor: pointer; }
 </div>
 
 <!-- ══ PRINT MODAL ══ -->
+<div class="overlay hidden" id="pdf-ready-modal">
+  <div class="modal" style="max-width:360px">
+    <h2>PDF ready</h2>
+    <p style="margin:6px 0 14px;opacity:.8;font-size:.85rem"><span id="pdf-ready-name"></span> — Print is in the share sheet.</p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('pdf-ready-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="sharePdfReady()">Share / Print PDF</button>
+    </div>
+  </div>
+</div>
 <div class="overlay hidden" id="print-modal">
   <div class="modal" style="max-width:320px">
     <h2>Print options</h2>
@@ -4408,35 +4418,54 @@ function openModal(id)  { document.getElementById(id).classList.remove('hidden')
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 let _printTarget = null;
+// Home-screen ("Add to Home Screen") web app on iPad/iPhone: window.print() does nothing
+// there -- no printer menu ever opens. So in standalone mode the sheet is turned into a PDF
+// (jsPDF, lazy-loaded from a CDN when the Print dialog opens, so it's ready by the tap) and
+// handed to the iOS share sheet, which has Print (and Save to Files). In a normal browser
+// tab window.print() still prints the in-page #print-area.
+const PRINT_STANDALONE = navigator.standalone === true ||
+  (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+const PDF_LIB_URLS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+];
+let _pdfLib = null;
+function loadPdfLib() {
+  if (window.jspdf) return Promise.resolve();
+  if (_pdfLib) return _pdfLib;
+  _pdfLib = new Promise((resolve, reject) => {
+    const tryUrl = i => {
+      if (i >= PDF_LIB_URLS.length) { _pdfLib = null; reject(new Error('PDF library unavailable')); return; }
+      const sc = document.createElement('script');
+      sc.src = PDF_LIB_URLS[i];
+      sc.onload = () => window.jspdf ? resolve() : tryUrl(i + 1);
+      sc.onerror = () => { sc.remove(); tryUrl(i + 1); };
+      document.head.appendChild(sc);
+    };
+    tryUrl(0);
+  });
+  return _pdfLib;
+}
+
 function openPrintModal(target) {
   _printTarget = target;
+  if (PRINT_STANDALONE) loadPdfLib().catch(() => {});
   document.getElementById('print-modal').classList.remove('hidden');
 }
 
-function doPrint() {
-  const inclCapo = document.getElementById('print-capo').checked;
-  const inclHarp = document.getElementById('print-harp').checked;
-  closeModal('print-modal');
-
-  const extraCol = inclCapo || inclHarp;
-  const songRow = (s, num, nested, altSong) => {
-    let extras = '';
-    if (inclCapo && s.capo) extras += `<span class="badge">${esc(capoText(s.capo))}</span>`;
-    if (inclHarp && s.harp) extras += `<span class="badge harp">Harp ${s.harp}</span>`;
-    const altLine = altSong ? `<div class="alt-line">alt: ${esc(altSong.title)}</div>` : '';
-    return `<tr>
-      <td class="num">${num}</td>
-      <td class="ttl${nested ? ' indent' : ''}">${esc(s.title)}${altLine}</td>
-      <td class="key">${s.key || ''}</td>
-      ${extraCol ? `<td class="ext">${extras}</td>` : ''}
-    </tr>`;
+// The sheet as data, shared by the HTML (browser print) and PDF (home-screen app) paths.
+function buildPrintSheet(inclCapo, inclHarp) {
+  const extrasOf = s => {
+    const ex = [];
+    if (inclCapo && s.capo) ex.push({ text: capoText(s.capo), harp: false });
+    if (inclHarp && s.harp) ex.push({ text: `Harp ${s.harp}`, harp: true });
+    return ex;
   };
-
-  let title, rows;
+  const song = (s, num, nested, altSong) =>
+    ({ kind: 'song', num, title: s.title, key: s.key || '', extras: extrasOf(s), nested, alt: altSong ? altSong.title : '' });
   if (_printTarget === 'setlist') {
-    const sl = db.setlists.find(s => s.id === activeSetId);
-    if (!sl) return;
-    title = sl.name;
+    const sl = db.setlists.find(x => x.id === activeSetId);
+    if (!sl) return null;
     // Printed sheets always show every section fully expanded and tabbed out under its
     // heading, regardless of whether it's currently collapsed on screen -- collapsing is a
     // screen-space convenience, not something that should hide songs from a physical setlist.
@@ -4445,28 +4474,47 @@ function doPrint() {
     // has one, prints as a small "alt: Title" line under the active song -- same info Play
     // mode shows, so a band member with only the paper sheet still knows a swap is available.
     let num = 0, nested = false;
-    rows = (sl.items || []).map(it => {
-      if (it.type === 'section') {
-        nested = true;
-        return `<tr class="section-row"><td></td><td colspan="${extraCol ? 3 : 2}">${esc(it.name || 'Section')}</td></tr>`;
-      }
-      if (it.type === 'section-end') { nested = false; return ''; }
-      const s = resolveItemSong(it); if (!s) return '';
+    const rows = [];
+    for (const it of (sl.items || [])) {
+      if (it.type === 'section') { nested = true; rows.push({ kind: 'section', name: it.name || 'Section' }); continue; }
+      if (it.type === 'section-end') { nested = false; continue; }
+      const s = resolveItemSong(it); if (!s) continue;
       const altId = it.altSongId ? (it.useAlt ? it.songId : it.altSongId) : null;
       const altSong = altId ? db.songs.find(x => x.id === altId) : null;
-      return songRow(s, ++num, nested, altSong);
-    }).join('');
-  } else {
-    const songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
-    title = 'Songs';
-    rows = songs.map((s, i) => songRow(s, i + 1, false)).join('');
+      rows.push(song(s, ++num, nested, altSong));
+    }
+    return { title: sl.name, rows };
   }
+  const songs = [...db.songs].sort((a, b) => a.title.localeCompare(b.title));
+  return { title: 'Songs', rows: songs.map((s, i) => song(s, i + 1, false, null)) };
+}
+
+function doPrint() {
+  const inclCapo = document.getElementById('print-capo').checked;
+  const inclHarp = document.getElementById('print-harp').checked;
+  closeModal('print-modal');
+  const sheet = buildPrintSheet(inclCapo, inclHarp);
+  if (!sheet) return;
+  const extraCol = inclCapo || inclHarp;
+  if (PRINT_STANDALONE) { printViaPdf(sheet, extraCol); return; }
+
+  const rows = sheet.rows.map(r => {
+    if (r.kind === 'section')
+      return `<tr class="section-row"><td></td><td colspan="${extraCol ? 3 : 2}">${esc(r.name)}</td></tr>`;
+    const extras = r.extras.map(e => `<span class="badge${e.harp ? ' harp' : ''}">${esc(e.text)}</span>`).join('');
+    const altLine = r.alt ? `<div class="alt-line">alt: ${esc(r.alt)}</div>` : '';
+    return `<tr>
+      <td class="num">${r.num}</td>
+      <td class="ttl${r.nested ? ' indent' : ''}">${esc(r.title)}${altLine}</td>
+      <td class="key">${esc(r.key)}</td>
+      ${extraCol ? `<td class="ext">${extras}</td>` : ''}
+    </tr>`;
+  }).join('');
+  const title = sheet.title;
 
   // Printed in place, in this same page: the sheet goes into #print-area and an @media print
-  // rule hides everything else. window.open() + print() on the new window never showed the
-  // iOS print menu on the iPad (the home-screen web app has no second window to print from, and
-  // the delayed print() lost the tap that started it), so window.print() is called right here,
-  // still inside the Print button's tap. No second window means no "← Close" button is needed.
+  // rule hides everything else. window.print() is called right here, still inside the Print
+  // button's tap (a delayed print() on a second window never showed the iOS print menu).
   const area = document.getElementById('print-area');
   area.innerHTML = `<h1>${esc(title)}</h1>
 <table>
@@ -4482,6 +4530,117 @@ function doPrint() {
   // being cleared on afterprint -- if iOS fired that before taking its snapshot, it'd print blank.
   window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
   window.print();
+}
+
+// Draws the sheet with jsPDF (A4, built-in Helvetica/Times, so only Latin-1 text survives:
+// anything else, e.g. emoji, is dropped rather than printed as garbage).
+function buildSheetPdf(sheet, extraCol) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const M = 42, bottom = H - 42;
+  const xNum = M + 22, xTitle = M + 34, xExt = W - M - 120;
+  const xKey = extraCol ? xExt - 44 : W - M - 40;
+  const titleW = xKey - xTitle - 10;
+  const clean = t => String(t ?? '').replace(/[^\x20-\x7E\xA0-\xFF]/g, '').replace(/\s+/g, ' ').trim();
+  let y = M;
+  const header = first => {
+    if (first) {
+      doc.setFont('times', 'bold'); doc.setFontSize(18); doc.setTextColor(0);
+      doc.text(clean(sheet.title) || 'Setlist', M, y + 14);
+      y += 24; doc.setLineWidth(1.5); doc.line(M, y, W - M, y); y += 18;
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(0);
+    doc.text('#', xNum, y, { align: 'right' }); doc.text('TITLE', xTitle, y); doc.text('KEY', xKey, y);
+    y += 5; doc.setLineWidth(0.6); doc.line(M, y, W - M, y); y += 4;
+  };
+  const ensure = h => { if (y + h > bottom) { doc.addPage(); y = M; header(false); } };
+  header(true);
+  sheet.rows.forEach((r, i) => {
+    if (r.kind === 'section') {
+      ensure(30);
+      y += i ? 14 : 4;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0);
+      doc.text(clean(r.name).toUpperCase(), xTitle, y + 10);
+      y += 15; doc.setLineWidth(0.6); doc.line(M, y, W - M, y);
+      return;
+    }
+    const indent = r.nested ? 14 : 0;
+    doc.setFont('times', 'normal'); doc.setFontSize(12);
+    const lines = doc.splitTextToSize(clean(r.title), titleW - indent);
+    const h = 8 + lines.length * 14 + (r.alt ? 11 : 0) + 6;
+    ensure(h);
+    let ty = y + 18;
+    doc.setFont('times', 'normal'); doc.setTextColor(130); doc.setFontSize(11); doc.text(String(r.num), xNum, ty, { align: 'right' });
+    doc.setTextColor(0); doc.setFontSize(12); doc.text(lines, xTitle + indent, ty, { lineHeightFactor: 1.15 });
+    doc.setFont('times', 'bold'); doc.text(clean(r.key), xKey, ty);
+    if (r.extras.length) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      let ex = xExt;
+      r.extras.forEach(e => {
+        const t = clean(e.text), w = doc.getTextWidth(t) + 10;
+        doc.setDrawColor(e.harp ? 102 : 170, e.harp ? 170 : 170, e.harp ? 0 : 170);
+        doc.setLineWidth(0.6); doc.roundedRect(ex, ty - 9, w, 13, 2, 2);
+        doc.setTextColor(e.harp ? 51 : 0, e.harp ? 136 : 0, 0); doc.text(t, ex + 5, ty);
+        ex += w + 4;
+      });
+      doc.setDrawColor(0); doc.setTextColor(0);
+    }
+    if (r.alt) {
+      doc.setFont('times', 'italic'); doc.setFontSize(9); doc.setTextColor(100);
+      doc.text('alt: ' + clean(r.alt), xTitle + indent, ty + (lines.length - 1) * 14 + 12);
+      doc.setTextColor(0);
+    }
+    y += h;
+    doc.setDrawColor(221); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); doc.setDrawColor(0);
+  });
+  return doc;
+}
+
+function pdfFileName(title) {
+  return (String(title).replace(/[\\/:*?"<>|]+/g, '').trim() || 'setlist') + '.pdf';
+}
+
+// Home-screen app path: PDF -> iOS share sheet (Print / Save to Files). The share call needs
+// the user's tap, so when the PDF library was already loaded (the normal case: it starts
+// loading when the Print dialog opens) it happens straight away; if it had to load first,
+// or the share sheet refuses, a "Share / Print PDF" button gives it a fresh tap.
+function printViaPdf(sheet, extraCol) {
+  const go = immediate => {
+    let file;
+    try {
+      const blob = buildSheetPdf(sheet, extraCol).output('blob');
+      file = new File([blob], pdfFileName(sheet.title), { type: 'application/pdf' });
+    } catch (e) { console.error(e); toast('Could not make the PDF'); return; }
+    if (immediate) sharePdf(file); else showPdfReady(file);
+  };
+  if (window.jspdf) { go(true); return; }
+  toast('Preparing PDF…');
+  loadPdfLib().then(() => go(false)).catch(() => toast('Could not load the PDF tool — check the connection'));
+}
+function sharePdf(file) {
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: file.name.replace(/\.pdf$/, '') }).catch(e => {
+      if (e && e.name === 'AbortError') return;  // the user closed the share sheet
+      showPdfReady(file);
+    });
+    return;
+  }
+  // No file sharing: open the PDF itself (iOS shows it with its own share/print button).
+  const url = URL.createObjectURL(file);
+  const w = window.open(url, '_blank');
+  if (!w) location.href = url;
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+let _pdfReadyFile = null;
+function showPdfReady(file) {
+  _pdfReadyFile = file;
+  document.getElementById('pdf-ready-name').textContent = file.name;
+  openModal('pdf-ready-modal');
+}
+function sharePdfReady() {
+  closeModal('pdf-ready-modal');
+  if (_pdfReadyFile) sharePdf(_pdfReadyFile);
 }
 
 // Click-outside-to-close for every overlay *except* the full-page CRD editor: that one's a
