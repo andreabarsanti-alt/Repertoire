@@ -14,6 +14,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Sortable, searchable table of all songs
 - Two filter dropdowns, alongside the text search: chord sheet (Any chords / **Has chords** / **No chords**) and repertoire scope (Any song / **In repertoire** / **🧪 Try out**)
 - Check a song **🧪 Try out** right from its row — no need to type a tag — and it's excluded from "In repertoire" above until you uncheck it again
+- Check **🎤 Lyrics only** (row, Add Song or edit) and the chord reader shows just the lyrics and section labels — the chords stay in the sheet, untouched
 - Add, inline-edit, and delete songs
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views

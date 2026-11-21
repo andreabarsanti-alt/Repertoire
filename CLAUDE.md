@@ -37,7 +37,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
       "harp": "G",
       "ugLink": "https://tabs.ultimate-guitar.com/...",
       "crd": "Am        C          G\nLyric line one...",
-      "tryOut": false
+      "tryOut": false,
+      "lyricsOnly": false
     }
   ],
   "setlists": [
@@ -64,6 +65,8 @@ Repertoire is a single-page web app for managing a musical repertoire. It runs o
 - `setlist.type` is `'live'` (a real gig, has a `date`) or `'generic'` (a working/rehearsal list, no date). Drives the left-pane split — see "Setlists" below.
 
 - `song.tryOut` (boolean, default off): a checkbox on the song itself, settable from the Songs tab row (`toggleSongTryOut`), its add/edit modal, its inline edit row, or a setlist row's ✎ edit. Marks it as out of the repertoire for now — the Songs tab's repertoire-scope filter reads it (`songsScopeFilter`, see below); there's no dedicated setlist or view built on top of it beyond that.
+
+- `song.lyricsOnly` (boolean, default off): a 🎤 checkbox next to Try out in the same places (Songs tab row `toggleSongLyricsOnly`, Add Song modal `f-lyrics`, inline edit `ie-lyrics`, setlist ✎ edit `sl-ie-lyrics`; a "🎤 Lyrics only" chip via `kchBadges`). When on, the CRD reader shows lyrics and section labels only: `renderCrdHTML(text, semis, lyricsOnly)` first runs `lyricsOnlyText`, which drops every chord line (`isChordLine`), strips inline `[G]` chords out of lyric lines, and drops a line left empty by that. Display only — `s.crd` keeps its chords (the full editor's preview still shows them).
 
 - `song` items resolve to `altSongId` instead of `songId` when `useAlt` is true — lets a slot's live song be swapped without reordering.
 - `section` items are collapsible chapter headings that live inline in the same flat `items` array — every `song` item after one belongs to it by position (not by any nested/reference structure) up to the next boundary: another `section`, an explicit `section-end`, or the end of the list. `collapsed` just controls whether those rows are rendered; it never changes what plays, prints, or counts.

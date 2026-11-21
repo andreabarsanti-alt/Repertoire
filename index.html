@@ -297,6 +297,7 @@ a.pill > span:first-child { text-decoration: underline; text-underline-offset: 3
 }
 .kch.harp { background: rgba(109,168,84,.18); border-color: rgba(109,168,84,.4); color: #8fd474; }
 .kch.tryout { background: rgba(224,168,74,.18); border-color: rgba(224,168,74,.4); color: #e0c060; }
+.kch.lyrics { background: rgba(140,160,220,.16); border-color: rgba(140,160,220,.4); color: #aab8e8; }
 
 /* Editable Key / Playing-key badges in the CRD reader header, and the read-only Capo badge
    derived from them */
@@ -354,6 +355,8 @@ tr:hover td { background: rgba(61,158,140,.07) !important; }
 .row-tryout input { width: 15px; height: 15px; cursor: pointer; accent-color: #e0c060; }
 .tryout-icon { color: var(--text-dim); font-weight: 700; }
 input:checked + .tryout-icon { color: #e0c060; }
+.lyrics-icon { opacity: .45; }
+input:checked + .lyrics-icon { opacity: 1; }
 .editing-row td { background: rgba(212,144,30,.05) !important; vertical-align: top; padding-top: 8px; }
 .inline-fi {
   width: 100%; padding: 6px 9px;
@@ -1003,6 +1006,9 @@ select.fi { cursor: pointer; }
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="f-tryout"> <span class="tryout-icon">?</span> Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px">
+        <input type="checkbox" id="f-lyrics"> <span class="lyrics-icon">🎤</span> Lyrics only <span style="color:var(--text-dim);font-weight:400">— the chord reader hides the chords (the sheet itself is kept)</span>
       </label>
     </div>
     <div class="fg">
@@ -1849,6 +1855,7 @@ function kchBadges(s) {
   if (s.capo) parts.push(`<span class="kch">${esc(capoText(s.capo))}</span>`);
   if (s.harp) parts.push(`<span class="kch harp">Harp ${esc(s.harp)}</span>`);
   if (s.tryOut) parts.push(`<span class="kch tryout">❓ Try out</span>`);
+  if (s.lyricsOnly) parts.push(`<span class="kch lyrics">🎤 Lyrics only</span>`);
   return parts.join('');
 }
 
@@ -1966,6 +1973,9 @@ function songDisplayRow(s) {
       <label class="row-tryout" title="❓ Try out" onclick="event.stopPropagation()">
         <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> <span class="tryout-icon">?</span>
       </label>
+      <label class="row-tryout" title="🎤 Lyrics only" onclick="event.stopPropagation()">
+        <input type="checkbox" ${s.lyricsOnly ? 'checked' : ''} onchange="toggleSongLyricsOnly('${s.id}')"> <span class="lyrics-icon">🎤</span>
+      </label>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="startInlineEdit('${s.id}')" title="Edit">✎</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="deleteSong('${s.id}')"      title="Delete">✕</button>
     </div></td>
@@ -1984,6 +1994,9 @@ function songEditRow(s) {
       </div>
       <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
         <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:4px;cursor:pointer">
+        <input type="checkbox" id="ie-lyrics" ${s.lyricsOnly ? 'checked' : ''}> <span class="lyrics-icon">🎤</span> Lyrics only
       </label>
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}></td>
@@ -2030,6 +2043,7 @@ function saveInlineEdit(id) {
   s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
   s.crd    = document.getElementById('ie-crd')?.value || '';
   s.tryOut = !!document.getElementById('ie-tryout')?.checked;
+  s.lyricsOnly = !!document.getElementById('ie-lyrics')?.checked;
   inlineEditId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -2052,6 +2066,7 @@ function resetSongForm() {
   document.getElementById('f-uglink').value = '';
   document.getElementById('f-crd').value    = '';
   document.getElementById('f-tryout').checked = false;
+  document.getElementById('f-lyrics').checked = false;
 }
 function openSongModal() {
   resetSongForm();
@@ -2072,6 +2087,7 @@ function saveSong() {
     ugLink: normalizeUG(document.getElementById('f-uglink').value),
     crd:    document.getElementById('f-crd').value || '',
     tryOut: document.getElementById('f-tryout').checked,
+    lyricsOnly: document.getElementById('f-lyrics').checked,
   });
   save(); renderAll(); closeModal('song-modal');
   toast('Song added');
@@ -2083,6 +2099,12 @@ function toggleSongTryOut(id) {
   const s = db.songs.find(x => x.id === id);
   if (!s) return;
   s.tryOut = !s.tryOut;
+  save(); renderAll();
+}
+function toggleSongLyricsOnly(id) {
+  const s = db.songs.find(x => x.id === id);
+  if (!s) return;
+  s.lyricsOnly = !s.lyricsOnly;
   save(); renderAll();
 }
 
@@ -2218,7 +2240,26 @@ function renderInlineLineHTML(line, semis) {
   out += esc(line.slice(last));
   return out;
 }
-function renderCrdHTML(text, semis) {
+// Lyrics only (song.lyricsOnly): drop chord lines entirely and strip inline [G] chords out of
+// lyric lines (section labels stay); a line left empty by that is dropped too. Display only —
+// s.crd keeps its chords.
+function lyricsOnlyText(text) {
+  const out = [];
+  for (const line of normalizeChordSpacing(text).split('\n')) {
+    if (isChordLine(line)) continue;
+    let had = false;
+    const stripped = line.replace(/\[([^\]]*)\]/g, (whole, raw) => {
+      const t = raw.trim();
+      if (!SECTION_RE.test(t) && CHORD_RE.test(t)) { had = true; return ''; }
+      return whole;
+    });
+    if (had && !stripped.trim()) continue;
+    out.push(had ? stripped.replace(/ {2,}/g, ' ') : line);
+  }
+  return out.join('\n');
+}
+function renderCrdHTML(text, semis, lyricsOnly) {
+  if (lyricsOnly) text = lyricsOnlyText(text);
   return normalizeChordSpacing(text).split('\n').map(line => {
     if (/\[[^\]]*\]/.test(line)) return renderInlineLineHTML(line, semis);
     if (isChordLine(line)) return renderChordLineHTML(line, semis);
@@ -2545,7 +2586,7 @@ function renderCrdBody() {
   </div>`;
   crdUpdateStoreBtn();
 
-  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
+  document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s), !!s.lyricsOnly);
   crdApplyFontSize();
 
   const ugBtn = document.getElementById('crd-ug-link');
@@ -2561,7 +2602,7 @@ function crdMetaEdited(field, value) {
   const s = db.songs.find(x => x.id === crdSongId);
   if (!s) return;
   if (field === 'tkey') {
-    document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s));
+    document.getElementById('crd-body').innerHTML = renderCrdHTML(s.crd, crdChordsEff(s), !!s.lyricsOnly);
     crdApplyFontSize();
   }
   const badge = document.getElementById('crd-capo-badge');
@@ -3379,6 +3420,9 @@ function slEditRow(s, i, nested) {
     <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
       <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
     </label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
+      <input type="checkbox" id="sl-ie-lyrics" ${s.lyricsOnly ? 'checked' : ''}> <span class="lyrics-icon">🎤</span> Lyrics only
+    </label>
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}>
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
     <div>
@@ -3412,6 +3456,7 @@ function saveSlEdit(id) {
   s.ugLink = normalizeUG(document.getElementById('sl-ie-uglink')?.value || '');
   s.crd    = document.getElementById('sl-ie-crd')?.value || '';
   s.tryOut = !!document.getElementById('sl-ie-tryout')?.checked;
+  s.lyricsOnly = !!document.getElementById('sl-ie-lyrics')?.checked;
   slEditSongId = null;
   save(); renderAll(); toast('Song updated');
 }
@@ -4470,6 +4515,7 @@ function quickAddUGImport() {
     ugLink: normalizeUG(parsed.ugLink || url),
     crd: document.getElementById('ug-import-crd').value || '',
     tryOut: false,
+    lyricsOnly: false,
   });
   save(); renderAll(); closeModal('ug-import-modal');
   toast('Song added');
