@@ -1161,7 +1161,7 @@ select.fi { cursor: pointer; }
         </div>
         <div class="crd-toolbar-right" id="crd-auto-group" style="display:none">
           <span class="crd-toolbar-label">Auto</span>
-          <button class="btn btn-secondary btn-sm" id="crd-auto-btn" onclick="crdAutoToggle()" title="Start / stop auto-scroll (Space)">▶ Play</button>
+          <button class="btn btn-secondary btn-sm" id="crd-auto-btn" onclick="crdAutoToggle()" title="Start / stop auto-scroll (Space)">▶ / ⏸</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-1)" title="Slower">−</button>
           <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed — 15 is about 3½ minutes for a full sheet">15</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(1)" title="Faster">+</button>
@@ -2617,11 +2617,9 @@ function crdAutoForgetPause() { crdAutoPaused = null; }
 
 function crdAutoUpdateUI() {
   const btn = document.getElementById('crd-auto-btn');
-  if (btn) {
-    btn.textContent = crdAutoOn ? '⏸ Pause' : '▶ Play';
-    btn.classList.toggle('btn-primary', crdAutoOn);
-    btn.classList.toggle('btn-secondary', !crdAutoOn);
-  }
+  // The Play/Pause button deliberately never changes label, colour or size: a wider "⏸ Pause"
+  // label used to wrap the toolbar onto another row on every play/pause, jolting the sheet.
+  // Play state is shown only by the bottom-right status pill (#crd-auto-badge).
   const lab = document.getElementById('crd-auto-speed-label');
   if (lab) lab.textContent = crdAutoSpeed;
   const badge = document.getElementById('crd-auto-badge');
