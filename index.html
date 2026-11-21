@@ -1174,7 +1174,7 @@ select.fi { cursor: pointer; }
           <span class="crd-toolbar-label">Auto</span>
           <button class="btn btn-secondary btn-sm" id="crd-auto-btn" onclick="crdAutoToggle()" title="Start / stop auto-scroll (Space)">▶ / ⏸</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-1)" title="Slower">−</button>
-          <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed — 15 is about 3½ minutes for a full sheet">15</span>
+          <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed (steps of 5) — 15 is about 3½ minutes for a full sheet">15</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(1)" title="Faster">+</button>
         </div>
         <div class="crd-toolbar-right">
@@ -2878,13 +2878,17 @@ function crdUpdateScrollPctLabel() {
 }
 
 // ── Auto-scroll ──
-// Hands-free scrolling. Speed is a level from 1 to 60 (saved in this browser) relative to the
+// Hands-free scrolling. Speed is a level from 5 to 60 in steps of 5 (saved in this browser) relative to the
 // length of the sheet: level 15 is a full scroll in about 3½ minutes, 30 in half that, 8 in about
 // double. Touching, wheeling or using the arrow keys pauses it for a moment so you can
 // reposition, then it carries on from wherever you left the page. It stops by itself at the end
 // of the sheet.
 const CRD_AUTO_FULL_SECS_AT_15 = 210;
-let crdAutoSpeed = Math.max(1, Math.min(60, parseInt(localStorage.getItem('rep_crd_auto_level') || '15', 10) || 15));
+// Speed levels move in discrete steps of CRD_AUTO_SPEED_STEP (5, 10, 15 … 60); a saved value from
+// before that (e.g. 16) is snapped to the nearest step on load.
+const CRD_AUTO_SPEED_STEP = 5, CRD_AUTO_SPEED_MIN = 5, CRD_AUTO_SPEED_MAX = 60;
+let crdAutoSpeed = Math.max(CRD_AUTO_SPEED_MIN, Math.min(CRD_AUTO_SPEED_MAX,
+  Math.round((parseInt(localStorage.getItem('rep_crd_auto_level') || '15', 10) || 15) / CRD_AUTO_SPEED_STEP) * CRD_AUTO_SPEED_STEP));
 let crdAutoOn = false, crdAutoRaf = 0, crdAutoLast = 0, crdAutoPos = 0, crdAutoHoldUntil = 0, crdAutoTouching = false;
 // Where Pause left the sheet ({ id, pos }). Play resumes from the current scroll position; this is
 // only a safety net in case something reset the pane to the top while paused. Any deliberate
@@ -2941,8 +2945,11 @@ function crdAutoStop() {
 }
 function crdAutoToggle() { crdAutoOn ? crdAutoStop() : crdAutoStart(); }
 function crdAutoNudge() { crdAutoHoldUntil = performance.now() + 1500; }
-function crdAutoSpeedStep(delta) {
-  crdAutoSpeed = Math.max(1, Math.min(60, crdAutoSpeed + delta));
+// One step faster (dir > 0) or slower (dir < 0), always landing on a multiple of the step.
+function crdAutoSpeedStep(dir) {
+  const st = CRD_AUTO_SPEED_STEP;
+  const next = dir > 0 ? Math.floor(crdAutoSpeed / st) * st + st : Math.ceil(crdAutoSpeed / st) * st - st;
+  crdAutoSpeed = Math.max(CRD_AUTO_SPEED_MIN, Math.min(CRD_AUTO_SPEED_MAX, next));
   localStorage.setItem('rep_crd_auto_level', crdAutoSpeed);
   crdAutoUpdateUI();
 }
@@ -2984,16 +2991,15 @@ function crdAutoTick(ts) {
 // Presses within CRD_CHAIN_MS of each other form one gesture; if a gesture turns out to be a
 // hold, any play/pause its first taps already did is undone (a repeat stream usually starts
 // with a lone press, then a pause, then the fast repeats).
-// A hold changes the auto-scroll speed: Down (forward) makes it faster, Up (back) slower — one
-// level straight away, then another every CRD_HOLD_STEP_MS while it's still held (1–60). The
-// sheet keeps scrolling during the hold so you feel the new speed; a hold while paused stays
-// paused (the new level shows in the status pill and applies on Play).
+// A hold changes the auto-scroll speed by exactly one step (5 levels): Down (forward) faster,
+// Up (back) slower — once per hold, however long it lasts. The sheet keeps scrolling during the
+// hold so you feel the new speed; a hold while paused stays paused (the new level shows in the
+// status pill and applies on Play).
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
 const CRD_REPEAT_GAP_MS = 150;
 const CRD_CHAIN_MS      = 800;
 const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
-const CRD_HOLD_STEP_MS  = 300;
 let crdPedal = null;   // gesture in progress: { key, dir, down, last, autoWas, holding, holdTimer, jumpTimer, endTimer }
 
 function crdPedalDown(key, dir) {
@@ -3025,14 +3031,13 @@ function crdPedalHoldStart() {
   clearTimeout(p.holdTimer);
   p.holding = true;
   if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }  // undo taps that were the start of this hold
-  crdPedalSpeedStep();
-  p.jumpTimer = setInterval(crdPedalSpeedStep, CRD_HOLD_STEP_MS);
+  crdPedalSpeedStep();                             // one step per hold
   crdPedalKeepHold();
 }
 function crdPedalSpeedStep() {
   const p = crdPedal;
   if (!p) return;
-  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (clamped 1–60)
+  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (steps of 5, 5–60)
 }
 // Keeps a hold alive while the key is still down or presses keep streaming in; ends it otherwise.
 function crdPedalKeepHold() {
