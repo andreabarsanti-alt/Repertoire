@@ -35,6 +35,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **● Start live** — a header button that asks whether it's a gig, rehearsal or soundcheck, then notes down every song you open in the chord reader, in order (re-opening the song you just played isn't counted twice). A red **LIVE** pill shows the count (hidden while the chord reader is open), and recording carries on if you close the app. **■ Stop** saves the songs as a live setlist of that type, dated today, and pushes it
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
+- **# Go to position** — the # button next to ↑↓ asks for a position number and moves the song straight there
 - **+ Add all songs** or **+ Add artist** (pick an artist or tag) in the Add Songs window, to fill a big setlist in one go. Songs already in the setlist are skipped, and ticking "Hide Try outs" leaves try-outs out too
 - **✎ Edit right from the row** — same full edit form as the Songs tab (Title, Key, Capo, Harp, Artists, UG link, CRD), just without leaving the setlist
 - **Alternate songs** — give any song slot a backup; swap which one is live with one tap

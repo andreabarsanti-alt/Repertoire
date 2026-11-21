@@ -3641,6 +3641,7 @@ function slRow(item, i, total, nested, num) {
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();startSlEdit('${s.id}')" title="Edit song">✎</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},-1)" ${i===0?'disabled':''} title="Up">↑</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSong(${i},1)" ${i===total-1&&!nested?'disabled':''} title="${i===total-1&&nested?'Leave section (already last)':'Down'}">↓</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();moveSlSongTo(${i})" title="Go to position #">#</button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();removeSlItem(${i})" title="Remove from setlist">✕</button>
     </div>
   </div>`;
@@ -3765,6 +3766,38 @@ function exitSectionInPlace(items, idx) {
   reindexSelection(items, selectedItem);
   save(); renderSetDetail(); renderBubbles();
   toast('Left the section');
+}
+
+// "#" button on a song row: asks for a position N (song numbering, as shown by sl-num) and moves
+// the song so it becomes song N. It takes the slot of whatever song is N now -- inserted right
+// before it, so it joins that song's section -- or, for the last position, right after the last
+// song (past a section-end closing it, so it doesn't get pulled into that section). If it
+// lands inside a collapsed section, that section is expanded so the row stays visible.
+function moveSlSongTo(idx) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const items = sl.items;
+  if (items[idx]?.type !== 'song') return;
+  const songIdx = items.map((it, j) => it.type === 'song' ? j : -1).filter(j => j >= 0);
+  const count = songIdx.length, cur = songIdx.indexOf(idx) + 1;
+  const ans = prompt(`Move to position (1–${count}):`, String(cur));
+  if (ans === null) return;
+  const n = parseInt(ans, 10);
+  if (!(n >= 1 && n <= count)) { toast(`Enter a number from 1 to ${count}`); return; }
+  if (n === cur) return;
+  const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
+  const [moved] = items.splice(idx, 1);
+  const rest = items.map((it, j) => it.type === 'song' ? j : -1).filter(j => j >= 0);
+  let at;
+  if (n - 1 < rest.length) at = rest[n - 1];
+  else { at = rest[rest.length - 1] + 1; while (items[at]?.type === 'section-end') at++; }
+  items.splice(at, 0, moved);
+  for (let j = at - 1; j >= 0; j--) {
+    if (items[j].type === 'section-end') break;
+    if (items[j].type === 'section') { items[j].collapsed = false; break; }
+  }
+  reindexSelection(items, selectedItem);
+  save(); renderSetDetail(); renderBubbles();
+  toast(`Moved to #${n}`);
 }
 
 function moveSlSong(idx, dir) {
