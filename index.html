@@ -2799,7 +2799,7 @@ function openCrdReader(id) {
   crdApplyAutoMode();
   openModal('crd-reader');
   document.getElementById('crd-scroll').scrollTop = 0;
-  if (pedalAutoMode) crdAutoStart();               // auto-scroll mode: starts playing right away
+  // Auto-scroll mode no longer starts on open (Andrea asked) — tap the sheet, Space or a pedal tap to play.
 }
 
 function renderCrdBody() {
