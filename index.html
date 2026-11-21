@@ -3032,12 +3032,13 @@ function crdAutoTick(ts) {
 // Presses within CRD_CHAIN_MS of each other form one gesture; if a gesture turns out to be a
 // hold, any play/pause its first taps already did is undone (a repeat stream usually starts
 // with a lone press, then a pause, then the fast repeats).
-// A hold changes the auto-scroll speed by exactly one step (5 levels): Down (forward) faster,
-// Up (back) slower — once per hold, however long it lasts. The sheet keeps scrolling during the
+// A hold changes the auto-scroll speed by one step (5 levels): Down (forward) faster, Up (back)
+// slower — once straight away, then another step every CRD_HOLD_STEP_MS (1 s) while still held. The sheet keeps scrolling during the
 // hold so you feel the new speed; a hold while paused stays paused (the new level shows in the
 // status pill and applies on Play).
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
+const CRD_HOLD_STEP_MS  = 1000;
 const CRD_REPEAT_GAP_MS = 150;
 const CRD_CHAIN_MS      = 800;
 const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
@@ -3072,12 +3073,15 @@ function crdPedalHoldStart() {
   clearTimeout(p.holdTimer);
   p.holding = true;
   if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }  // undo taps that were the start of this hold
-  crdPedalSpeedStep();                             // one step per hold
+  crdPedalSpeedStep();                             // one step now…
+  p.jumpTimer = setInterval(crdPedalSpeedStep, CRD_HOLD_STEP_MS);   // …and one per second while held
   crdPedalKeepHold();
 }
 function crdPedalSpeedStep() {
   const p = crdPedal;
   if (!p) return;
+  // Released already (key up and no fresh repeat) but the hold hasn't timed out yet: no extra step.
+  if (!p.down && performance.now() - p.last > CRD_REPEAT_GAP_MS) return;
   crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (steps of 5, 5–60)
 }
 // Keeps a hold alive while the key is still down or presses keep streaming in; ends it otherwise.
