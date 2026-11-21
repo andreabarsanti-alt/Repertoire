@@ -66,8 +66,7 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 }
 .bubble:active { transform: scale(1.08) !important; }
 @keyframes floatBubble { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.bubble-name { font-weight: 700; font-size: 0.82rem; line-height: 1.2; max-width: 90%; text-shadow: 0 1px 6px rgba(0,0,0,.6); position: relative; }
-.bubble-count { font-size: 0.68rem; opacity: .75; margin-top: 2px; position: relative; }
+.bubble-name { font-weight: 700; line-height: 1.15; max-width: 88%; overflow-wrap: break-word; hyphens: auto; text-shadow: 0 1px 6px rgba(0,0,0,.65); position: relative; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer;
@@ -276,7 +275,7 @@ function twoCircleIntersect(x1, y1, r1, x2, y2, r2) {
   const mx = x1 + a * dx / d, my = y1 + a * dy / d;
   return [{ x: mx + h * dy / d, y: my - h * dx / d }, { x: mx - h * dy / d, y: my + h * dx / d }];
 }
-function packBubbles(items) {
+function packBubbles(items, xWeight = 1, halfW = Infinity) {
   if (!items.length) return;
   items.sort((a, b) => b.r - a.r);
   items[0].x = 0; items[0].y = 0;
@@ -292,8 +291,11 @@ function packBubbles(items) {
     let best = null, bestD = Infinity;
     for (const cand of cands) {
       let ok = true;
-      for (const p of placed) if (Math.hypot(cand.x - p.x, cand.y - p.y) < p.r + c.r + GAP - 0.5) { ok = false; break; }
-      if (ok) { const d = Math.hypot(cand.x, cand.y * 1.15); if (d < bestD) { bestD = d; best = cand; } }
+      if (Math.abs(cand.x) + c.r > halfW) ok = false;   // keep the cluster within the screen width
+      if (ok) for (const p of placed) if (Math.hypot(cand.x - p.x, cand.y - p.y) < p.r + c.r + GAP - 0.5) { ok = false; break; }
+      // Width counts more than height: on a phone the cluster grows downwards (the page scrolls)
+      // instead of sideways, so it doesn't have to be shrunk to fit the screen width.
+      if (ok) { const d = Math.hypot(cand.x * xWeight, cand.y); if (d < bestD) { bestD = d; best = cand; } }
     }
     c.x = best ? best.x : i * (c.r * 2 + GAP); c.y = best ? best.y : 0;
   }
@@ -307,8 +309,11 @@ function renderBubbles() {
   lastBubbleSig = sig;
   if (!keys.length) { wrap.innerHTML = ''; wrap.style.height = ''; return; }
   const max = Math.max(...keys.map(k => g[k].length));
-  const items = keys.map((key, i) => ({ key, i, count: g[key].length, r: Math.round(42 + (g[key].length / max) * 46) }));
-  packBubbles(items);
+  // Sized from the screen width, so even the smallest bubble's label stays big enough to read.
+  const W0 = wrap.clientWidth || (window.innerWidth - 32);
+  const minR = Math.max(58, Math.min(80, W0 * 0.17)), addR = Math.min(70, W0 * 0.12);
+  const items = keys.map((key, i) => ({ key, i, count: g[key].length, r: Math.round(minR + (g[key].length / max) * addR) }));
+  packBubbles(items, W0 < 600 ? 2.4 : 1, (W0 - 2 * 8) / 2);
   const PAD = 8;
   const minX = Math.min(...items.map(c => c.x - c.r)), maxX = Math.max(...items.map(c => c.x + c.r));
   const minY = Math.min(...items.map(c => c.y - c.r)), maxY = Math.max(...items.map(c => c.y + c.r));
@@ -320,13 +325,12 @@ function renderBubbles() {
     const [c1, c2] = PALETTE[c.i % PALETTE.length];
     const size = Math.round(c.r * 2 * scale);
     const left = Math.round(offX + (c.x - c.r - minX) * scale), top = Math.round(PAD + 8 + (c.y - c.r - minY) * scale);
-    const fs = Math.max(0.62, Math.min(0.9, size / 120));
+    const fs = Math.max(0.95, Math.min(1.35, size / 110));
     return `<div class="bubble" data-key="${esc(c.key)}" onclick="openList(this.dataset.key)"
       style="width:${size}px;height:${size}px;left:${left}px;top:${top}px;
              background:radial-gradient(circle at 38% 38%, ${c1}, ${c2});
              --bdur:${(3.4 + (c.i % 7) * 0.38).toFixed(2)}s;animation-delay:${-((c.i * 0.41) % 4)}s">
       <span class="bubble-name" style="font-size:${fs}rem">${esc(c.key)}</span>
-      <span class="bubble-count">${c.count} canzon${c.count !== 1 ? 'i' : 'e'}</span>
     </div>`;
   }).join('');
 }
