@@ -70,6 +70,14 @@ body {
   #print-area .section-row td { border-bottom: 1px solid #000; padding-top: 16px; font-weight: 700;
                                 text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
   #print-area .section-row:first-child td { padding-top: 7px; }
+  #print-area .qr-poster { text-align: center; font-family: Helvetica, Arial, sans-serif; padding-top: 30px; }
+  #print-area .qp-band { font-size: 20px; color: #555; margin-bottom: 28px; }
+  #print-area .qp-h { font-size: 44px; font-weight: 700; }
+  #print-area .qp-sub { font-size: 18px; margin: 10px 0 24px; }
+  #print-area .qp-qr svg { width: 110mm; height: 110mm; }
+  #print-area .qp-url { font-size: 14px; color: #555; margin-top: 10px; }
+  #print-area .qp-ig { font-size: 26px; font-weight: 700; margin-top: 50px; line-height: 1.5; }
+  #print-area .qp-ig a { color: #000; font-weight: 400; text-decoration: none; }
   @page { margin: 12mm 14mm; }
 }
 
@@ -4606,11 +4614,14 @@ function pdfFileName(title) {
 // loading when the Print dialog opens) it happens straight away; if it had to load first,
 // or the share sheet refuses, a "Share / Print PDF" button gives it a fresh tap.
 function printViaPdf(sheet, extraCol) {
+  pdfShareFlow(() => buildSheetPdf(sheet, extraCol), pdfFileName(sheet.title));
+}
+function pdfShareFlow(makeDoc, fileName) {
   const go = immediate => {
     let file;
     try {
-      const blob = buildSheetPdf(sheet, extraCol).output('blob');
-      file = new File([blob], pdfFileName(sheet.title), { type: 'application/pdf' });
+      const blob = makeDoc().output('blob');
+      file = new File([blob], fileName, { type: 'application/pdf' });
     } catch (e) { console.error(e); toast('Could not make the PDF'); return; }
     if (immediate) sharePdf(file); else showPdfReady(file);
   };
@@ -5691,10 +5702,76 @@ function liveFillQr(elId) {
   const el = document.getElementById(elId);
   if (!el) return;
   const url = liveShareUrl();
+  if (PRINT_STANDALONE) loadPdfLib().catch(() => {});  // for the ⤢ Show big poster
   loadQrLib().then(() => { el.innerHTML = qrSvg(url); })
              .catch(() => { el.textContent = 'QR code needs an internet connection — share the link instead'; });
 }
 function liveShowBigQr() { openModal('live-qr-big'); liveFillQr('live-qr-big-svg'); }
+// Instagram handle per profile, printed on the QR poster ("Filmaci e taggaci"). Public anyway.
+const LIVE_INSTAGRAM = { two_of_us: 'twoofus_7478' };
+// "⤢ Show big" -> a printable A4 QR poster for the audience, in Italian (like request.html):
+// the same two print paths as doPrint (PDF to the share sheet in the home-screen app, in-page
+// window.print() in a browser tab). Both libraries start loading when the QR card renders.
+function liveQrPoster() {
+  if (!window.qrcode) {
+    toast('QR code still loading…');
+    loadQrLib().catch(() => toast('QR code needs an internet connection'));
+    return;
+  }
+  const url = liveShareUrl();
+  const ig = LIVE_INSTAGRAM[LIVE_GIG] || '';
+  const igUrl = ig ? `https://www.instagram.com/${ig}/` : '';
+  const name = (getProfiles().find(p => p.id === PROFILE) || {}).name || '';
+  if (PRINT_STANDALONE) {
+    pdfShareFlow(() => buildQrPosterPdf(url, name, ig, igUrl), pdfFileName(`QR richieste ${name}`.trim()));
+    return;
+  }
+  const area = document.getElementById('print-area');
+  area.innerHTML = `<div class="qr-poster">
+    ${name ? `<div class="qp-band">${esc(name)}</div>` : ''}
+    <div class="qp-h">Richiedi una canzone!</div>
+    <div class="qp-sub">Inquadra il QR code con la fotocamera del telefono</div>
+    <div class="qp-qr">${qrSvg(url)}</div>
+    <div class="qp-url">${esc(url.replace(/^https?:\/\//, ''))}</div>
+    ${ig ? `<div class="qp-ig">Filmaci e taggaci!<br><a href="${esc(igUrl)}">Instagram @${esc(ig)}</a></div>` : ''}
+  </div>`;
+  const prevTitle = document.title;
+  document.title = `QR richieste ${name}`.trim();
+  window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
+  window.print();
+}
+function buildQrPosterPdf(url, name, ig, igUrl) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const cx = W / 2;
+  let y = 90;
+  doc.setTextColor(0);
+  if (name) { doc.setFont('helvetica', 'normal'); doc.setFontSize(20); doc.setTextColor(90); doc.text(name, cx, y, { align: 'center' }); y += 50; doc.setTextColor(0); }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(40);
+  doc.text('Richiedi una canzone!', cx, y, { align: 'center' }); y += 36;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(16);
+  doc.text('Inquadra il QR code con la fotocamera del telefono', cx, y, { align: 'center' }); y += 30;
+  // QR as filled squares (vector, sharp at any print size), with a quiet zone of 2 modules.
+  const q = qrcode(0, 'M'); q.addData(url); q.make();
+  const n = q.getModuleCount(), size = 320, cell = size / (n + 4), x0 = cx - size / 2;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+    if (q.isDark(r, c)) doc.rect(x0 + (c + 2) * cell, y + (r + 2) * cell, cell + 0.2, cell + 0.2, 'F');
+  y += size + 26;
+  doc.setFontSize(13); doc.setTextColor(90);
+  doc.text(url.replace(/^https?:\/\//, ''), cx, y, { align: 'center' }); doc.setTextColor(0);
+  if (ig) {
+    y += 70;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(28);
+    doc.text('Filmaci e taggaci!', cx, y, { align: 'center' }); y += 34;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(22);
+    const t = `Instagram @${ig}`;
+    doc.text(t, cx, y, { align: 'center' });
+    const tw = doc.getTextWidth(t);
+    doc.link(cx - tw / 2, y - 20, tw, 26, { url: igUrl });
+  }
+  return doc;
+}
 function liveCopyLink() {
   const url = liveShareUrl();
   (navigator.clipboard?.writeText(url) || Promise.reject()).then(() => toast('Link copied'), () => prompt('Audience link:', url));
@@ -5780,7 +5857,7 @@ function renderLive() {
           <div class="live-qr-side">
             <div class="live-qr-title">Audience page — scan to request</div>
             <a class="live-qr-url" href="${esc(liveShareUrl())}" target="_blank" rel="noopener">${esc(liveShareUrl())}</a>
-            <button class="btn btn-secondary btn-sm" onclick="liveShowBigQr()">⤢ Show big</button>
+            <button class="btn btn-secondary btn-sm" onclick="liveQrPoster()" title="Print a QR poster for the audience (in Italian)">⤢ Show big</button>
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
