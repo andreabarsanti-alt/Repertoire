@@ -39,16 +39,8 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
   background: rgba(196,90,90,.14); border: 1px solid rgba(196,90,90,.4); color: #ffb0b0;
 }
 .hidden { display: none !important; }
-.board { margin-bottom: 14px; }
-.board h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin: 10px 0 6px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  font-size: 0.8rem; padding: 5px 11px; border-radius: 999px;
-  background: var(--surface2); border: 1px solid var(--border);
-}
-.chip.played { color: #8fe0bf; border-color: rgba(58,170,126,.4); background: rgba(58,170,126,.1); }
-.chip.req b { color: #ff9a9a; font-weight: 600; margin-left: 3px; }
 .hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
+.loc-hint { text-align: left; font-size: 0.75rem; margin: 0 0 10px; }
 #bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
 /* Phone layout: tags as colourful chips flowing in rows instead of a tall column of bubbles. */
 #bubbles.chips-mode { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 0; height: auto !important; }
@@ -146,7 +138,6 @@ textarea.fi { resize: vertical; min-height: 70px; }
 
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
-    <div class="board" id="board"></div>
     <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
     <div id="search-results" class="hidden"></div>
     <div id="bubbles"></div>
@@ -267,19 +258,10 @@ function render() {
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
   document.getElementById('subtitle').textContent = open ? 'Scegli un artista o un genere, oppure cerca una canzone' : 'Dai un\'occhiata a cosa suoniamo stasera';
-  renderBoard();
   renderBubbles();
   renderSearch();
   // An open song list refreshes in place with the new played/requested state.
   if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
-}
-
-function renderBoard() {
-  const played = songs.filter(isPlayed).sort((a, b) => info.played[b.k || fbKey(b.id)] - info.played[a.k || fbKey(a.id)]);
-  const reqd = songs.filter(s => reqCount(s) && !isPlayed(s)).sort((a, b) => reqCount(b) - reqCount(a));
-  document.getElementById('board').innerHTML =
-    (reqd.length ? `<h2>Richieste</h2><div class="chips">${reqd.map(s => `<span class="chip req">${esc(s.t)}${reqCount(s) > 1 ? `<b>×${reqCount(s)}</b>` : ''}</span>`).join('')}</div>` : '') +
-    (played.length ? `<h2>Suonate stasera</h2><div class="chips">${played.map(s => `<span class="chip played">✓ ${esc(s.t)}</span>`).join('')}</div>` : '');
 }
 
 // Circle packing — the same approach as the app's Visualizer (largest first, each new circle at
@@ -418,13 +400,32 @@ function openForm(songId) {
       <div class="sheet-head"><h2>${s ? esc(s.t) : 'Chiedi una canzone qualsiasi'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
       ${s && isPlayed(s) ? '<p class="hint" style="text-align:left;margin-bottom:10px">Già suonata stasera — puoi comunque richiederla di nuovo.</p>' : ''}
       ${s ? '' : `<div class="fg"><label>Canzone (e artista)</label><input class="fi" id="rq-text" maxlength="100" placeholder="es. Harvest Moon – Neil Young"></div>`}
-      <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="rq-name" maxlength="40" autocomplete="given-name"></div>
+      <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="rq-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
       <div class="fg"><label>Messaggio per la band (facoltativo)</label><textarea class="fi" id="rq-msg" maxlength="200" placeholder="Una dedica, un compleanno…"></textarea></div>
+      <p class="hint loc-hint">📍 Al momento dell’invio il telefono può chiederti la posizione: serve solo a far sapere alla band che sei in sala. Puoi anche rifiutare.</p>
       <div class="form-err" id="rq-err"></div>
       <button class="btn btn-primary btn-wide" id="rq-send" onclick="sendRequest()">Invia richiesta</button>`;
   }
   document.getElementById('form-sheet').classList.remove('hidden');
   setTimeout(() => document.getElementById(s ? 'rq-name' : 'rq-text')?.focus(), 50);
+}
+
+const NAME_KEY = 'rq_name';
+function savedName() { try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; } }
+function saveName(n) { try { n ? localStorage.setItem(NAME_KEY, n) : localStorage.removeItem(NAME_KEY); } catch {} }
+
+// The phone's position, sent with the request so the band can tell a request from the room
+// from one sent from far away. Optional: refused, unavailable or slow just means no location.
+function getLoc() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null);
+    const done = v => { clearTimeout(t); resolve(v); };
+    const t = setTimeout(() => resolve(null), 10000);
+    navigator.geolocation.getCurrentPosition(
+      p => done({ lat: +p.coords.latitude.toFixed(5), lng: +p.coords.longitude.toFixed(5), acc: Math.round(p.coords.accuracy || 0) }),
+      () => done(null),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+  });
 }
 
 async function sendRequest() {
@@ -440,21 +441,28 @@ async function sendRequest() {
   if (formSongId) body.songId = formSongId; else body.text = text;
   if (name) body.name = name;
   if (msg) body.msg = msg;
+  saveName(name);
   btn.disabled = true; err.textContent = '';
+  const label = btn.textContent; btn.textContent = 'Invio…';
+  const loc = await getLoc();
+  if (loc) body.loc = loc;
+  const post = b => fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/requests.json`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b),
+  });
   try {
-    const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/requests.json`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    });
-    if (r.status === 401 || r.status === 403) { err.textContent = 'Le richieste sono chiuse in questo momento'; btn.disabled = false; poll(); return; }
+    let r = await post(body);
+    // Database rules from before locations were added refuse the extra field: send it without.
+    if (!r.ok && body.loc) { delete body.loc; r = await post(body); }
+    if (r.status === 401 || r.status === 403) { err.textContent = 'Le richieste sono chiuse in questo momento'; btn.disabled = false; btn.textContent = label; poll(); return; }
     if (!r.ok) throw new Error();
   } catch {
     err.textContent = 'Invio non riuscito — controlla la connessione e riprova';
-    btn.disabled = false; return;
+    btn.disabled = false; btn.textContent = label; return;
   }
   setLastSent();
   if (formSongId) {
     addMine(formSongId);
-    // Show it on the Requested board straight away; the next poll brings the real count.
+    // Show it as requested in the song lists straight away; the next poll brings the real count.
     const s = songById(formSongId);
     if (s && info) { info.requested = info.requested || {}; const k = s.k || fbKey(s.id); info.requested[k] = (+info.requested[k] || 0) + 1; render(); }
   }

@@ -52,6 +52,13 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
             "text":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
             "name":   { ".validate": "newData.isString() && newData.val().length <= 40" },
             "msg":    { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "loc": {
+              ".validate": "newData.hasChildren(['lat', 'lng'])",
+              "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+              "lng": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+              "acc": { ".validate": "newData.isNumber()" },
+              "$o":  { ".validate": false }
+            },
             "status": { ".validate": "auth != null && auth.token.email === 'YOUR_EMAIL' && (newData.val() === 'played' || newData.val() === 'dismissed')" },
             "$other": { ".validate": false }
           }
@@ -85,6 +92,8 @@ On the iPad, open Repertoire and tap the **Live** tab:
 3. Choose the setlist to show and tap **📣 Publish to audience**.
 4. Show the QR code (**⤢ Show big**) or print it. Each profile's link never changes, so a printed QR code keeps working for every gig.
 
+The app remembers where the iPad was when you tap **● Start live** (or when you first publish) as the venue, and marks each request **📍 In the audience** or **⚠ Not in the audience** by comparing it with the phone's location, if the person allowed their phone to share it. Tap **Set here** in the Live tab to set the venue again. The venue location stays on the iPad and is never sent to Firebase.
+
 Before each gig, tap **Clear requests** to start with an empty list and an empty "played" board.
 
 ## Troubleshooting
@@ -92,4 +101,5 @@ Before each gig, tap **Clear requests** to start with an empty list and an empty
 - **"Wrong email or password"**: check the user in Authentication → Users. You can reset the password there.
 - **"Permission denied — check the Firebase rules"**: the email in the rules must match your sign-in email exactly, in lowercase, and the rules must be published.
 - **"Email/Password sign-in is not enabled"**: redo step 4.2.
+- **Every request says "📍 No location"**: if you set up Firebase before the location check was added, open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**. Until then requests still arrive, just without a location. It's also normal for people who refuse the location prompt.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

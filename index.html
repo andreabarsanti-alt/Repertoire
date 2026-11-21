@@ -978,6 +978,14 @@ select.fi { cursor: pointer; }
 .live-req-title a { color: var(--text); }
 .live-req-title .live-free { color: #e0c060; }
 .live-req-from { font-size: 0.8rem; color: var(--text); opacity: .8; margin-top: 3px; overflow-wrap: anywhere; }
+.live-req-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; }
+.live-req-name { font-size: 0.85rem; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.live-req-name.anon { font-weight: 400; color: var(--text-dim); }
+.live-loc { font-size: 0.72rem; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--border); white-space: nowrap; }
+.live-loc.near { color: var(--accent); border-color: rgba(61,158,140,.5); }
+.live-loc.far { color: #ff8a7a; border-color: rgba(255,120,100,.6); background: rgba(255,90,70,.1); font-weight: 600; }
+.live-loc.unknown { color: var(--text-dim); }
+.live-venue { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--text-dim); margin: 0 0 10px; }
 .live-req-time { font-size: 0.68rem; color: var(--text-dim); font-family: var(--fm); margin-top: 3px; }
 .live-req-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
 .live-req-state { font-size: 0.72rem; color: var(--text-dim); }
@@ -4178,6 +4186,7 @@ function startLiveRec(kind) {
   closeModal('live-start-modal');
   liveRec = { kind: LIVE_KINDS[kind] ? kind : 'gig', date: localDateStr(), startedAt: Date.now(), songIds: [] };
   saveLiveRec(); renderLiveRec();
+  liveCaptureVenue(false);   // where the live started = the venue, for the audience location check
   toast(`Live started (${LIVE_KINDS[liveRec.kind]}) — open songs in the chord reader to note them down`, 3500);
 }
 
@@ -5082,6 +5091,42 @@ let liveES = null, liveESState = 'off', liveTokenTimer = null, liveRetryTimer = 
 let liveSeen = null;            // request ids already seen; null until the first snapshot (no alert for old ones)
 let liveFresh = new Set();      // highlighted until handled
 let liveShowDone = false, liveEditingSetup = false;
+
+// Venue location: where this iPad was when the live started (or when you tap "Set here"). Kept on
+// this device only, never sent to Firebase; each request's location is compared against it.
+const LIVE_LOC_KEY = 'rep_live_loc_' + PROFILE;     // {lat, lng, acc, at}
+const LIVE_NEAR_M = 300;                            // base radius counted as "in the audience"
+function getVenueLoc() { try { return JSON.parse(localStorage.getItem(LIVE_LOC_KEY) || 'null'); } catch { return null; } }
+function liveCaptureVenue(manual) {
+  if (!navigator.geolocation) { if (manual) toast('Location isn\'t available on this device'); return; }
+  navigator.geolocation.getCurrentPosition(p => {
+    localStorage.setItem(LIVE_LOC_KEY, JSON.stringify({ lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0), at: Date.now() }));
+    if (manual) toast('Venue location set');
+    renderLive();
+  }, e => {
+    if (manual) toast(e.code === 1 ? 'Location permission denied — allow it for this site in Settings' : 'Couldn\'t get your location', 4000);
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+function distM(a, b) {   // haversine, metres
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function fmtDist(m) { return m < 1000 ? Math.round(m / 10) * 10 + ' m' : (m < 10000 ? (m / 1000).toFixed(1) : Math.round(m / 1000)) + ' km'; }
+// Badge for a request: in the audience / not in the audience / no location. The radius grows with
+// both positions' reported accuracy (capped), since indoor phone locations can be off by hundreds of m.
+function liveLocBadge(r) {
+  const v = getVenueLoc();
+  const l = r.loc;
+  if (!l || typeof l.lat !== 'number' || typeof l.lng !== 'number') return '<span class="live-loc unknown" title="The phone didn\'t share its location">📍 No location</span>';
+  if (!v) return '<span class="live-loc unknown" title="Set the venue location to check">📍 Venue not set</span>';
+  const d = distM(v, l);
+  const limit = LIVE_NEAR_M + Math.min(+l.acc || 0, 1500) + Math.min(+v.acc || 0, 1500);
+  return d <= limit
+    ? `<span class="live-loc near" title="${fmtDist(d)} from where you set the venue">📍 In the audience</span>`
+    : `<span class="live-loc far" title="${fmtDist(d)} from where you set the venue">⚠ Not in the audience · ${fmtDist(d)}</span>`;
+}
 let liveBoardTimer = null, liveBoardLast = null;
 let liveAudio = null;
 
@@ -5362,6 +5407,7 @@ async function livePublish() {
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
   setLivePub(songs.map(s => s.id));
+  if (!getVenueLoc()) liveCaptureVenue(false);
   toast(wasPub ? 'Audience page updated' : `Published "${sl.name}" — requests are open`);
   if (!wasPub || liveESState !== 'live') liveConnect(); else liveFetchInfo();
 }
@@ -5548,6 +5594,10 @@ function renderLive() {
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
+        <div class="live-venue">${(() => { const v = getVenueLoc(); return v
+          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${v.acc ? ` (±${fmtDist(v.acc)})` : ''}`
+          : '📍 Venue location not set — requests can\'t be checked'; })()}
+          <button class="btn btn-secondary btn-sm" onclick="liveCaptureVenue(true)" title="Use this iPad's current position as the venue">Set here</button></div>
         <h3>Requests <span id="live-req-count"></span></h3>
         <div id="live-reqs"></div>
       </section>
@@ -5573,7 +5623,7 @@ function renderLiveLists() {
     const s = r.songId ? db.songs.find(x => x.id === r.songId) : null;
     const title = r.text ? `<span class="live-free">✎ ${esc(r.text)}</span>`
                 : s ? songTitleLink(s) : 'Unknown song';
-    const from = [r.name ? '— ' + esc(r.name) : '', r.msg ? '“' + esc(r.msg) + '”' : ''].filter(Boolean).join(' ');
+    const who = r.name ? `<span class="live-req-name">👤 ${esc(r.name)}</span>` : '<span class="live-req-name anon">👤 Anonymous</span>';
     const actions = r.status
       ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
@@ -5582,7 +5632,8 @@ function renderLiveLists() {
     return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
       <div class="live-req-main">
         <div class="live-req-title">${title}</div>
-        ${from ? `<div class="live-req-from">${from}</div>` : ''}
+        <div class="live-req-who">${who}${liveLocBadge(r)}</div>
+        ${r.msg ? `<div class="live-req-from">“${esc(r.msg)}”</div>` : ''}
         <div class="live-req-time">${time(r.at)}</div>
       </div>
       <div class="live-req-actions">${actions}</div>
