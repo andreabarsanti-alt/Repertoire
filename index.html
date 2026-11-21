@@ -883,10 +883,11 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .set-name-col .set-name { flex: none; white-space: nowrap; }
 .set-date { font-size: 0.68rem; color: var(--text-dim); }
 .set-kind { color: var(--accent); font-weight: 600; }
-/* "Start a live" recording indicator — floats above everything incl. the CRD reader (1500) and
-   full editor (1600), bottom-left so it never covers the reader's auto-scroll pill (bottom-right). */
+/* "Start a live" recording indicator — sits *below* the full-screen overlays (CRD reader and Play
+   mode at 1500, full editor 1600), so it's hidden while reading/playing chords and only shows in
+   the normal app views. */
 #live-rec-pill {
-  position: fixed; left: 14px; bottom: 14px; z-index: 1700;
+  position: fixed; left: 14px; bottom: 14px; z-index: 1400;
   display: flex; align-items: center; gap: 8px;
   background: rgba(150,30,40,.92); color: #fff; border: 1px solid rgba(255,255,255,.25);
   font-family: var(--fm); font-size: 0.8rem; padding: 5px 6px 5px 12px; border-radius: 999px;
