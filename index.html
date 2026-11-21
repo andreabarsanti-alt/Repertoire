@@ -2559,8 +2559,8 @@ function openCrdReader(id) {
   crdUpdateScrollPctLabel();
   crdAutoStop();
   crdAutoPaused = null;
-  if (s.autoSpeed) crdAutoSpeed = crdSnapSpeed(s.autoSpeed);   // per-song speed, else the device default
-  else crdAutoSpeed = crdSnapSpeed(localStorage.getItem('rep_crd_auto_level') || '15');
+  if (s.autoSpeed) crdAutoSpeed = crdSnapSpeed(s.autoSpeed);   // per-song speed, else the fixed default (20)
+  else crdAutoSpeed = CRD_AUTO_SPEED_DEFAULT;
   crdPedalCancel();
   crdApplyAutoMode();
   openModal('crd-reader');
@@ -2932,10 +2932,11 @@ const CRD_AUTO_FULL_SECS_AT_15 = 210;
 const CRD_AUTO_SPEED_STEP = 5, CRD_AUTO_SPEED_MIN = 5, CRD_AUTO_SPEED_MAX = 60;
 function crdSnapSpeed(v) {
   return Math.max(CRD_AUTO_SPEED_MIN, Math.min(CRD_AUTO_SPEED_MAX,
-    Math.round((parseInt(v, 10) || 15) / CRD_AUTO_SPEED_STEP) * CRD_AUTO_SPEED_STEP));
+    Math.round((parseInt(v, 10) || CRD_AUTO_SPEED_DEFAULT) / CRD_AUTO_SPEED_STEP) * CRD_AUTO_SPEED_STEP));
 }
-// Default for songs with no saved speed of their own: the last speed used on this device.
-let crdAutoSpeed = crdSnapSpeed(localStorage.getItem('rep_crd_auto_level') || '15');
+// Fixed starting speed for songs with no saved speed of their own (s.autoSpeed).
+const CRD_AUTO_SPEED_DEFAULT = 20;
+let crdAutoSpeed = CRD_AUTO_SPEED_DEFAULT;
 let crdAutoOn = false, crdAutoRaf = 0, crdAutoLast = 0, crdAutoPos = 0, crdAutoHoldUntil = 0, crdAutoTouching = false;
 // Where Pause left the sheet ({ id, pos }). Play resumes from the current scroll position; this is
 // only a safety net in case something reset the pane to the top while paused. Any deliberate
@@ -2997,7 +2998,6 @@ function crdAutoSpeedStep(dir) {
   const st = CRD_AUTO_SPEED_STEP;
   const next = dir > 0 ? Math.floor(crdAutoSpeed / st) * st + st : Math.ceil(crdAutoSpeed / st) * st - st;
   crdAutoSpeed = Math.max(CRD_AUTO_SPEED_MIN, Math.min(CRD_AUTO_SPEED_MAX, next));
-  localStorage.setItem('rep_crd_auto_level', crdAutoSpeed);
   // Remember it on the open song (s.autoSpeed, part of db — saved and pushed/pulled like any
   // other song field), so the song reopens at the speed it was last played at.
   const s = crdSongId && db.songs.find(x => x.id === crdSongId);
