@@ -419,7 +419,7 @@ function songRow(s, mine) {
 let shuffleRank = {}, shuffledAt = Date.now(), lastTouch = 0;
 // Reshuffle the titles list every SHUFFLE_MS (checked on each 15 s poll), but never under
 // someone's finger: not within IDLE_MS of a touch/scroll, and not while a sheet is open.
-const SHUFFLE_MS = 120000, IDLE_MS = 20000;
+const SHUFFLE_MS = 15 * 60000, IDLE_MS = 20000;   // every 15 min (Andrea)
 ['touchstart', 'scroll', 'wheel', 'keydown'].forEach(ev => addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true }));
 function maybeReshuffle() {
   const busy = Date.now() - lastTouch < IDLE_MS
