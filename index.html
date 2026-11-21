@@ -2089,10 +2089,25 @@ function deleteSong(id) {
 const NOTE_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const NOTE_CANON = ['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
-const CHORD_QUAL = '(?:maj7|maj9|maj13|maj|mmaj7|mM7|m7b5|m7#5|m6|m7|m9|m11|m13|min7|min|m|dim7|dim|aug|\\+|sus2|sus4|sus|add9|add11|add2|6\\/9|6|7b5|7#5|7b9|7#9|7|9|11|13|2|4|5)';
-const CHORD_RE = new RegExp('^[A-G](#|b)?' + CHORD_QUAL + '?(\\/[A-G](#|b)?)?$');
-const CHORD_DECOR_RE = /^(\|{1,2}:?|:?\|{1,2}|%{1,2}|N\.?C\.?)$/i;
-const SECTION_RE = /^(chorus|verse|pre-chorus|prechorus|bridge|intro|outro|hook|solo|interlude|tag|refrain|coda|instrumental)\s*\d*\.?$/i;
+// Chord grammar (not a fixed list): ROOT [QUALITY] [EXTENSION] [MODIFIERS…] [/BASS]
+//   ROOT       A–G + optional # or b
+//   QUALITY    maj/Maj/M · m/min · mmaj/mMaj/mM (minor-major) · dim/° · ø (half-dim) · aug/+
+//   EXTENSION  2 4 5 6 7 9 11 13, 6/9 or 69, optionally followed by M (Latin "7M" = maj7)
+//   MODIFIERS  any number of: sus/sus2/sus4 · add2/4/9/11/13 · alterations b5 #5 b9 #9 #11 b13
+//              (also with + or -) · a bare + (C7+) · no3 · alt · a parenthesised group of these
+//   BASS       / + A–G + optional # or b
+// Anchored on the whole token, so a lyric word only matches if it's literally a chord spelling
+// (e.g. "Am", "Em") — and a line only counts as a chord line if *every* token is a chord/decor.
+const CHORD_MOD_ALTS = 'sus[24]?|add(?:2|4|9|11|13)|[#b+\\-](?:5|9|11|13)|no3|alt';
+const CHORD_MOD = '(?:' + CHORD_MOD_ALTS + ')';
+const CHORD_PAREN_ATOM = '(?:' + CHORD_MOD_ALTS + '|maj7|M7|[#b+\\-]?(?:2|4|5|6|7|9|11|13))';
+const CHORD_BODY =
+  '(?:mmaj|mMaj|mM|maj|Maj|min|m|M|dim|°|ø|aug|\\+)?' +           // quality
+  '(?:(?:6\\/9|69|13|11|9|7|6|5|4|2)M?)?' +                       // extension (7M = maj7)
+  '(?:' + CHORD_MOD + '|\\+|\\(' + CHORD_PAREN_ATOM + '(?:[,\\s]?' + CHORD_PAREN_ATOM + ')*\\))*'; // modifiers
+const CHORD_RE = new RegExp('^[A-G][#b]?' + CHORD_BODY + '(?:\\/[A-G][#b]?)?$');
+const CHORD_DECOR_RE = /^(\|+:?|:?\|+|%{1,2}|N\.?C\.?|\/+|[x×]\d+|\d+[x×])$/i; // bars, repeats, beat slashes, x2/2x
+const SECTION_RE = /^(chorus|verse|pre-chorus|prechorus|bridge|intro|outro|hook|solo|interlude|tag|refrain|coda|instrumental|break|finale|ending|fade[\s-]?(?:in|out))\s*\d*\.?$/i;
 
 // Collapses spaced-out slash chords ("G / D" → "G/D") anywhere in the text so they're
 // recognized as a single chord token instead of breaking on whitespace.
@@ -2104,13 +2119,18 @@ function normalizeChordSpacing(text) {
 // so "(G/D)" or "Bb/D," are still recognized as chords with their punctuation preserved.
 function tokenParts(tok) {
   const m = tok.match(/^([(\[]*)(.*?)([)\],.;:]*)$/);
-  return { pre: m[1] || '', core: m[2] || '', post: m[3] || '' };
+  let core = m[2] || '', post = m[3] || '';
+  // "C(add9)" / "G7(b9)": the closing paren belongs to the chord, not the wrapping punctuation.
+  if (post[0] === ')' && core.includes('(') && !core.includes(')')) { core += ')'; post = post.slice(1); }
+  return { pre: m[1] || '', core, post };
 }
 
+const NOTE_ENHARM = { 'Cb': 11, 'Fb': 4, 'E#': 5, 'B#': 0 };
 function noteIndex(note) {
   let i = NOTE_SHARP.indexOf(note);
   if (i !== -1) return i;
-  return NOTE_FLAT.indexOf(note);
+  i = NOTE_FLAT.indexOf(note);
+  return i !== -1 ? i : (note in NOTE_ENHARM ? NOTE_ENHARM[note] : -1);
 }
 function transposeNote(note, semis) {
   const i = noteIndex(note);
@@ -2121,23 +2141,11 @@ function transposeNote(note, semis) {
 }
 function transposeToken(tok, semis) {
   if (!semis) return tok;
-  const m = tok.match(/^([A-G])([#b]?)(.*)$/);
+  const m = tok.match(/^([A-G][#b]?)(.*?)(?:\/([A-G][#b]?))?$/);
   if (!m) return tok;
-  let [, root, acc, rest] = m;
-  let bass = '';
-  const slash = rest.indexOf('/');
-  if (slash !== -1) {
-    const bassPart = rest.slice(slash + 1);
-    const bm = bassPart.match(/^([A-G])([#b]?)(.*)$/);
-    if (bm) {
-      bass = '/' + transposeNote(bm[1] + bm[2], semis) + bm[3];
-      rest = rest.slice(0, slash);
-    } else {
-      bass = '/' + bassPart;
-      rest = rest.slice(0, slash);
-    }
-  }
-  return transposeNote(root + acc, semis) + rest + bass;
+  const [, root, rest, bass] = m;
+  // Only a trailing "/<note>" is a bass note — "6/9" inside the body is left alone.
+  return transposeNote(root, semis) + rest + (bass ? '/' + transposeNote(bass, semis) : '');
 }
 
 // ── Chord line / inline-bracket detection + HTML rendering ──
@@ -2179,7 +2187,8 @@ function renderInlineLineHTML(line, semis) {
   while ((m = re.exec(line))) {
     out += esc(line.slice(last, m.index));
     const raw = m[1].trim();
-    if (SECTION_RE.test(raw)) {
+    // A known section name, or any non-chord [label] standing alone on its line ("[Guitar Solo]").
+    if (SECTION_RE.test(raw) || (!CHORD_RE.test(raw) && line.trim() === m[0])) {
       out += `<span class="crd-section">${esc(raw)}</span>`;
     } else if (CHORD_RE.test(raw)) {
       const t = transposeToken(raw, semis);
