@@ -31,7 +31,8 @@ A single-page web app for managing a musical repertoire — built to run on an i
 ### Setlists
 - Create and manage multiple setlists
 - **⧉ Duplicate** a setlist — copies everything (sections, alternates, date) as "<name> (copy)"
-- **Live vs. Generic** — the left pane splits setlists into two groups: **Live** (an actual gig, with a date — sorted soonest-first, e.g. "7 Aug 2026") and **Generic** (a working/rehearsal list, sorted alphabetically). Mark a setlist Live and give it a date from the same modal you name it in
+- **Live vs. Generic** — the left pane splits setlists into two groups: **Live** (a gig, rehearsal or soundcheck, with a date — sorted soonest-first, shown e.g. "Rehearsal · 7 Aug 2026") and **Generic** (a working list, sorted alphabetically). Mark a setlist Live and pick its type and date from the same modal you name it in; older live setlists count as gigs
+- **● Start live** — a header button that asks whether it's a gig, rehearsal or soundcheck, then notes down every song you open in the chord reader, in order (re-opening the song you just played isn't counted twice). A red **LIVE** pill shows the count, even over the reader, and recording carries on if you close the app. **■ Stop** saves the songs as a live setlist of that type, dated today, and pushes it
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
 - **✎ Edit right from the row** — same full edit form as the Songs tab (Title, Key, Capo, Harp, Artists, UG link, CRD), just without leaving the setlist

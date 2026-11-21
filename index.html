@@ -882,6 +882,25 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .set-name-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .set-name-col .set-name { flex: none; white-space: nowrap; }
 .set-date { font-size: 0.68rem; color: var(--text-dim); }
+.set-kind { color: var(--accent); font-weight: 600; }
+/* "Start a live" recording indicator — floats above everything incl. the CRD reader (1500) and
+   full editor (1600), bottom-left so it never covers the reader's auto-scroll pill (bottom-right). */
+#live-rec-pill {
+  position: fixed; left: 14px; bottom: 14px; z-index: 1700;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(150,30,40,.92); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  font-family: var(--fm); font-size: 0.8rem; padding: 5px 6px 5px 12px; border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+#live-rec-pill.hidden { display: none; }
+#live-rec-pill .live-dot { color: #ff6b6b; animation: liveBlink 1.4s ease-in-out infinite; }
+@keyframes liveBlink { 50% { opacity: .25; } }
+#live-rec-pill button {
+  background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3);
+  border-radius: 999px; padding: 3px 10px; font: inherit; cursor: pointer;
+}
+.live-kind-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-kind-btns .btn { flex: 1; min-width: 110px; padding: 12px; }
 .sets-divider {
   font-size: 0.65rem; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text-dim); padding: 4px 6px 2px; margin-top: 4px;
@@ -915,6 +934,7 @@ select.fi { cursor: pointer; }
       <label class="tune-toggle" title="For a foot pedal that sends Up/Down keys. Off: the pedal scrolls the chord sheet. On: a short tap of either key plays/pauses auto-scroll; holding Down speeds it up, holding Up slows it down">
         <input type="checkbox" id="pedal-auto-toggle" onchange="togglePedalAutoMode()"> Pedal Auto-scroll
       </label>
+      <button class="btn btn-secondary btn-sm" onclick="liveRecButton()" id="btn-live-rec" title="Start a live: every song you open in the chord reader is noted down, in order; Stop saves them as a live setlist and pushes it">● Start live</button>
       <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer">
         Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
@@ -1029,17 +1049,46 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Name *</label><input class="fi" id="f-set-name" type="text" placeholder="Setlist name"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="f-set-live" onchange="toggleSetLiveField()"> Live (has a gig date)
+        <input type="checkbox" id="f-set-live" onchange="toggleSetLiveField()"> Live (gig, rehearsal or soundcheck — has a date)
       </label>
     </div>
+    <div class="fg" id="f-set-kind-row" style="display:none">
+      <label>Type</label>
+      <select class="fi" id="f-set-kind">
+        <option value="gig">Gig</option>
+        <option value="rehearsal">Rehearsal</option>
+        <option value="soundcheck">Soundcheck</option>
+      </select>
+    </div>
     <div class="fg" id="f-set-date-row" style="display:none">
-      <label>Gig date</label><input class="fi" id="f-set-date" type="date">
+      <label>Date</label><input class="fi" id="f-set-date" type="date">
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('setlist-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveSetlist()">Save</button>
     </div>
   </div>
+</div>
+
+<!-- ══ START A LIVE MODAL ══ -->
+<div class="overlay hidden" id="live-start-modal">
+  <div class="modal">
+    <h2>Start a live</h2>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:14px">Every song you open in the chord reader is noted down, in order, until you tap Stop — then it's saved as a live setlist and pushed. It keeps recording even if you close the app.</p>
+    <div class="live-kind-btns">
+      <button class="btn btn-primary" onclick="startLiveRec('gig')">Gig</button>
+      <button class="btn btn-primary" onclick="startLiveRec('rehearsal')">Rehearsal</button>
+      <button class="btn btn-primary" onclick="startLiveRec('soundcheck')">Soundcheck</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('live-start-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="live-rec-pill" class="hidden">
+  <span class="live-dot">●</span><span id="live-rec-text"></span>
+  <button onclick="stopLiveRec()" title="Stop the live, save it as a setlist and push">■ Stop</button>
 </div>
 
 <!-- ══ EDIT PROFILES MODAL ══ -->
@@ -1334,6 +1383,13 @@ function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
 // Known historical setlists, matched by name, backfilled once with a live gig date the
 // first time an old save (from before setlists carried a type/date) is loaded — see
 // migrateSetlists(). New setlists always get an explicit type going forward.
+// What kind of live a 'live' setlist is (setlist.liveType). Missing/unknown reads as 'gig' —
+// every live setlist from before the field existed was a gig — rather than being backfilled,
+// so old data doesn't change (and doesn't trip the repo-sync banner) just by loading.
+const LIVE_KINDS = { gig: 'Gig', rehearsal: 'Rehearsal', soundcheck: 'Soundcheck' };
+function liveKindOf(sl) { return LIVE_KINDS[sl?.liveType] ? sl.liveType : 'gig'; }
+function liveKindLabel(sl) { return LIVE_KINDS[liveKindOf(sl)]; }
+
 const LEGACY_LIVE_DATES = [
   { test: /^il nove\b.*?(\d{1,2})\/(\d{1,2})\/(\d{4})/i,
     date: (m) => `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` },
@@ -1449,6 +1505,7 @@ async function boot() {
   if (!db.tagMeta) db.tagMeta = {};
   renderProfileSelect();
   renderAll();
+  loadLiveRec(); renderLiveRec();   // a live started before the app was closed carries on
   syncHeaderHeight();
   // Inter/DM Mono load async from Google Fonts (see <head>) and can nudge the header's
   // wrapped height slightly once they swap in — resync once that settles.
@@ -2597,6 +2654,7 @@ function openCrdReader(id) {
   if (crdSongId === id && !document.getElementById('crd-reader').classList.contains('hidden')) return;
   document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
+  liveRecNote(id);                                 // "Start a live" recording, if one is running
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
@@ -3209,7 +3267,8 @@ function formatSetDate(dateStr) {
 }
 
 function setItemRow(sl) {
-  const dateHtml = sl.type === 'live' ? `<span class="set-date">${formatSetDate(sl.date)}</span>` : '';
+  const dateHtml = sl.type === 'live'
+    ? `<span class="set-date"><span class="set-kind">${liveKindLabel(sl)}</span> · ${formatSetDate(sl.date)}</span>` : '';
   return `<div class="set-item${sl.type==='live'?' live-set':''}${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
     <div class="set-name-col">
       <span class="set-name">${esc(sl.name)}</span>
@@ -3308,7 +3367,7 @@ function renderSetDetail() {
       }).join('');
   const filteredEmpty = items.length > 0 && slCrdFilter !== 'all' && shownCount === 0;
 
-  const dateSuffix = sl.type === 'live' && sl.date ? ` <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">· ${formatSetDate(sl.date)}</span>` : '';
+  const dateSuffix = sl.type === 'live' ? ` <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">· <span class="set-kind">${liveKindLabel(sl)}</span>${sl.date ? ' · ' + formatSetDate(sl.date) : ''}</span>` : '';
   el.innerHTML = `
     <div class="set-detail-header">
       <h2>${esc(sl.name)}${dateSuffix} <span style="color:var(--text-dim);font-size:0.75rem;font-weight:400">${playCount} songs</span></h2>
@@ -3873,6 +3932,7 @@ function cleanupSlDrag() {
 function toggleSetLiveField() {
   const live = document.getElementById('f-set-live').checked;
   document.getElementById('f-set-date-row').style.display = live ? '' : 'none';
+  document.getElementById('f-set-kind-row').style.display = live ? '' : 'none';
 }
 
 function openSetlistModal(id) {
@@ -3882,6 +3942,7 @@ function openSetlistModal(id) {
   document.getElementById('f-set-name').value = sl?.name || '';
   document.getElementById('f-set-live').checked = sl?.type === 'live';
   document.getElementById('f-set-date').value = sl?.date || '';
+  document.getElementById('f-set-kind').value = liveKindOf(sl);
   toggleSetLiveField();
   openModal('setlist-modal');
   document.getElementById('f-set-name').focus();
@@ -3892,20 +3953,109 @@ function saveSetlist() {
   if (!name) { toast('Name is required'); return; }
   const live = document.getElementById('f-set-live').checked;
   const date = document.getElementById('f-set-date').value;
-  if (live && !date) { toast('Enter a gig date'); return; }
+  const kind = document.getElementById('f-set-kind').value;
+  if (live && !date) { toast('Enter a date'); return; }
   const type = live ? 'live' : 'generic';
   if (editSetId) {
     const sl = db.setlists.find(s => s.id === editSetId);
-    if (sl) { sl.name = name; sl.type = type; if (live) sl.date = date; else delete sl.date; }
+    if (sl) {
+      sl.name = name; sl.type = type;
+      if (live) { sl.date = date; sl.liveType = kind; } else { delete sl.date; delete sl.liveType; }
+    }
   } else {
     const sl = { id: uid(), name, type, items: [] };
-    if (live) sl.date = date;
+    if (live) { sl.date = date; sl.liveType = kind; }
     db.setlists.push(sl);
     activeSetId = sl.id;
   }
   save(); renderSets(); renderSetDetail(); renderBubbles();
   closeModal('setlist-modal');
   toast(editSetId ? 'Setlist updated' : 'Setlist created');
+}
+
+// ─────────────────────────────────────────
+// START A LIVE — records every song opened in the CRD reader, in order, then saves them as a
+// live setlist of the chosen kind and pushes. The in-progress recording lives in its own
+// per-profile localStorage key (not in db, so it isn't pushed half-done), so it survives the
+// app being closed/reloaded until Stop.
+// ─────────────────────────────────────────
+const LIVE_REC_KEY = 'rep_live_rec' + (PROFILE ? '_' + PROFILE : '');
+let liveRec = null;   // { kind, date:'YYYY-MM-DD', startedAt:ms, songIds:[...] } | null
+
+function loadLiveRec() {
+  try { liveRec = JSON.parse(localStorage.getItem(LIVE_REC_KEY) || 'null'); } catch { liveRec = null; }
+  if (liveRec && !Array.isArray(liveRec.songIds)) liveRec = null;
+}
+function saveLiveRec() {
+  if (liveRec) localStorage.setItem(LIVE_REC_KEY, JSON.stringify(liveRec));
+  else localStorage.removeItem(LIVE_REC_KEY);
+}
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function renderLiveRec() {
+  const pill = document.getElementById('live-rec-pill');
+  const btn  = document.getElementById('btn-live-rec');
+  if (!liveRec) { pill.classList.add('hidden'); btn.textContent = '● Start live'; return; }
+  const n = liveRec.songIds.length;
+  document.getElementById('live-rec-text').textContent =
+    `LIVE · ${LIVE_KINDS[liveRec.kind] || 'Gig'} · ${n} song${n === 1 ? '' : 's'}`;
+  pill.classList.remove('hidden');
+  btn.textContent = '■ Stop live';
+}
+
+function liveRecButton() {
+  if (liveRec) stopLiveRec();
+  else openModal('live-start-modal');
+}
+
+function startLiveRec(kind) {
+  closeModal('live-start-modal');
+  liveRec = { kind: LIVE_KINDS[kind] ? kind : 'gig', date: localDateStr(), startedAt: Date.now(), songIds: [] };
+  saveLiveRec(); renderLiveRec();
+  toast(`Live started (${LIVE_KINDS[liveRec.kind]}) — open songs in the chord reader to note them down`, 3500);
+}
+
+// Called by openCrdReader. Re-opening the song that was just noted (e.g. closing the reader and
+// tapping the same title again) isn't another performance, so it's skipped; coming back to a
+// song later, after something else, is noted again.
+function liveRecNote(id) {
+  if (!liveRec) return;
+  if (liveRec.songIds[liveRec.songIds.length - 1] === id) return;
+  liveRec.songIds.push(id);
+  saveLiveRec(); renderLiveRec();
+}
+
+function stopLiveRec() {
+  if (!liveRec) return;
+  const ids = liveRec.songIds.filter(id => db.songs.some(s => s.id === id));
+  const kindLabel = LIVE_KINDS[liveRec.kind] || 'Gig';
+  if (!ids.length) {
+    if (!confirm('Stop the live? No songs were opened, so nothing will be saved.')) return;
+    liveRec = null; saveLiveRec(); renderLiveRec();
+    toast('Live stopped — nothing recorded');
+    return;
+  }
+  if (!confirm(`Stop the live and save its ${ids.length} song${ids.length === 1 ? '' : 's'} as a ${kindLabel.toLowerCase()} setlist, then push?`)) return;
+
+  let name = `${kindLabel} ${formatSetDate(liveRec.date)}`;
+  if (db.setlists.some(sl => sl.name === name)) {
+    let n = 2;
+    while (db.setlists.some(sl => sl.name === `${name} (${n})`)) n++;
+    name = `${name} (${n})`;
+  }
+  const sl = { id: uid(), name, type: 'live', liveType: liveRec.kind, date: liveRec.date,
+               items: ids.map(songId => ({ type: 'song', songId })) };
+  db.setlists.push(sl);
+  activeSetId = sl.id;
+  save();
+  liveRec = null; saveLiveRec(); renderLiveRec();
+  renderSets(); renderSetDetail(); renderBubbles();
+  toast(`Saved "${name}"`);
+  const cfg = getGithubConfig();
+  if (cfg && cfg.token && cfg.owner && cfg.repo) doPush(cfg);
+  else openGithubConfigModal('push');
 }
 
 function duplicateSetlist(id) {
