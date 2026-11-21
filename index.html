@@ -2252,6 +2252,10 @@ function deriveDefaultTKey(s) {
 function openCrdReader(id) {
   const s = db.songs.find(x => x.id === id);
   if (!s || !s.crd) return;
+  // Already open on this song (e.g. Enter/Space re-activating the still-focused title link behind
+  // the overlay): leave it alone rather than resetting to the top and restarting auto-scroll.
+  if (crdSongId === id && !document.getElementById('crd-reader').classList.contains('hidden')) return;
+  document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
@@ -2259,6 +2263,7 @@ function openCrdReader(id) {
   renderCrdBody();
   crdUpdateScrollPctLabel();
   crdAutoStop();
+  crdAutoPaused = null;
   crdPedalCancel();
   crdApplyAutoMode();
   openModal('crd-reader');
@@ -2604,6 +2609,11 @@ function crdUpdateScrollPctLabel() {
 const CRD_AUTO_FULL_SECS_AT_15 = 210;
 let crdAutoSpeed = Math.max(1, Math.min(60, parseInt(localStorage.getItem('rep_crd_auto_level') || '15', 10) || 15));
 let crdAutoOn = false, crdAutoRaf = 0, crdAutoLast = 0, crdAutoPos = 0, crdAutoHoldUntil = 0, crdAutoTouching = false;
+// Where Pause left the sheet ({ id, pos }). Play resumes from the current scroll position; this is
+// only a safety net in case something reset the pane to the top while paused. Any deliberate
+// movement (touch, wheel, keys, pedal hold) forgets it, so scrolling to the top yourself sticks.
+let crdAutoPaused = null;
+function crdAutoForgetPause() { crdAutoPaused = null; }
 
 function crdAutoUpdateUI() {
   const btn = document.getElementById('crd-auto-btn');
@@ -2639,12 +2649,17 @@ function togglePedalAutoMode() {
 function crdAutoStart() {
   const el = document.getElementById('crd-scroll');
   if (!el) return;
+  const pz = crdAutoPaused;
+  if (pz && pz.id === crdSongId && el.scrollTop < 2 && pz.pos > 2) el.scrollTop = pz.pos;
+  crdAutoPaused = null;
   crdAutoOn = true; crdAutoPos = el.scrollTop; crdAutoLast = 0; crdAutoHoldUntil = 0;
   crdAutoUpdateUI();
   cancelAnimationFrame(crdAutoRaf);
   crdAutoRaf = requestAnimationFrame(crdAutoTick);
 }
 function crdAutoStop() {
+  const el = document.getElementById('crd-scroll');
+  if (crdAutoOn && el && crdSongId) crdAutoPaused = { id: crdSongId, pos: el.scrollTop };
   crdAutoOn = false;
   cancelAnimationFrame(crdAutoRaf);
   crdAutoUpdateUI();
@@ -2676,57 +2691,91 @@ function crdAutoTick(ts) {
 (function () {
   const el = document.getElementById('crd-scroll');
   if (!el) return;
-  el.addEventListener('wheel', crdAutoNudge, { passive: true });
-  el.addEventListener('touchstart', () => { crdAutoTouching = true; }, { passive: true });
+  el.addEventListener('wheel', () => { crdAutoForgetPause(); crdAutoNudge(); }, { passive: true });
+  el.addEventListener('touchstart', () => { crdAutoTouching = true; crdAutoForgetPause(); }, { passive: true });
   const release = () => { crdAutoTouching = false; crdAutoNudge(); };
   el.addEventListener('touchend', release, { passive: true });
   el.addEventListener('touchcancel', release, { passive: true });
 })();
 
 // ── Pedal keys (Pedal Auto-scroll mode) ──
-// A foot pedal mapped as a keyboard sends Up/Down (or PageUp/PageDown). In this mode a short
-// press — released within CRD_HOLD_MS — plays/pauses auto-scroll (either key, same effect);
-// keeping it pressed scrolls up (Up) or down (Down) for as long as it's held, at twice the
-// "Scroll %" step per second. Auto-scroll waits while you hold and carries on afterwards.
+// A foot pedal mapped as a keyboard sends Up/Down (or PageUp/PageDown). Pedals differ in what
+// "holding" looks like: some send one keydown and a keyup on release, some auto-repeat keydowns,
+// and some send a stream of full keydown+keyup pairs as if tapped very fast. So a hold is
+// recognised from either signal:
+//   - the key stays down for CRD_HOLD_MS (true hold), or
+//   - presses of the same key arrive less than CRD_REPEAT_GAP_MS apart (repeat stream).
+// A short press is a tap: it plays/pauses auto-scroll on release (either key, same effect).
+// Presses within CRD_CHAIN_MS of each other form one gesture; if a gesture turns out to be a
+// hold, any play/pause its first taps already did is undone (a repeat stream usually starts
+// with a lone press, then a pause, then the fast repeats).
+// A hold does the old-style big jump: one "Scroll %" step up (Up) or down (Down) straight away,
+// then another every CRD_HOLD_JUMP_MS while it's still held. Auto-scroll waits while you hold
+// and carries on from the new position afterwards.
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
-const CRD_HOLD_MS = 350;
-let crdPedal = null;   // the press in progress: { key, dir, holding, timer, raf, last, pos }
+const CRD_HOLD_MS       = 350;
+const CRD_REPEAT_GAP_MS = 150;
+const CRD_CHAIN_MS      = 800;
+const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
+const CRD_HOLD_JUMP_MS  = 700;
+let crdPedal = null;   // gesture in progress: { key, dir, down, last, autoWas, holding, holdTimer, jumpTimer, endTimer }
 
 function crdPedalDown(key, dir) {
-  if (crdPedal && crdPedal.key === key) return;   // already tracking this press (key repeat)
-  crdPedalCancel();
-  crdPedal = { key, dir, holding: false, timer: setTimeout(crdPedalHoldStart, CRD_HOLD_MS), raf: 0, last: 0, pos: 0 };
-}
-function crdPedalHoldStart() {
-  const p = crdPedal, el = document.getElementById('crd-scroll');
-  if (!p || !el) return;
-  p.holding = true; p.pos = el.scrollTop; p.last = 0;
-  p.raf = requestAnimationFrame(crdPedalHoldTick);
-}
-function crdPedalHoldTick(ts) {
-  const p = crdPedal;
-  if (!p || !p.holding) return;
-  const el = document.getElementById('crd-scroll');
-  if (!el) { crdPedalCancel(); return; }
-  const dt = p.last ? Math.min(ts - p.last, 100) : 0;
-  p.last = ts;
-  const max = el.scrollHeight - el.clientHeight;
-  p.pos = Math.max(0, Math.min(max, p.pos + p.dir * crdScrollStep() * 2 * dt / 1000));
-  el.scrollTop = p.pos;
-  crdAutoNudge();                                  // keep auto-scroll waiting while held
-  p.raf = requestAnimationFrame(crdPedalHoldTick);
+  const now = performance.now();
+  let p = crdPedal;
+  if (p && (p.key !== key || (!p.holding && !p.down && now - p.last > CRD_CHAIN_MS))) { crdPedalCancel(); p = null; }
+  if (!p) p = crdPedal = { key, dir, down: false, last: 0, autoWas: crdAutoOn, holding: false, holdTimer: 0, jumpTimer: 0, endTimer: 0 };
+  const gap = p.last ? now - p.last : Infinity;
+  const wasDown = p.down;
+  p.last = now; p.down = true;
+  if (p.holding) { crdPedalKeepHold(); return; }
+  if (gap < CRD_REPEAT_GAP_MS) { crdPedalHoldStart(); return; }
+  if (!wasDown) {
+    clearTimeout(p.holdTimer);
+    p.holdTimer = setTimeout(() => { if (crdPedal === p && p.down) crdPedalHoldStart(); }, CRD_HOLD_MS);
+  }
 }
 function crdPedalUp(key) {
   const p = crdPedal;
   if (!p || p.key !== key) return;
-  const wasHold = p.holding;
-  crdPedalCancel();
-  if (!wasHold) crdAutoToggle();                   // short press = play / pause
+  p.down = false;
+  clearTimeout(p.holdTimer);
+  if (p.holding) crdPedalKeepHold();
+  else crdAutoToggle();                            // short press = play / pause
+}
+function crdPedalHoldStart() {
+  const p = crdPedal;
+  if (!p || p.holding) return;
+  clearTimeout(p.holdTimer);
+  p.holding = true;
+  if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }  // undo taps that were the start of this hold
+  crdPedalJump();
+  p.jumpTimer = setInterval(crdPedalJump, CRD_HOLD_JUMP_MS);
+  crdPedalKeepHold();
+}
+function crdPedalJump() {
+  const p = crdPedal, el = document.getElementById('crd-scroll');
+  if (!p || !el) return;
+  crdAutoForgetPause();
+  crdAutoNudge();
+  el.scrollBy({ top: p.dir * crdScrollStep(), behavior: 'smooth' });
+}
+// Keeps a hold alive while the key is still down or presses keep streaming in; ends it otherwise.
+function crdPedalKeepHold() {
+  const p = crdPedal;
+  if (!p) return;
+  crdAutoNudge();
+  clearTimeout(p.endTimer);
+  p.endTimer = setTimeout(() => {
+    if (crdPedal !== p) return;
+    if (p.down || performance.now() - p.last < CRD_HOLD_IDLE_MS) crdPedalKeepHold();
+    else { crdPedalCancel(); crdAutoNudge(); }
+  }, CRD_HOLD_IDLE_MS);
 }
 function crdPedalCancel() {
-  if (!crdPedal) return;
-  clearTimeout(crdPedal.timer);
-  cancelAnimationFrame(crdPedal.raf);
+  const p = crdPedal;
+  if (!p) return;
+  clearTimeout(p.holdTimer); clearInterval(p.jumpTimer); clearTimeout(p.endTimer);
   crdPedal = null;
 }
 window.addEventListener('blur', crdPedalCancel);   // never leave a hold stuck if focus is lost
@@ -2744,11 +2793,11 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault();
-    crdAutoNudge();
+    crdAutoNudge(); crdAutoForgetPause();
     document.getElementById('crd-scroll').scrollBy({ top: crdScrollStep(), behavior: 'smooth' });
   } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
     e.preventDefault();
-    crdAutoNudge();
+    crdAutoNudge(); crdAutoForgetPause();
     document.getElementById('crd-scroll').scrollBy({ top: -crdScrollStep(), behavior: 'smooth' });
   } else if (e.key === ' ' && pedalAutoMode && tag !== 'BUTTON') {
     e.preventDefault();
@@ -3861,6 +3910,9 @@ document.addEventListener('visibilitychange', () => {
 
 document.addEventListener('keydown', e => {
   if (!playSetId) return;
+  // The CRD reader opened from Play mode sits on top and owns the arrow keys (scroll / pedal);
+  // stepping the hidden play list underneath would leave you on a different song afterwards.
+  if (!document.getElementById('crd-reader').classList.contains('hidden')) return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); stepPlay(1); }
   if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  { e.preventDefault(); stepPlay(-1); }
 });
