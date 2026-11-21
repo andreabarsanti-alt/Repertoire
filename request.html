@@ -42,6 +42,9 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 .hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
 .loc-hint { text-align: left; font-size: 0.75rem; margin: 0 0 10px; }
 #all-titles { margin: 4px 0 18px; }
+.view-toggle { display: flex; gap: 0; margin: 0 0 12px; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.view-toggle button { flex: 1; padding: 9px 8px; font: inherit; font-size: 0.85rem; background: transparent; color: var(--text-dim); border: 0; cursor: pointer; }
+.view-toggle button.on { background: var(--accent); color: #fff; font-weight: 600; }
 #bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
 /* Phone layout: tags as colourful chips flowing in rows instead of a tall column of bubbles. */
 #bubbles.chips-mode { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 0; height: auto !important; }
@@ -150,6 +153,10 @@ textarea.fi { resize: vertical; min-height: 70px; }
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
     <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
+    <div class="view-toggle" role="tablist">
+      <button id="vt-tags" onclick="setUserView('tags')">Per artista / genere</button>
+      <button id="vt-titles" onclick="setUserView('titles')">Tutte le canzoni</button>
+    </div>
     <div id="search-results" class="hidden"></div>
     <div id="bubbles"></div>
     <div id="all-titles" class="hidden"></div>
@@ -283,11 +290,13 @@ function render() {
   const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
-  const titles = info.view === 'titles';
+  const titles = currentView() === 'titles';
+  document.getElementById('vt-tags').classList.toggle('on', !titles);
+  document.getElementById('vt-titles').classList.toggle('on', titles);
   document.getElementById('subtitle').textContent = !open ? 'Dai un\'occhiata a cosa suoniamo stasera'
     : titles ? 'Scegli una canzone, oppure cercala' : 'Scegli un artista o un genere, oppure cerca una canzone';
+  renderSearch();                        // sets which container is visible first, so bubbles can measure
   if (titles) renderTitles(); else renderBubbles();
-  renderSearch();
   // An open song list refreshes in place with the new played/requested state.
   if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
 }
@@ -402,6 +411,15 @@ function songRow(s, mine) {
 // "All titles" view (info.view === 'titles', chosen in the app when publishing): every song as a
 // row, in a random order that's drawn once per page load, so polling doesn't reshuffle it.
 const shuffleRank = {};
+// The band's choice (info.view) is only the default: each person can switch with the toggle, and
+// their pick sticks for this browser session.
+let userView = (() => { try { return sessionStorage.getItem('rq_view_' + GIG); } catch { return null; } })();
+function currentView() { return userView || (info?.view === 'titles' ? 'titles' : 'tags'); }
+function setUserView(v) {
+  userView = v; try { sessionStorage.setItem('rq_view_' + GIG, v); } catch {}
+  lastBubbleSig = null;   // bubbles were hidden, so redraw them at the right size
+  render();
+}
 function renderTitles() {
   songs.forEach(s => { if (!(s.id in shuffleRank)) shuffleRank[s.id] = Math.random(); });
   const mine = getMine();
@@ -411,7 +429,7 @@ function renderTitles() {
 function renderSearch() {
   const q = (document.getElementById('song-search').value || '').trim().toLowerCase();
   const res = document.getElementById('search-results');
-  const titles = info?.view === 'titles';
+  const titles = currentView() === 'titles';
   document.getElementById('bubbles').classList.toggle('hidden', !!q || titles);
   document.getElementById('all-titles').classList.toggle('hidden', !!q || !titles);
   res.classList.toggle('hidden', !q);
