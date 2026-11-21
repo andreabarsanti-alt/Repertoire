@@ -42,9 +42,12 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 .hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
 .loc-hint { text-align: left; font-size: 0.75rem; margin: 0 0 10px; }
 #all-titles { margin: 4px 0 18px; }
-.view-toggle { display: flex; gap: 0; margin: 0 0 12px; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
-.view-toggle button { flex: 1; padding: 9px 8px; font: inherit; font-size: 0.85rem; background: transparent; color: var(--text-dim); border: 0; cursor: pointer; }
-.view-toggle button.on { background: var(--accent); color: #fff; font-weight: 600; }
+.view-toggle { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 0 0 8px; }
+.vt-ico { font-size: 0.8rem; opacity: .45; transition: opacity .2s; }
+.vt-ico.on { opacity: 1; }
+.vswitch { position: relative; width: 38px; height: 22px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; padding: 0; }
+.vswitch span { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); transition: transform .2s; }
+.vswitch[aria-checked="true"] span { transform: translateX(16px); }
 #bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
 /* Phone layout: tags as colourful chips flowing in rows instead of a tall column of bubbles. */
 #bubbles.chips-mode { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 0; height: auto !important; }
@@ -55,7 +58,8 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.45);
 }
 .tchip:active { transform: scale(.96); }
-.search { position: relative; margin: 2px 0 14px; }
+.search { position: relative; margin: 14px 0 10px; }
+#other-btn { margin: 0 0 12px; }
 .search .fi { padding-left: 40px; }
 .search::before { content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; opacity: .7; pointer-events: none; }
 #search-results { margin-bottom: 14px; }
@@ -130,7 +134,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .thanks h2 { color: var(--accent); margin-bottom: 6px; }
 .thanks p { color: var(--text-dim); margin-bottom: 18px; }
 .ig {
-  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 18px 0 0;
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 14px;
   padding: 14px 16px; border-radius: 14px; text-decoration: none; color: #fff;
   background: linear-gradient(135deg, #f58529, #dd2a7b 50%, #8134af);
   box-shadow: 0 6px 18px rgba(0,0,0,.45);
@@ -147,25 +151,26 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <h1 id="title">Richiedi una canzone</h1>
     <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
+  <a id="ig" class="ig hidden" target="_blank" rel="noopener">
+    <span class="ig-icon">📸</span>
+    <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
+  </a>
 
   <div id="state-msg" class="center-msg"><div class="big">🎵</div><h2>Caricamento…</h2></div>
 
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
-    <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
-    <div class="view-toggle" role="tablist">
-      <button id="vt-tags" onclick="setUserView('tags')">Per artista / genere</button>
-      <button id="vt-titles" onclick="setUserView('titles')">Tutte le canzoni</button>
+    <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Chiedi una canzone qualsiasi</button>
+    <div class="view-toggle">
+      <span class="vt-ico" aria-hidden="true">🏷️</span>
+      <button class="vswitch" id="vswitch" role="switch" aria-checked="false" aria-label="Mostra tutte le canzoni" onclick="setUserView(currentView() === 'titles' ? 'tags' : 'titles')"><span></span></button>
+      <span class="vt-ico" aria-hidden="true">☰</span>
     </div>
-    <div id="search-results" class="hidden"></div>
     <div id="bubbles"></div>
     <div id="all-titles" class="hidden"></div>
-    <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Altro? Chiedi una canzone qualsiasi</button>
+    <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
+    <div id="search-results" class="hidden"></div>
   </div>
-  <a id="ig" class="ig hidden" target="_blank" rel="noopener">
-    <span class="ig-icon">📸</span>
-    <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
-  </a>
   <footer>Richieste di canzoni · niente promesse, ma faremo del nostro meglio</footer>
 </div>
 
@@ -291,8 +296,9 @@ function render() {
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
   const titles = currentView() === 'titles';
-  document.getElementById('vt-tags').classList.toggle('on', !titles);
-  document.getElementById('vt-titles').classList.toggle('on', titles);
+  document.getElementById('vswitch').setAttribute('aria-checked', String(titles));
+  const icos = document.querySelectorAll('.vt-ico');
+  icos[0].classList.toggle('on', !titles); icos[1].classList.toggle('on', titles);
   document.getElementById('subtitle').textContent = !open ? 'Dai un\'occhiata a cosa suoniamo stasera'
     : titles ? 'Scegli una canzone, oppure cercala' : 'Scegli un artista o un genere, oppure cerca una canzone';
   renderSearch();                        // sets which container is visible first, so bubbles can measure
@@ -409,8 +415,18 @@ function songRow(s, mine) {
 }
 // Song search: matches titles and tags; while it has text, the results replace the bubbles.
 // "All titles" view (info.view === 'titles', chosen in the app when publishing): every song as a
-// row, in a random order that's drawn once per page load, so polling doesn't reshuffle it.
-const shuffleRank = {};
+// row, in a random order, redrawn every couple of minutes (see maybeReshuffle).
+let shuffleRank = {}, shuffledAt = Date.now(), lastTouch = 0;
+// Reshuffle the titles list every SHUFFLE_MS (checked on each 15 s poll), but never under
+// someone's finger: not within IDLE_MS of a touch/scroll, and not while a sheet is open.
+const SHUFFLE_MS = 120000, IDLE_MS = 20000;
+['touchstart', 'scroll', 'wheel', 'keydown'].forEach(ev => addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true }));
+function maybeReshuffle() {
+  const busy = Date.now() - lastTouch < IDLE_MS
+    || !document.getElementById('list-sheet').classList.contains('hidden')
+    || !document.getElementById('form-sheet').classList.contains('hidden');
+  if (!busy && Date.now() - shuffledAt > SHUFFLE_MS) { shuffleRank = {}; shuffledAt = Date.now(); }
+}
 // The band's choice (info.view) is only the default: each person can switch with the toggle, and
 // their pick sticks for this browser session.
 let userView = (() => { try { return sessionStorage.getItem('rq_view_' + GIG); } catch { return null; } })();
@@ -421,6 +437,7 @@ function setUserView(v) {
   render();
 }
 function renderTitles() {
+  maybeReshuffle();
   songs.forEach(s => { if (!(s.id in shuffleRank)) shuffleRank[s.id] = Math.random(); });
   const mine = getMine();
   document.getElementById('all-titles').innerHTML = [...songs].sort((a, b) => shuffleRank[a.id] - shuffleRank[b.id])
