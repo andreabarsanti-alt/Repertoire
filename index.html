@@ -33,12 +33,15 @@
 }
 
 /* ── BASE ────────────────────────────────── */
+/* UI text scale: every rem size in the app is relative to this (110% of the browser's 16px).
+   The CRD reader/editor sheets use their own px sizes (A−/A+), so they're unaffected. */
+html { font-size: 110%; }
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--fd);
   min-height: 100dvh;
-  font-size: 18px;
+  font-size: 20px;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
 }
@@ -86,7 +89,7 @@ nav { display: flex; gap: 3px; flex: 1; }
 }
 .tab-btn.active { background: var(--accent); color: #e8f8f5; font-weight: 600; }
 .tab-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
-.hdr-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.hdr-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
 .tune-toggle {
   font-size: 0.78rem; color: var(--text-dim); display: flex; align-items: center;
   gap: 5px; cursor: pointer; white-space: nowrap;
@@ -100,10 +103,25 @@ nav { display: flex; gap: 3px; flex: 1; }
 .profile-select:hover { background: var(--border); }
 
 /* display:contents so on wide screens these items lay out as if they were direct
-   .hdr-actions flex children — the wrapping div only becomes a real block (and the ⋯
-   toggle button only appears) once the mobile breakpoint below takes over. */
+   .hdr-actions flex children — the wrapping div only becomes a real block once the mobile
+   breakpoint below takes over. Export/Import (.hdr-more-file) always sit behind the ⋯ toggle:
+   on wide screens (iPad) ⋯ drops them down as a small menu under the header's right edge;
+   on phones they're part of the full ⋯ panel with everything else. */
 .hdr-more { display: contents; }
-.hdr-more-toggle { display: none; }
+.hdr-more-toggle { display: inline-flex; }
+.hdr-more-file { display: none; }
+.hdr-more.open .hdr-more-file {
+  display: flex; flex-direction: column; gap: 8px;
+  position: absolute; right: 18px; top: calc(100% + 4px); z-index: 210;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.6); min-width: 140px;
+}
+.hdr-more.open .hdr-more-file .btn { width: 100%; }
+/* The three checkbox toggles move as one block, so when the actions don't fit on one row
+   (iPad portrait) they wrap together; there they also go after the buttons, so the buttons
+   keep the first row instead of Push being stranded alone. */
+.hdr-toggles { display: flex; gap: 10px; align-items: center; }
+@media (min-width: 601px) and (max-width: 1000px) { .hdr-toggles { order: 1; } }
 
 /* ── BUTTONS ─────────────────────────────── */
 .btn {
@@ -402,6 +420,7 @@ input:checked + .lyrics-icon { opacity: 1; }
     width: 100%; justify-content: flex-start;
   }
   .hdr-more.open .tune-toggle { padding: 6px 2px; font-size: 0.85rem; }
+  .hdr-more.open .hdr-more-file, .hdr-more.open .hdr-toggles { display: contents; }
   nav { order: 8; width: 100%; justify-content: center; }
   .profile-select { flex: 1; min-width: 0; }
 
@@ -1000,6 +1019,7 @@ select.fi { cursor: pointer; }
   </nav>
   <div class="hdr-actions">
     <div class="hdr-more" id="hdr-more">
+      <div class="hdr-toggles">
       <label class="tune-toggle" title="Increases (or restores) every song's Capo by 1 fret — e.g. for an instrument tuned down a half step">
         <input type="checkbox" id="global-tune-toggle" onchange="toggleGlobalTune()"> Half-step down tuning
       </label>
@@ -1009,11 +1029,14 @@ select.fi { cursor: pointer; }
       <label class="tune-toggle" title="For a foot pedal that sends Up/Down keys. Off: the pedal scrolls the chord sheet. On: a short tap of either key plays/pauses auto-scroll; holding Down speeds it up, holding Up slows it down">
         <input type="checkbox" id="pedal-auto-toggle" onchange="togglePedalAutoMode()"> Pedal Auto-scroll
       </label>
+      </div>
       <button class="btn btn-secondary btn-sm" onclick="liveRecButton()" id="btn-live-rec" title="Start a live: every song you open in the chord reader is noted down, in order; Stop saves them as a live setlist and pushes it">● Start live</button>
-      <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
-      <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-        Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
-      </label>
+      <div class="hdr-more-file">
+        <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+          Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+        </label>
+      </div>
     </div>
     <button type="button" class="btn btn-secondary btn-sm hdr-more-toggle" id="hdr-more-toggle" onclick="toggleHdrMore()" title="More options">⋯</button>
     <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app, and its data from repertoire_&lt;profile&gt;.json on the repo's data branch — no login needed, but discards any local changes not yet pushed">🔄 Refresh</button>
@@ -1686,6 +1709,14 @@ function toggleHdrMore() {
   document.getElementById('hdr-more').classList.toggle('open');
   syncHeaderHeight();
 }
+// Tapping anywhere outside the ⋯ menu closes it (clicks inside it don't — closing on the
+// Import label's own click could hide its file input before the picker reports back).
+document.addEventListener('click', e => {
+  const more = document.getElementById('hdr-more');
+  if (!more.classList.contains('open') || e.target.closest('#hdr-more, #hdr-more-toggle')) return;
+  more.classList.remove('open');
+  syncHeaderHeight();
+});
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 
