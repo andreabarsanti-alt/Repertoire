@@ -989,8 +989,10 @@ select.fi { cursor: pointer; }
 .live-count { font-family: var(--fm); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: rgba(196,90,90,.2); color: #ff9a9a; border: 1px solid rgba(196,90,90,.45); }
 .live-played-btn { min-width: 36px; }
 .live-played-btn.on { background: var(--success); color: #fff; border-color: var(--success); }
-.live-qr-card { margin-top: 16px; padding: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
-.live-qr-svg { width: 180px; height: 180px; margin: 0 auto 10px; background: #fff; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.75rem; }
+.live-qr-card { margin-bottom: 16px; padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; display: flex; gap: 14px; align-items: center; }
+.live-qr-side { flex: 1; min-width: 0; }
+.live-qr-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
+.live-qr-svg { width: 150px; height: 150px; flex-shrink: 0; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.75rem; }
 .live-qr-svg svg { width: 100%; height: 100%; display: block; }
 .live-qr-url { display: block; font-family: var(--fm); font-size: 0.68rem; color: var(--accent); overflow-wrap: anywhere; margin-bottom: 10px; }
 .live-qr-card .btn { margin: 2px; }
@@ -5439,18 +5441,21 @@ function renderLive() {
     </div>
     <div class="live-cols">
       <section class="live-col">
+        ${pub ? `<div class="live-qr-card">
+          <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>
+          <div class="live-qr-side">
+            <div class="live-qr-title">Audience page — scan to request</div>
+            <a class="live-qr-url" href="${esc(liveAudienceUrl())}" target="_blank" rel="noopener">${esc(liveAudienceUrl())}</a>
+            <button class="btn btn-secondary btn-sm" onclick="liveShowBigQr()">⤢ Show big</button>
+            <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
+          </div>
+        </div>` : ''}
         <h3>Requests <span id="live-req-count"></span></h3>
         <div id="live-reqs"></div>
       </section>
       <section class="live-col">
         <h3>Setlist${pub ? ' — tap ✓ when played' : ''}</h3>
         <div id="live-songs"></div>
-        ${pub ? `<div class="live-qr-card">
-          <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>
-          <a class="live-qr-url" href="${esc(liveAudienceUrl())}" target="_blank" rel="noopener">${esc(liveAudienceUrl())}</a>
-          <button class="btn btn-secondary btn-sm" onclick="liveShowBigQr()">⤢ Show big</button>
-          <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
-        </div>` : ''}
       </section>
     </div>`;
   renderLiveStatus();
