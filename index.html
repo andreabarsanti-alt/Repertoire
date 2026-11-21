@@ -743,6 +743,9 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 }
 
 /* Add songs list */
+.pick-bulk { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:10px; }
+.pick-artist-grp { display:flex; gap:6px; flex:1 1 220px; min-width:0; }
+.pick-artist-grp select { flex:1; min-width:0; }
 .song-pick-list {
   max-height: 300px; overflow-y: auto;
   border: 1px solid var(--border); border-radius: var(--radius);
@@ -1231,6 +1234,13 @@ select.fi { cursor: pointer; }
     <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
       <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide ❓ Try outs
     </label>
+    <div class="pick-bulk">
+      <button class="btn btn-secondary btn-sm" onclick="addAllSongs()">+ Add all songs</button>
+      <span class="pick-artist-grp">
+        <select class="profile-select" id="pick-artist" aria-label="Artist"></select>
+        <button class="btn btn-secondary btn-sm" onclick="addArtistSongs()">+ Add artist</button>
+      </span>
+    </div>
     <div class="song-pick-list" id="pick-list"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('add-songs-modal')">Cancel</button>
@@ -4215,8 +4225,63 @@ function setlistSongIds(sl) {
 function openAddSongsModal() {
   document.getElementById('pick-hide-existing').checked = true;
   document.getElementById('pick-hide-tryout').checked = false;
+  renderPickArtists();
   renderPickList('');
   openModal('add-songs-modal');
+}
+
+function songTagList(s) { return (s.tags || '').split(',').map(t => t.trim()).filter(Boolean); }
+
+// "Add artist" dropdown: artists are just tags (a song's first tag is its artist by convention),
+// so the tags that lead some song's tag list are offered first as "Artists", every other tag
+// below as "Other tags". Each shows its song count.
+function renderPickArtists() {
+  const count = new Map(), first = new Set();
+  db.songs.forEach(s => songTagList(s).forEach((t, i) => {
+    count.set(t, (count.get(t) || 0) + 1);
+    if (i === 0) first.add(t);
+  }));
+  const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' });
+  const opts = arr => arr.sort(byName).map(t => `<option value="${esc(t)}">${esc(t)} (${count.get(t)})</option>`).join('');
+  const artists = [...count.keys()].filter(t => first.has(t));
+  const others  = [...count.keys()].filter(t => !first.has(t));
+  const el = document.getElementById('pick-artist');
+  el.innerHTML = '<option value="">Artist…</option>' +
+    (artists.length ? `<optgroup label="Artists">${opts(artists)}</optgroup>` : '') +
+    (others.length  ? `<optgroup label="Other tags">${opts(others)}</optgroup>` : '');
+}
+
+// Bulk add: every matching song not already in the setlist (setlistSongIds -- an alternate counts
+// as in it), honouring "Hide Try outs", alphabetical, inserted after the selected row like
+// confirmAddSongs. Duplicates are always skipped here, whatever "Hide songs already in this
+// setlist" says -- that box only controls what the list shows for hand-picking.
+function bulkAddSongs(match, what) {
+  const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  sl.items = sl.items || [];
+  const have = setlistSongIds(sl);
+  const hideTryout = !!document.getElementById('pick-hide-tryout')?.checked;
+  const pool = db.songs.filter(s => match(s) && !(hideTryout && s.tryOut));
+  const add  = pool.filter(s => !have.has(s.id))
+    .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+  const skipped = pool.length - add.length;
+  if (!add.length) { toast(pool.length ? `Already in this setlist (${what})` : `No songs to add (${what})`); return; }
+  if (!confirm(`Add ${add.length} song${add.length!==1?'s':''} (${what}) to "${sl.name}"?` +
+      (skipped ? `\n${skipped} already in the setlist will be skipped.` : ''))) return;
+  const toAdd = add.map(s => ({ type: 'song', songId: s.id }));
+  if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) sl.items.splice(selectedItemIdx + 1, 0, ...toAdd);
+  else sl.items.push(...toAdd);
+  save(); renderSetDetail(); renderBubbles();
+  closeModal('add-songs-modal');
+  toast(`${toAdd.length} song${toAdd.length!==1?'s':''} added` + (skipped ? ` · ${skipped} already in setlist` : ''));
+}
+
+function addAllSongs() { bulkAddSongs(() => true, 'all songs'); }
+
+function addArtistSongs() {
+  const tag = document.getElementById('pick-artist').value;
+  if (!tag) { toast('Pick an artist first'); return; }
+  const tl = tag.toLowerCase();
+  bulkAddSongs(s => songTagList(s).some(t => t.toLowerCase() === tl), tag);
 }
 
 // "Hide songs already in this setlist" (checked by default, so the picker's baseline stays
