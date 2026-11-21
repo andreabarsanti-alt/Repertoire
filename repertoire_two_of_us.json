@@ -2648,9 +2648,9 @@
       "date": "2026-10-31"
     },
     {
-      "id": "1562e534-1423-4d89-80b6-29de6bcc20a4",
-      "name": "Repertoire",
-      "type": "generic",
+      "id": "78a109b5-2640-44d0-9c9d-ca165fe4731a",
+      "name": "Il Nove",
+      "type": "live",
       "items": [
         {
           "type": "song",
@@ -2666,15 +2666,15 @@
         },
         {
           "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "song",
           "songId": "s01"
         },
         {
           "type": "song",
           "songId": "e9e7e2b8-920f-4092-815f-45f8f03f42d0"
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
         },
         {
           "type": "song",
@@ -2718,23 +2718,11 @@
         },
         {
           "type": "song",
-          "songId": "5515c491-abc2-43a8-99a8-4c2d5471822c"
-        },
-        {
-          "type": "song",
-          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
-        },
-        {
-          "type": "song",
-          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
-        },
-        {
-          "type": "song",
           "songId": "48059d27-3a58-415f-8814-1199e07162e4"
         },
         {
           "type": "song",
-          "songId": "bb8f7695-7028-4240-af53-f03bab19a1da"
+          "songId": "4f4fa897-b1ba-428a-aa84-cc6756cf8682"
         },
         {
           "type": "song",
@@ -2754,15 +2742,23 @@
         },
         {
           "type": "song",
+          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
+        },
+        {
+          "type": "song",
+          "songId": "9c48510e-81f5-4da4-b1d7-e7f4c1272caa"
+        },
+        {
+          "type": "song",
+          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
+        },
+        {
+          "type": "song",
           "songId": "s14"
         },
         {
           "type": "song",
           "songId": "s15"
-        },
-        {
-          "type": "song",
-          "songId": "9c48510e-81f5-4da4-b1d7-e7f4c1272caa"
         },
         {
           "type": "song",
@@ -2773,20 +2769,11 @@
           "songId": "s30"
         },
         {
-          "type": "section",
-          "name": "More Neil Young (In caso)",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "s28"
-        },
-        {
-          "type": "song",
-          "songId": "e10f61fb-77b0-4b57-a7c8-d0467306c9b8"
-        },
-        {
           "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "bb8f7695-7028-4240-af53-f03bab19a1da"
         },
         {
           "type": "song",
@@ -2809,29 +2796,17 @@
           "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
         },
         {
+          "type": "section",
+          "name": "Encore",
+          "collapsed": true
+        },
+        {
           "type": "song",
           "songId": "s38"
         },
         {
           "type": "song",
-          "songId": "4f4fa897-b1ba-428a-aa84-cc6756cf8682"
-        },
-        {
-          "type": "section",
-          "name": "Encore",
-          "collapsed": false
-        },
-        {
-          "type": "song",
           "songId": "mobwy45ykmxg3"
-        },
-        {
-          "type": "song",
-          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
-        },
-        {
-          "type": "song",
-          "songId": "20e8b656-fd0b-4b06-8364-c2dc41bae4bf"
         },
         {
           "type": "song",
@@ -2854,12 +2829,20 @@
           "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
+          "type": "song",
+          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
+        },
+        {
+          "type": "song",
+          "songId": "20e8b656-fd0b-4b06-8364-c2dc41bae4bf"
+        },
+        {
           "type": "section-end"
         },
         {
           "type": "section",
           "name": "Italiana (Vediamo dove e quali)",
-          "collapsed": false
+          "collapsed": true
         },
         {
           "type": "song",
@@ -2883,161 +2866,10 @@
         },
         {
           "type": "section-end"
-        },
-        {
-          "type": "section",
-          "name": "Altre",
-          "collapsed": false
-        },
-        {
-          "type": "song",
-          "songId": "645b295b-438d-482b-b0be-3bcf9701d070"
-        },
-        {
-          "type": "song",
-          "songId": "s23"
-        },
-        {
-          "type": "song",
-          "songId": "s13"
-        },
-        {
-          "type": "song",
-          "songId": "96b1f45b-00fd-4dad-b7e7-f625e28ddbed"
-        },
-        {
-          "type": "song",
-          "songId": "s18"
-        },
-        {
-          "type": "song",
-          "songId": "6dec3f02-828c-43d7-916f-825d825a2bac"
-        },
-        {
-          "type": "song",
-          "songId": "b79c9194-0cd6-4314-a72e-ceb4a5ddc064"
-        },
-        {
-          "type": "song",
-          "songId": "mobxcagv7zvgk"
-        },
-        {
-          "type": "song",
-          "songId": "s06"
-        },
-        {
-          "type": "song",
-          "songId": "s26"
-        },
-        {
-          "type": "song",
-          "songId": "s40"
-        },
-        {
-          "type": "song",
-          "songId": "e4a931ce-40a6-43f0-84d7-83e7158c56f3"
-        },
-        {
-          "type": "song",
-          "songId": "e5e9893b-db1c-4de1-8f78-459f69a8f613"
-        },
-        {
-          "type": "song",
-          "songId": "s41"
-        },
-        {
-          "type": "song",
-          "songId": "mobwnzg39cdvz"
-        },
-        {
-          "type": "song",
-          "songId": "s02"
-        },
-        {
-          "type": "song",
-          "songId": "s22"
-        },
-        {
-          "type": "song",
-          "songId": "s17"
-        },
-        {
-          "type": "song",
-          "songId": "mobwys0zxdtab"
-        },
-        {
-          "type": "song",
-          "songId": "s29"
-        },
-        {
-          "type": "song",
-          "songId": "mobx4gbien69s"
-        },
-        {
-          "type": "song",
-          "songId": "s07"
-        },
-        {
-          "type": "song",
-          "songId": "b559d6a4-c0bb-442f-bf93-5990ebac751e"
-        },
-        {
-          "type": "song",
-          "songId": "19f275fa-8289-4e7e-9842-38372cd628b0"
-        },
-        {
-          "type": "song",
-          "songId": "e17f2932-a4a9-45f5-8342-9c7fe7bf99e6"
-        },
-        {
-          "type": "song",
-          "songId": "214bf23d-b10c-4475-b93c-8608d81ca91d"
-        },
-        {
-          "type": "song",
-          "songId": "mobx3suewssgb"
-        },
-        {
-          "type": "song",
-          "songId": "mobwzwj4octlr"
-        },
-        {
-          "type": "song",
-          "songId": "9cdfb7ce-5974-4ac1-aca2-12434efbba91"
-        },
-        {
-          "type": "song",
-          "songId": "s03"
-        },
-        {
-          "type": "song",
-          "songId": "cd672d55-d11a-49ec-90a7-97dcbcdbdf24"
-        },
-        {
-          "type": "song",
-          "songId": "c94a7825-c876-4dfe-be01-468295c75458"
-        },
-        {
-          "type": "song",
-          "songId": "3e6e1b70-f3f7-4102-8462-8c6b4bee55e8"
-        },
-        {
-          "type": "song",
-          "songId": "257f454f-d2de-4aaf-aeb1-ee9e035a7e2f"
-        },
-        {
-          "type": "song",
-          "songId": "0575ef02-2ba1-4ec9-8b3c-af2eccccc9a9"
-        },
-        {
-          "type": "song",
-          "songId": "86b59268-5f33-4c3a-be96-a3099959ca4e"
-        },
-        {
-          "type": "song",
-          "songId": "6ebe9805-dd40-4558-b135-b57e59fb7fec"
         }
-      ]
+      ],
+      "date": "2026-11-22",
+      "liveType": "gig"
     }
   ],
   "tuneUp": true
