@@ -961,7 +961,7 @@ select.fi { cursor: pointer; }
 .live-status.live { color: var(--success); }
 .live-status.connecting { color: #e0c060; }
 .live-status.error { color: var(--danger); }
-.live-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.live-cols { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
 .live-col h3 {
   font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em;
   color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
@@ -996,9 +996,12 @@ select.fi { cursor: pointer; }
 .live-song-num { width: 22px; text-align: right; color: var(--text-dim); font-family: var(--fm); font-size: 0.72rem; flex-shrink: 0; }
 .live-song-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .live-song-title a { color: var(--text); }
+.live-song-kch { margin-left: 8px; display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.live-song-kch .kch { font-size: 0.68rem; }
 .live-song.played .live-song-title { opacity: .45; text-decoration: line-through; }
 .live-count { font-family: var(--fm); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: rgba(196,90,90,.2); color: #ff9a9a; border: 1px solid rgba(196,90,90,.45); }
 .live-played-btn { min-width: 36px; }
+.live-extra-h { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 16px 0 4px; }
 .live-played-btn.on { background: var(--success); color: #fff; border-color: var(--success); }
 .live-qr-card { margin-bottom: 16px; padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; display: flex; gap: 14px; align-items: center; }
 .live-qr-side { flex: 1; min-width: 0; }
@@ -1097,7 +1100,7 @@ select.fi { cursor: pointer; }
       <select class="profile-select" id="songs-scope-select" onchange="setSongsScopeFilter(this.value)" title="Filter by repertoire status">
         <option value="all">Any song</option>
         <option value="repertoire">In repertoire</option>
-        <option value="tryout">❓ Try out</option>
+        <option value="tryout">❓ Not ready</option>
       </select>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
@@ -1146,7 +1149,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Ultimate Guitar Link</label><input class="fi" id="f-uglink" type="url" placeholder="https://tabs.ultimate-guitar.com/…"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="f-tryout"> <span class="tryout-icon">?</span> Try out <span style="color:var(--text-dim);font-weight:400">— marks it out of the repertoire for now; filter by it in the Songs tab</span>
+        <input type="checkbox" id="f-tryout"> <span class="tryout-icon">?</span> Not ready <span style="color:var(--text-dim);font-weight:400">— not ready to play yet: kept out of the audience page; filter by it in the Songs tab</span>
       </label>
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px">
         <input type="checkbox" id="f-lyrics"> <span class="lyrics-icon">🎤</span> Lyrics only <span style="color:var(--text-dim);font-weight:400">— the chord reader hides the chords (the sheet itself is kept)</span>
@@ -1240,7 +1243,7 @@ select.fi { cursor: pointer; }
       <input type="checkbox" id="pick-hide-existing" checked onchange="renderPickList(document.getElementById('pick-search').value)"> Hide songs already in this setlist
     </label>
     <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
-      <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide ❓ Try outs
+      <input type="checkbox" id="pick-hide-tryout" onchange="renderPickList(document.getElementById('pick-search').value)"> Hide ❓ Not ready songs
     </label>
     <div class="pick-bulk">
       <button class="btn btn-secondary btn-sm" onclick="addAllSongs()">+ Add all songs</button>
@@ -1266,7 +1269,7 @@ select.fi { cursor: pointer; }
       <input type="checkbox" id="alt-hide-existing" checked onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide songs already in this setlist
     </label>
     <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-dim);cursor:pointer;margin-bottom:12px">
-      <input type="checkbox" id="alt-hide-tryout" onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide ❓ Try outs
+      <input type="checkbox" id="alt-hide-tryout" onchange="renderAltPickList(document.getElementById('alt-search').value)"> Hide ❓ Not ready songs
     </label>
     <div class="song-pick-list" id="alt-pick-list"></div>
     <div class="modal-footer">
@@ -2094,7 +2097,7 @@ function kchBadges(s) {
   if (s.key)  parts.push(`<span class="kch">${esc(s.key)}</span>`);
   if (s.capo) parts.push(`<span class="kch">${esc(capoText(s.capo))}</span>`);
   if (s.harp) parts.push(`<span class="kch harp">Harp ${esc(s.harp)}</span>`);
-  if (s.tryOut) parts.push(`<span class="kch tryout">❓ Try out</span>`);
+  if (s.tryOut) parts.push(`<span class="kch tryout">❓ Not ready</span>`);
   if (s.lyricsOnly) parts.push(`<span class="kch lyrics">🎤 Lyrics only</span>`);
   return parts.join('');
 }
@@ -2178,7 +2181,7 @@ function renderSongs() {
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     const emptyMsg = q ? 'No songs match your search'
-      : songsScopeFilter === 'tryout' ? 'No songs checked ❓ Try out yet'
+      : songsScopeFilter === 'tryout' ? 'No songs checked ❓ Not ready yet'
       : songsScopeFilter === 'repertoire' && songsCrdFilter === 'with' ? 'No repertoire songs with chords yet'
       : songsScopeFilter === 'repertoire' && songsCrdFilter === 'without' ? 'No repertoire songs without chords'
       : songsScopeFilter === 'repertoire' ? 'No songs in the repertoire yet'
@@ -2210,7 +2213,7 @@ function songDisplayRow(s) {
     <td>${tagChips}</td>
     <td>${ug}</td>
     <td><div class="row-actions">
-      <label class="row-tryout" title="❓ Try out" onclick="event.stopPropagation()">
+      <label class="row-tryout" title="❓ Not ready" onclick="event.stopPropagation()">
         <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> <span class="tryout-icon">?</span>
       </label>
       <label class="row-tryout" title="🎤 Lyrics only" onclick="event.stopPropagation()">
@@ -2233,7 +2236,7 @@ function songEditRow(s) {
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
       <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
-        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
+        <input type="checkbox" id="ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Not ready
       </label>
       <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);margin-top:4px;cursor:pointer">
         <input type="checkbox" id="ie-lyrics" ${s.lyricsOnly ? 'checked' : ''}> <span class="lyrics-icon">🎤</span> Lyrics only
@@ -3516,7 +3519,6 @@ function renderSetDetail() {
           <option value="with"    ${slCrdFilter==='with'   ?'selected':''}>🎸 Has chords</option>
           <option value="without" ${slCrdFilter==='without'?'selected':''}>No chords</option>
         </select>
-        <button class="btn btn-secondary btn-sm" onclick="openPlay('${sl.id}')">▶ Play</button>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
         ${hasSections ? `
         <button class="btn btn-secondary btn-sm" onclick="expandAllSections(true)">⤢ Expand all</button>
@@ -3676,7 +3678,7 @@ function slEditRow(s, i, nested) {
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
     <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
-      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Try out
+      <input type="checkbox" id="sl-ie-tryout" ${s.tryOut ? 'checked' : ''}> <span class="tryout-icon">?</span> Not ready
     </label>
     <label style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-dim);cursor:pointer">
       <input type="checkbox" id="sl-ie-lyrics" ${s.lyricsOnly ? 'checked' : ''}> <span class="lyrics-icon">🎤</span> Lyrics only
@@ -3921,7 +3923,7 @@ function renderAltPickList(q) {
     <label class="song-pick-item">
       <input type="radio" name="alt-pick" value="${s.id}" ${item.altSongId===s.id?'checked':''}>
       <div>
-        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Not ready</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
     </label>`;
@@ -4350,7 +4352,7 @@ function renderPickList(q) {
     <label class="song-pick-item">
       <input type="checkbox" value="${s.id}">
       <div>
-        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Try out</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
+        <div class="pick-title">${esc(s.title)}${s.tryOut ? ' <span class="kch tryout">❓ Not ready</span>' : ''}${already ? ' <span class="kch">✓ In setlist</span>' : ''}</div>
         <div class="pick-sub">${esc(s.tags)}${s.key?' · '+esc(s.key):''}</div>
       </div>
     </label>`;
@@ -5347,6 +5349,13 @@ function liveSetId() {
   return db.setlists.some(s => s.id === id) ? id : null;
 }
 function liveChooseSet(id) { localStorage.setItem(LIVE_SET_KEY, id); renderLive(); }
+// What the audience page offers: the chosen setlist, plus every other song in the library that
+// isn't marked Not ready (s.tryOut). Setlist songs go in even if Not ready, since they're planned.
+function liveAudienceSongs(sl) {
+  const out = liveSetSongs(sl), seen = new Set(out.map(s => s.id));
+  db.songs.forEach(s => { if (!s.tryOut && !seen.has(s.id)) { seen.add(s.id); out.push(s); } });
+  return out;
+}
 function liveSetSongs(sl) {
   const seen = new Set(), out = [];
   resolvePlayableSongs(sl).forEach(s => { if (!seen.has(s.id)) { seen.add(s.id); out.push(s); } });
@@ -5392,8 +5401,8 @@ function liveSignOut() {
 async function livePublish() {
   const sl = db.setlists.find(s => s.id === liveSetId());
   if (!sl) { toast('Pick a setlist first'); return; }
-  const songs = liveSetSongs(sl);
-  if (!songs.length) { toast('That setlist has no songs'); return; }
+  const songs = liveAudienceSongs(sl);
+  if (!songs.length) { toast('No songs to publish'); return; }
   const wasPub = livePublished();
   const payload = songs.map(s => ({
     id: s.id, k: fbKey(s.id), t: s.title || '',
@@ -5532,12 +5541,24 @@ function renderLiveStatus() {
   el.className = 'live-status ' + liveESState;
   el.textContent = map[liveESState] || '';
 }
+// Setlist picker + ▶ Play: works whether or not Firebase is set up (Play mode moved here from
+// the Setlists tab).
+function livePlayBar(withPublish) {
+  const setId = liveSetId();
+  const sets = [...db.setlists].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  return `<select class="profile-select" id="live-set-select" onchange="liveChooseSet(this.value)" title="Setlist to play and show the audience">
+        ${setId ? '' : '<option value="">Choose a setlist…</option>'}
+        ${sets.map(s => `<option value="${esc(s.id)}" ${s.id === setId ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="openPlay(liveSetId())" ${setId ? '' : 'disabled'}>▶ Play</button>`;
+}
 function renderLive() {
   const el = document.getElementById('live-root');
   if (!el) return;
   const cfg = getFbConfig();
+  const bar = `<div class="live-bar">${livePlayBar()}</div>`;
   if (!cfg?.apiKey || !cfg?.dbUrl || liveEditingSetup) {
-    el.innerHTML = `<div class="live-card">
+    el.innerHTML = bar + `<div class="live-card">
       <h2>Audience requests</h2>
       <p>Show one setlist to your audience on their phones, as tag bubbles (they scan a QR code — no app or account needed), and get their song requests here, live. It needs a free Firebase project: a one-time setup of about 15 minutes, explained step by step in the <a href="${FB_SETUP_URL}" target="_blank" rel="noopener">setup guide</a>. Then paste the two values it gives you here.</p>
       <div class="fg"><label>Web API key</label><input class="fi" id="live-api-key" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(cfg?.apiKey || '')}" placeholder="AIza…"></div>
@@ -5551,7 +5572,7 @@ function renderLive() {
     return;
   }
   if (!cfg.refreshToken) {
-    el.innerHTML = `<div class="live-card">
+    el.innerHTML = bar + `<div class="live-card">
       <h2>Sign in to Firebase</h2>
       <p>Use the email and password of the user you added in Firebase (Authentication → Users). You stay signed in on this device.</p>
       <div class="fg"><label>Email</label><input class="fi" id="live-email" type="email" autocomplete="username" autocapitalize="off" value="${esc(cfg.email || '')}"></div>
@@ -5566,14 +5587,10 @@ function renderLive() {
   }
   const pub = livePublished();
   const setId = liveSetId();
-  const sets = [...db.setlists].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const open = liveInfo ? liveInfo.open === true : true;
   el.innerHTML = `
     <div class="live-bar">
-      <select class="profile-select" id="live-set-select" onchange="liveChooseSet(this.value)" title="Setlist to show the audience">
-        ${setId ? '' : '<option value="">Choose a setlist…</option>'}
-        ${sets.map(s => `<option value="${esc(s.id)}" ${s.id === setId ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-      </select>
+      ${livePlayBar()}
       <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
       ${pub ? `<label class="tune-toggle"><input type="checkbox" id="live-open-toggle" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>
                <button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
@@ -5627,7 +5644,7 @@ function renderLiveLists() {
     const actions = r.status
       ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
-      : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>
+      : `${r.songId ? '' : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>`}
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`;
     return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
       <div class="live-req-main">
@@ -5652,15 +5669,22 @@ function renderLiveLists() {
   const counts = {};
   pending.forEach(r => { if (r.songId) counts[r.songId] = (counts[r.songId] || 0) + 1; });
   const played = liveInfo?.played || {};
-  songEl.innerHTML = liveSetSongs(sl).map((s, i) => {
+  // Requested songs that aren't in the setlist (the audience sees the whole ready repertoire)
+  // get their own rows underneath, so their ✓ is still one tap away.
+  const setSongs = liveSetSongs(sl), inSet = new Set(setSongs.map(x => x.id));
+  const extra = Object.keys(counts).filter(id => !inSet.has(id)).map(id => db.songs.find(x => x.id === id)).filter(Boolean)
+    .sort((a, b) => counts[b.id] - counts[a.id] || (a.title || '').localeCompare(b.title || ''));
+  const row = (s, num) => {
     const isPlayed = !!played[fbKey(s.id)];
     return `<div class="live-song${isPlayed ? ' played' : ''}">
-      <span class="live-song-num">${i + 1}</span>
-      <span class="live-song-title">${songTitleLink(s)}</span>
+      <span class="live-song-num">${num}</span>
+      <span class="live-song-title">${songTitleLink(s)}<span class="live-song-kch">${kchBadges(s)}</span></span>
       ${counts[s.id] ? `<span class="live-count" title="Pending requests">×${counts[s.id]}</span>` : ''}
       ${pub ? `<button class="btn btn-secondary btn-sm btn-icon live-played-btn${isPlayed ? ' on' : ''}" onclick="liveToggleSongPlayed('${esc(s.id)}')" title="${isPlayed ? 'Played — tap to undo' : 'Mark played'}">✓</button>` : ''}
     </div>`;
-  }).join('') || '<div class="empty" style="padding:24px 10px">This setlist has no songs</div>';
+  };
+  songEl.innerHTML = (setSongs.map((s, i) => row(s, i + 1)).join('') || '<div class="empty" style="padding:24px 10px">This setlist has no songs</div>') +
+    (extra.length ? `<div class="live-extra-h">Requested, not in this setlist</div>` + extra.map(s => row(s, '+')).join('') : '');
 }
 
 function liveInit() {
