@@ -1213,9 +1213,14 @@ select.fi { cursor: pointer; }
       <label>Tags (comma separated)</label>
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
+    <div class="fg">
+      <label>Chord Sheet (optional)</label>
+      <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet"></textarea>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
-      <button class="btn btn-primary" id="ug-import-btn" onclick="confirmUGImport()" disabled>Add Song</button>
+      <button class="btn btn-secondary" id="ug-import-more-btn" onclick="confirmUGImport()" disabled title="Open the full Add Song form, pre-filled, to set Key/Capo/Harp before saving">More details…</button>
+      <button class="btn btn-primary" id="ug-import-btn" onclick="quickAddUGImport()" disabled>Add Song</button>
     </div>
   </div>
 </div>
@@ -4183,8 +4188,10 @@ function parseUGUrl(url) {
 function openUGImport() {
   document.getElementById('ug-import-url').value = '';
   document.getElementById('ug-import-tags').value = '';
+  document.getElementById('ug-import-crd').value = '';
   document.getElementById('ug-import-preview').style.display = 'none';
   document.getElementById('ug-import-btn').disabled = true;
+  document.getElementById('ug-import-more-btn').disabled = true;
   openModal('ug-import-modal');
   setTimeout(() => document.getElementById('ug-import-url').focus(), 0);
 }
@@ -4202,17 +4209,39 @@ function onUGImportInput() {
     preview.style.display = 'none';
     btn.disabled = true;
   }
+  document.getElementById('ug-import-more-btn').disabled = btn.disabled;
 }
 
+// "Add Song" in the import dialog: saves straight away (title, artist tags, UG link, and the
+// pasted chord sheet if any) — one step, no second form.
+function quickAddUGImport() {
+  const url    = document.getElementById('ug-import-url').value.trim();
+  const parsed = parseUGUrl(url);
+  if (!parsed) return;
+  const tags = document.getElementById('ug-import-tags').value.trim() || parsed.artist || '';
+  db.songs.push({
+    id: uid(), title: parsed.title, tags, key: '', capo: '', harp: '',
+    ugLink: normalizeUG(parsed.ugLink || url),
+    crd: document.getElementById('ug-import-crd').value || '',
+    tryOut: false,
+  });
+  save(); renderAll(); closeModal('ug-import-modal');
+  toast('Song added');
+}
+
+// "More details…": the old path — opens the full Add Song form pre-filled (chord sheet included)
+// so Key/Capo/Harp can be set before saving.
 function confirmUGImport() {
   const url    = document.getElementById('ug-import-url').value.trim();
   const tags   = document.getElementById('ug-import-tags').value.trim();
+  const crd    = document.getElementById('ug-import-crd').value;
   const parsed = parseUGUrl(url);
   closeModal('ug-import-modal');
   resetSongForm();
   document.getElementById('f-title').value  = parsed?.title  || '';
   document.getElementById('f-tags').value   = tags || (parsed?.artist ? parsed.artist + ', ' : '');
   document.getElementById('f-uglink').value = parsed?.ugLink || url;
+  document.getElementById('f-crd').value    = crd || '';
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
 }
