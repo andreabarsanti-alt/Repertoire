@@ -5092,7 +5092,7 @@ let liveInfo = null;            // last known info node (what the audience sees)
 let liveES = null, liveESState = 'off', liveTokenTimer = null, liveRetryTimer = null;
 let liveSeen = null;            // request ids already seen; null until the first snapshot (no alert for old ones)
 let liveFresh = new Set();      // highlighted until handled
-let liveShowDone = false, liveEditingSetup = false;
+let liveShowDone = true, liveEditingSetup = false;   // done requests shown by default (Andrea)
 
 // Venue location: where this iPad was when the live started (or when you tap "Set here"). Kept on
 // this device only, never sent to Firebase; each request's location is compared against it.
