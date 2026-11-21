@@ -2796,7 +2796,6 @@ function openCrdReader(id) {
   document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
   liveRecNote(id);                                 // "Start a live" recording, if one is running
-  liveAutoPlayed(id);                              // ...and marks it played on the audience page
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
@@ -2882,6 +2881,7 @@ function closeCrdReader() {
   crdAutoStop();
   crdPedalCancel();
   closeModal('crd-reader');
+  if (crdSongId) liveAutoPlayed(crdSongId);         // closing a published song marks it played
   crdSongId = null;
 }
 
@@ -5475,9 +5475,10 @@ async function liveMarkReq(id, status) {
     }
   } catch (e) { toast('Failed: ' + e.message); }
 }
-// "Start a live" tie-in (openCrdReader): opening a published song during a live marks it played.
+// closeCrdReader: closing the chord reader on a published song marks it played (Live tab and
+// audience page), whether or not a "Start live" recording is running. Undo with its ✓.
 function liveAutoPlayed(id) {
-  if (!liveRec || !liveSignedIn()) return;
+  if (!liveSignedIn()) return;
   const ids = livePubIds();
   if (!ids || !ids.includes(id) || liveInfo?.played?.[fbKey(id)]) return;
   liveSetPlayed(id, true).catch(() => {});
