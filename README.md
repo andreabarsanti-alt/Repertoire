@@ -43,18 +43,18 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match
 - **Keyboard Mode** — a header toggle (device-local, not saved with the data) that relabels every "Capo" as "Transpose" throughout the app, for players who don't use a capo. Fret counts over 6 are shown wrapped an octave down as the equivalent negative shift (capo 7 → Transpose -5, capo 11 → Transpose -1) — the underlying saved value is unchanged, only the display
 - All data stored in `localStorage` (persists across sessions on the same device)
-- Each profile has its own data file in the repo, `repertoire_<profile>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`)
-- On first load, seeds from the profile's file if no saved data exists
+- Each profile has its own data file in the repo, `repertoire_<profile>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`), kept on a separate **`data` branch** so data pushes don't clutter the app's history on `main`
+- On first load, seeds from the profile's file (read from the `data` branch through the GitHub API, no login needed) if no saved data exists
 - Detects when the repo file differs from local data — comparing everything: every song field (chord sheet, Try out, Lyrics only, scroll speed…), setlists, tag colours and tuning — and offers to sync, saying how many songs/setlists differ
-- **🔄 Refresh** — hard-reloads both the app itself and its data from what's published (`repertoire_<profile>.json` and `index.html`), bypassing the browser cache on both — no GitHub login needed, replaces local data after a confirm
+- **🔄 Refresh** — hard-reloads both the app itself and its data from the repo (`repertoire_<profile>.json` from the `data` branch, `index.html` from the published site), bypassing the browser cache on both — no GitHub login needed, replaces local data after a confirm
 - **Export** — downloads current state as `repertoire_<profile>.json`
 - **Import** — loads a previously exported JSON file
-- **Push / Pull** — pushes the profile's `repertoire_<profile>.json` to the repo (or pulls it back) via the GitHub API
+- **Push / Pull** — pushes the profile's `repertoire_<profile>.json` to the repo's `data` branch (or pulls it back) via the GitHub API
 - **Profile switcher** — a header dropdown to jump between all available profiles (e.g. Two of Us / Loose Ends) without editing the URL by hand; its **✎ Edit profiles…** entry opens a popup to add a new one (starts empty — push to it once you've added songs) or delete one you no longer need
 
 ## Hosting on GitHub Pages
 
-1. Push `index.html` and the `repertoire_<profile>.json` data files to the `main` branch
+1. Push `index.html` to the `main` branch, and the `repertoire_<profile>.json` data files to a `data` branch (the app reads and writes them there via the GitHub API)
 2. In the repo settings → **Pages** → set source to `main` / `root`
 3. Access at `https://<username>.github.io/<repo>/`
 

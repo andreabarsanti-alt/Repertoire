@@ -921,7 +921,7 @@ select.fi { cursor: pointer; }
       </label>
     </div>
     <button type="button" class="btn btn-secondary btn-sm hdr-more-toggle" id="hdr-more-toggle" onclick="toggleHdrMore()" title="More options">⋯</button>
-    <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app and its data from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
+    <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app, and its data from repertoire_&lt;profile&gt;.json on the repo's data branch — no login needed, but discards any local changes not yet pushed">🔄 Refresh</button>
     <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull this profile's data file (repertoire_&lt;profile&gt;.json) from GitHub">⬇ Pull</button>
     <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push this profile's data file (repertoire_&lt;profile&gt;.json) to GitHub">⬆ Push</button>
   </div>
@@ -1127,7 +1127,7 @@ select.fi { cursor: pointer; }
       <input class="fi" id="gh-repo" type="text" placeholder="Repertoire">
     </div>
     <div class="fg-row">
-      <div class="fg"><label>Branch</label><input class="fi" id="gh-branch" type="text" placeholder="main"></div>
+      <div class="fg"><label>Branch</label><input class="fi" id="gh-branch" type="text" placeholder="data"></div>
       <div class="fg"><label>File path</label><input class="fi" id="gh-path" type="text" placeholder="repertoire_two_of_us.json"></div>
     </div>
     <p style="font-size:0.72rem;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
@@ -1275,6 +1275,19 @@ const PROFILE     = new URLSearchParams(location.search).get('profile') || 'two_
 const STORAGE_KEY = 'rep_v2'            + (PROFILE ? '_' + PROFILE : '');
 const SEED_FILE   = 'repertoire'        + (PROFILE ? '_' + PROFILE : '') + '.json';
 const GH_CFG_KEY  = 'rep_github_config' + (PROFILE ? '_' + PROFILE : '');
+
+// ─────────────────────────────────────────
+// DATA BRANCH
+// ─────────────────────────────────────────
+// The profile JSON files live on their own `data` branch, not on `main` (which only holds the
+// app and is what GitHub Pages serves), so data pushes never clutter the app's history. That
+// means SEED_FILE is no longer a same-origin file next to index.html — every read (first-load
+// seed, startup repo check, 🔄 Refresh, ⬇ Pull) and every write (⬆ Push) goes through the
+// GitHub Contents API on DATA_BRANCH instead (see fetchRepoData()).
+const DATA_BRANCH = 'data';
+// Repo to read from when there's no saved GitHub config and the page isn't on <owner>.github.io
+// (e.g. testing from a local server) — the public repo this app lives in.
+const DATA_REPO_FALLBACK = { owner: 'andreabarsanti-alt', repo: 'Repertoire' };
 
 // ─────────────────────────────────────────
 // PROFILE REGISTRY (add/delete via the header dropdown's "Edit profiles…")
@@ -1429,8 +1442,8 @@ async function boot() {
     checkRepoSync();
   } else {
     try {
-      const r = await fetch(SEED_FILE);
-      if (r.ok) { db = await r.json(); migrateSetlists(); save(); }
+      const d = await fetchRepoData();
+      if (d && Array.isArray(d.songs)) { db = d; migrateSetlists(); save(); }
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
@@ -1575,10 +1588,8 @@ function dbFingerprint(data) {
 
 async function checkRepoSync() {
   try {
-    const r = await fetch(SEED_FILE + '?_=' + Date.now());
-    if (!r.ok) return;
-    const repoData = await r.json();
-    if (!Array.isArray(repoData.songs)) return;
+    const repoData = await fetchRepoData();
+    if (!repoData || !Array.isArray(repoData.songs)) return;
     if (dbFingerprint(db) === dbFingerprint(repoData)) return;
 
     const parts = [];
@@ -1624,17 +1635,16 @@ function dismissSync() {
 }
 
 // Manual "🔄 Refresh" button — unlike checkRepoSync (which only runs once on boot and just
-// shows a banner), this reloads straight from the published SEED_FILE right now, no login/token
-// needed (unlike ⬇ Pull's GitHub-API round trip). Always overwrites local data, so it confirms
+// shows a banner), this reloads SEED_FILE from the data branch right now (fetchRepoData — no
+// token needed, the repo is public; uses the saved token if there is one). Always overwrites local data, so it confirms
 // first — same JSON-shape validation/migration as doPull()/acceptSync().
 async function forceRefresh() {
-  if (!confirm('Force refresh from the published ' + SEED_FILE + '? Any local changes not yet pushed will be lost, and the page will reload.')) return;
+  if (!confirm('Force refresh ' + SEED_FILE + ' from the repo\'s ' + DATA_BRANCH + ' branch? Any local changes not yet pushed will be lost, and the page will reload.')) return;
   const btn = document.getElementById('btn-force-refresh');
   btn.disabled = true; btn.textContent = '🔄…';
   try {
-    const r = await fetch(SEED_FILE + '?_=' + Date.now());
-    if (!r.ok) throw new Error(`GET ${r.status}`);
-    const d = await r.json();
+    const d = await fetchRepoData();
+    if (!d) throw new Error(SEED_FILE + ' not found on the ' + DATA_BRANCH + ' branch');
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
     db = d; migrateSetlists();
@@ -4325,7 +4335,47 @@ document.getElementById('f-set-name').addEventListener('keydown', e => e.key==='
 // GITHUB PUSH
 // ─────────────────────────────────────────
 function getGithubConfig() {
-  try { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch { return null; }
+  let cfg;
+  try { cfg = JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch { return null; }
+  // Configs saved before the data moved off main still say branch "main" — move them over to
+  // DATA_BRANCH once (main no longer has the JSON files, so a push there would recreate them).
+  if (cfg && (!cfg.branch || cfg.branch === 'main')) {
+    cfg.branch = DATA_BRANCH;
+    localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg));
+  }
+  return cfg;
+}
+
+// Reads this profile's SEED_FILE from the repo via the GitHub Contents API (raw media type) —
+// the one read path for the first-load seed, the startup repo check, 🔄 Refresh and ⬇ Pull.
+// With a saved token it reads the configured owner/repo/branch/path, authenticated (no rate
+// limit worries, always the exact latest commit). Without one it reads DATA_BRANCH of the
+// public repo anonymously (60 requests/hour per IP — plenty here), falling back to
+// raw.githubusercontent.com if the API refuses. Returns the parsed JSON, or null if the file
+// doesn't exist (e.g. a brand-new profile that hasn't been pushed yet); throws on other errors.
+async function fetchRepoData(cfg) {
+  cfg = cfg || getGithubConfig();
+  const auto = autoDetectGithub();
+  const owner  = cfg?.owner  || auto.owner || DATA_REPO_FALLBACK.owner;
+  const repo   = cfg?.repo   || (auto.owner ? auto.repo : '') || DATA_REPO_FALLBACK.repo;
+  const branch = cfg?.branch || DATA_BRANCH;
+  const path   = cfg?.path   || SEED_FILE;
+  const headers = { 'Accept': 'application/vnd.github.raw+json' };
+  if (cfg?.token) headers['Authorization'] = `token ${cfg.token}`;
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&_=${Date.now()}`;
+  let res;
+  try { res = await fetch(apiUrl, { headers, cache: 'no-store' }); } catch (e) { res = null; }
+  if (res && res.ok) return JSON.parse(await res.text());
+  if (res && res.status === 404) return null;
+  if (cfg?.token && res) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GET ${res.status}`);
+  }
+  // Anonymous API call refused (rate limit) or unreachable — try the raw CDN instead.
+  const raw = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${path}?_=${Date.now()}`, { cache: 'no-store' });
+  if (raw.status === 404) return null;
+  if (!raw.ok) throw new Error(`GET ${raw.status}`);
+  return JSON.parse(await raw.text());
 }
 
 function clearGithubConfig() {
@@ -4334,7 +4384,7 @@ function clearGithubConfig() {
   document.getElementById('gh-token').value  = '';
   document.getElementById('gh-owner').value  = auto.owner;
   document.getElementById('gh-repo').value   = auto.repo;
-  document.getElementById('gh-branch').value = 'main';
+  document.getElementById('gh-branch').value = DATA_BRANCH;
   document.getElementById('gh-path').value   = SEED_FILE;
   toast('GitHub settings cleared');
 }
@@ -4345,9 +4395,9 @@ function autoDetectGithub() {
   const m = host.match(/^([^.]+)\.github\.io$/);
   if (m) {
     const rm = path.match(/^\/([^/]+)/);
-    return { owner: m[1], repo: rm ? rm[1] : '', branch: 'main', path: SEED_FILE, token: '' };
+    return { owner: m[1], repo: rm ? rm[1] : '', branch: DATA_BRANCH, path: SEED_FILE, token: '' };
   }
-  return { owner: '', repo: '', branch: 'main', path: SEED_FILE, token: '' };
+  return { owner: '', repo: '', branch: DATA_BRANCH, path: SEED_FILE, token: '' };
 }
 
 // Which action to run after the config modal is saved — set by whichever
@@ -4361,7 +4411,7 @@ function openGithubConfigModal(intent) {
   document.getElementById('gh-token').value  = cfg.token  || '';
   document.getElementById('gh-owner').value  = cfg.owner  || '';
   document.getElementById('gh-repo').value   = cfg.repo   || '';
-  document.getElementById('gh-branch').value = cfg.branch || 'main';
+  document.getElementById('gh-branch').value = cfg.branch || DATA_BRANCH;
   document.getElementById('gh-path').value   = cfg.path   || SEED_FILE;
   document.getElementById('github-modal-title').textContent = ghConfigIntent === 'pull' ? 'Pull from GitHub' : 'Push to GitHub';
   document.getElementById('gh-save-btn').textContent = ghConfigIntent === 'pull' ? 'Save & Pull' : 'Save & Push';
@@ -4374,7 +4424,7 @@ function saveGithubConfig() {
     token:  document.getElementById('gh-token').value.trim(),
     owner:  document.getElementById('gh-owner').value.trim(),
     repo:   document.getElementById('gh-repo').value.trim(),
-    branch: document.getElementById('gh-branch').value.trim() || 'main',
+    branch: document.getElementById('gh-branch').value.trim() || DATA_BRANCH,
     path:   document.getElementById('gh-path').value.trim()   || SEED_FILE,
   };
   if (!cfg.token || !cfg.owner || !cfg.repo) { toast('Token, Owner and Repo are required'); return; }
@@ -4443,23 +4493,8 @@ async function doPull(cfg) {
   const btn = document.getElementById('btn-pull');
   btn.disabled = true; btn.textContent = '⬇…';
   try {
-    const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`;
-    const headers = {
-      'Authorization': `token ${cfg.token}`,
-      'Accept': 'application/vnd.github.v3+json',
-    };
-    const res = await fetch(`${apiUrl}?ref=${encodeURIComponent(cfg.branch)}&_=${Date.now()}`, { headers });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `GET ${res.status}`);
-    }
-    const file = await res.json();
-    // Decode base64 content (GitHub returns it with newlines)
-    const json = decodeURIComponent(
-      atob(file.content.replace(/\n/g, ''))
-        .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2,'0')).join('')
-    );
-    const d = JSON.parse(json);
+    const d = await fetchRepoData(cfg);
+    if (!d) throw new Error(`${cfg.path} not found on branch ${cfg.branch}`);
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
     db = d; migrateSetlists();
