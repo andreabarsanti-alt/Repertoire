@@ -21,12 +21,14 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **CRD reader** — paste in your own chord/lyric sheet per song (inline `[G]` chords or a chord line above the lyrics, `[Verse]`/`[Chorus]` section labels); if present, the title opens it in a full-screen in-app reader instead of Ultimate Guitar, with a UG link and edit still one tap away (no delete here — that's Songs-tab-only, so it's never a stray tap away mid-reading)
   - **Root key vs. Playing key** — type the key you're actually playing shapes in and the header live-shows the **Capo** you need (and re-transposes the chords on screen); edit the **Key** itself to preview a different root without touching the sheet. Nothing's saved until you tap **Save capo** (just remembers the capo) or **Update root** (also rewrites the sheet into the new key) — reload without tapping either and it's exactly as it was
   - Auto-defaults to the song's saved Capo/Key on open, and folds in the global **Half-step down tuning** toggle
-  - Tap-to-hide header for a distraction-free view; keyboard scrolling (arrow keys / Page Up/Down)
+  - Tap-to-hide header for a distraction-free view; keyboard scrolling (arrow keys / Page Up/Down), with a **Scroll %** control for how far each press jumps
+  - **Pedal Auto-scroll** — a header toggle (device-local) for a foot pedal that sends Up/Down keys. When on, the reader gets an **Auto** play/pause button with a speed level (15 ≈ a full sheet in 3½ minutes), opening a song starts scrolling straight away, tapping the sheet or Space plays/pauses, and a status pill bottom-right shows/hides the toolbar. On the pedal: a short tap plays/pauses, holding scrolls up/down. Touching the sheet pauses auto-scroll briefly, then it carries on. Off, the reader works exactly as before
   - **⤢ Full editor** — a full-screen, full-width view for comfortable long-sheet editing, with a **👁 Preview** button to swap in a live rendering (styled chords, section labels — the same look as the reader) when you want to check it. Just a Key field alongside it (no Playing key/Capo here) — it saves straight into the song when you tap Done, and it works even before the song's been saved. Also the go-to for fixing a sheet transcribed in the wrong key — edit the chords and Key together, right there
 - Tag autocomplete when editing — suggests existing tags as you type
 
 ### Setlists
 - Create and manage multiple setlists
+- **⧉ Duplicate** a setlist — copies everything (sections, alternates, date) as "<name> (copy)"
 - **Live vs. Generic** — the left pane splits setlists into two groups: **Live** (an actual gig, with a date — sorted soonest-first, e.g. "7 Aug 2026") and **Generic** (a working/rehearsal list, sorted alphabetically). Mark a setlist Live and give it a date from the same modal you name it in
 - Two-column layout: setlist selector on the left, song list on the right
 - Add songs, remove songs, reorder by drag-and-drop or ↑↓ buttons
@@ -39,17 +41,18 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - **Half-step down tuning** — a global header toggle for instruments tuned down a half step; bumps every song's Capo by 1 fret (library-wide, confirmed) and shifts the CRD reader's transpose to match
 - **Keyboard Mode** — a header toggle (device-local, not saved with the data) that relabels every "Capo" as "Transpose" throughout the app, for players who don't use a capo. Fret counts over 6 are shown wrapped an octave down as the equivalent negative shift (capo 7 → Transpose -5, capo 11 → Transpose -1) — the underlying saved value is unchanged, only the display
 - All data stored in `localStorage` (persists across sessions on the same device)
-- On first load, seeds from `repertoire.json` if no saved data exists
+- Each profile has its own data file in the repo, `repertoire_<profile>.json` (e.g. `repertoire_two_of_us.json`, `repertoire_loose_ends.json`)
+- On first load, seeds from the profile's file if no saved data exists
 - Detects when the repo file differs from local data and offers to sync
 - **🔄 Refresh** — hard-reloads both the app itself and its data from what's published (`repertoire_<profile>.json` and `index.html`), bypassing the browser cache on both — no GitHub login needed, replaces local data after a confirm
-- **Export** — downloads current state as `repertoire.json`
+- **Export** — downloads current state as `repertoire_<profile>.json`
 - **Import** — loads a previously exported JSON file
-- **Push to GitHub** — pushes `repertoire.json` directly to the repo via GitHub API
+- **Push / Pull** — pushes the profile's `repertoire_<profile>.json` to the repo (or pulls it back) via the GitHub API
 - **Profile switcher** — a header dropdown to jump between all available profiles (e.g. Two of Us / Loose Ends) without editing the URL by hand; its **✎ Edit profiles…** entry opens a popup to add a new one (starts empty — push to it once you've added songs) or delete one you no longer need
 
 ## Hosting on GitHub Pages
 
-1. Push `index.html` and `repertoire.json` to the `main` branch
+1. Push `index.html` and the `repertoire_<profile>.json` data files to the `main` branch
 2. In the repo settings → **Pages** → set source to `main` / `root`
 3. Access at `https://<username>.github.io/<repo>/`
 

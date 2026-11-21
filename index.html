@@ -908,8 +908,8 @@ select.fi { cursor: pointer; }
     </div>
     <button type="button" class="btn btn-secondary btn-sm hdr-more-toggle" id="hdr-more-toggle" onclick="toggleHdrMore()" title="More options">⋯</button>
     <button class="btn btn-secondary btn-sm" onclick="forceRefresh()" id="btn-force-refresh" title="Hard-reload the app and its data from the published repertoire_&lt;profile&gt;.json — no login needed, but discards any local changes not yet pushed. If you just pushed and it's not showing up yet, GitHub Pages caching can lag a minute; use ⬇ Pull for the exact latest commit instead">🔄 Refresh</button>
-    <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull repertoire.json from GitHub">⬇ Pull</button>
-    <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push repertoire.json to GitHub">⬆ Push</button>
+    <button class="btn btn-secondary btn-sm" onclick="pullFromGithub()" id="btn-pull" title="Pull this profile's data file (repertoire_&lt;profile&gt;.json) from GitHub">⬇ Pull</button>
+    <button class="btn btn-secondary btn-sm" onclick="pushToGithub()" id="btn-push" title="Push this profile's data file (repertoire_&lt;profile&gt;.json) to GitHub">⬆ Push</button>
   </div>
 </header>
 
@@ -1111,7 +1111,7 @@ select.fi { cursor: pointer; }
     </div>
     <div class="fg-row">
       <div class="fg"><label>Branch</label><input class="fi" id="gh-branch" type="text" placeholder="main"></div>
-      <div class="fg"><label>File path</label><input class="fi" id="gh-path" type="text" placeholder="repertoire.json"></div>
+      <div class="fg"><label>File path</label><input class="fi" id="gh-path" type="text" placeholder="repertoire_two_of_us.json"></div>
     </div>
     <p style="font-size:0.72rem;color:var(--text-dim);margin-bottom:14px;line-height:1.5">
       Token needs <strong>Contents: Read & Write</strong> permission.<br>Settings are stored locally in your browser.
@@ -1607,7 +1607,7 @@ function exportJSON() {
   const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = 'repertoire.json'; a.click();
+  a.href = url; a.download = SEED_FILE; a.click();
   URL.revokeObjectURL(url);
   toast('Exported!');
 }
