@@ -3051,6 +3051,23 @@
           "songId": "6ebe9805-dd40-4558-b135-b57e59fb7fec"
         }
       ]
+    },
+    {
+      "id": "a2f65927-8cbb-4522-ad62-ce19015c6319",
+      "name": "Gig 21 nov 2026",
+      "type": "live",
+      "liveType": "gig",
+      "date": "2026-11-21",
+      "items": [
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        }
+      ]
     }
   ],
   "tuneUp": true
