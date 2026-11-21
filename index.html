@@ -3789,8 +3789,8 @@ function moveSlSongTo(idx) {
   if (items[idx]?.type !== 'song') return;
   const songIdx = items.map((it, j) => it.type === 'song' ? j : -1).filter(j => j >= 0);
   const count = songIdx.length, cur = songIdx.indexOf(idx) + 1;
-  const ans = prompt(`Move to position (1–${count}):`, String(cur));
-  if (ans === null) return;
+  const ans = prompt(`Move to position (1–${count}, now #${cur}):`, '');
+  if (ans === null || !ans.trim()) return;
   const n = parseInt(ans, 10);
   if (!(n >= 1 && n <= count)) { toast(`Enter a number from 1 to ${count}`); return; }
   if (n === cur) return;
