@@ -5500,8 +5500,10 @@ function liveShortUrl() {
   const base = location.origin + location.pathname.replace(/[^/]*$/, '');
   return `${base}r/?${proj}${LIVE_GIG === 'two_of_us' ? '' : '/' + LIVE_GIG}`;
 }
-// What the QR code, link and Copy link use.
-function liveShareUrl() { return liveShortUrl() || liveAudienceUrl(); }
+// Andrea's own TinyURL links, per profile (they redirect to the link above). Public anyway.
+const LIVE_TINY_LINKS = { two_of_us: 'https://tinyurl.com/4cys25ft' };
+// What the QR code, link and Copy link use: the TinyURL if this profile has one, else the r/ short link, else the full one.
+function liveShareUrl() { return LIVE_TINY_LINKS[LIVE_GIG] || liveShortUrl() || liveAudienceUrl(); }
 let _qrLib = null;
 function loadQrLib() {
   if (window.qrcode) return Promise.resolve();
