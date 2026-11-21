@@ -50,6 +50,19 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 .chip.req b { color: #ff9a9a; font-weight: 600; margin-left: 3px; }
 .hint { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin: 6px 0 4px; }
 #bubbles { position: relative; min-height: 120px; margin: 4px 0 18px; }
+/* Phone layout: tags as colourful chips flowing in rows instead of a tall column of bubbles. */
+#bubbles.chips-mode { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 0; height: auto !important; }
+.tchip {
+  border: 1px solid rgba(255,255,255,.14); border-radius: 999px; cursor: pointer;
+  padding: .55em 1.05em; color: #fff; font: inherit; font-weight: 700; line-height: 1.2;
+  text-shadow: 0 1px 4px rgba(0,0,0,.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.45);
+}
+.tchip:active { transform: scale(.96); }
+.search { position: relative; margin: 2px 0 14px; }
+.search .fi { padding-left: 40px; }
+.search::before { content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; opacity: .7; pointer-events: none; }
+#search-results { margin-bottom: 14px; }
 .bubble {
   position: absolute; border-radius: 50%; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center; padding: 10px;
@@ -126,7 +139,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
 <div class="wrap">
   <header>
     <h1 id="title">Richiedi una canzone</h1>
-    <p id="subtitle">Tocca una bolla, scegli una canzone e mandala alla band</p>
+    <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
 
   <div id="state-msg" class="center-msg"><div class="big">🎵</div><h2>Caricamento…</h2></div>
@@ -134,6 +147,8 @@ textarea.fi { resize: vertical; min-height: 70px; }
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
     <div class="board" id="board"></div>
+    <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
+    <div id="search-results" class="hidden"></div>
     <div id="bubbles"></div>
     <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Altro? Chiedi una canzone qualsiasi</button>
   </div>
@@ -251,9 +266,10 @@ function render() {
   const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
-  document.getElementById('subtitle').textContent = open ? 'Tocca una bolla, scegli una canzone e mandala alla band' : 'Dai un\'occhiata a cosa suoniamo stasera';
+  document.getElementById('subtitle').textContent = open ? 'Scegli un artista o un genere, oppure cerca una canzone' : 'Dai un\'occhiata a cosa suoniamo stasera';
   renderBoard();
   renderBubbles();
+  renderSearch();
   // An open song list refreshes in place with the new played/requested state.
   if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
 }
@@ -309,6 +325,20 @@ function renderBubbles() {
   lastBubbleSig = sig;
   if (!keys.length) { wrap.innerHTML = ''; wrap.style.height = ''; return; }
   const max = Math.max(...keys.map(k => g[k].length));
+  if ((wrap.clientWidth || window.innerWidth) < 600) {
+    // Phone: chips in rows, biggest tags first, text size by song count.
+    wrap.classList.add('chips-mode'); wrap.style.height = '';
+    wrap.innerHTML = keys.map((key, i) => ({ key, i, n: g[key].length }))
+      .sort((a, b) => b.n - a.n || a.key.localeCompare(b.key))
+      .map(c => {
+        const [c1, c2] = PALETTE[c.i % PALETTE.length];
+        const fs = (1 + 0.45 * (c.n / max)).toFixed(2);
+        return `<button class="tchip" data-key="${esc(c.key)}" onclick="openList(this.dataset.key)"
+          style="font-size:${fs}rem;background:linear-gradient(160deg, ${c1}, ${c2})">${esc(c.key)}</button>`;
+      }).join('');
+    return;
+  }
+  wrap.classList.remove('chips-mode');
   // Sized from the screen width, so even the smallest bubble's label stays big enough to read.
   const W0 = wrap.clientWidth || (window.innerWidth - 32);
   const minR = Math.max(58, Math.min(80, W0 * 0.17)), addR = Math.min(70, W0 * 0.12);
@@ -347,15 +377,29 @@ function renderList(tag) {
   const list = (groups()[tag] || []).slice().sort((a, b) => a.t.localeCompare(b.t));
   const mine = getMine();
   document.getElementById('list-title').textContent = tag;
-  document.getElementById('list-songs').innerHTML = list.map(s => {
-    const tags = [];
-    if (isPlayed(s)) tags.push('<span class="tag played">✓ Suonata</span>');
-    else if (reqCount(s)) tags.push(`<span class="tag req">Richiesta${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
-    if (mine.includes(s.id)) tags.push('<span class="tag mine">L\'hai chiesta tu</span>');
-    return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
-      <span class="song-title">${esc(s.t)}</span>${tags.join('')}
-    </button>`;
-  }).join('') || '<p class="hint">Nessuna canzone qui</p>';
+  document.getElementById('list-songs').innerHTML = list.map(s => songRow(s, mine)).join('') || '<p class="hint">Nessuna canzone qui</p>';
+}
+function songRow(s, mine) {
+  const tags = [];
+  if (isPlayed(s)) tags.push('<span class="tag played">✓ Suonata</span>');
+  else if (reqCount(s)) tags.push(`<span class="tag req">Richiesta${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
+  if (mine.includes(s.id)) tags.push('<span class="tag mine">L\'hai chiesta tu</span>');
+  return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
+    <span class="song-title">${esc(s.t)}</span>${tags.join('')}
+  </button>`;
+}
+// Song search: matches titles and tags; while it has text, the results replace the bubbles.
+function renderSearch() {
+  const q = (document.getElementById('song-search').value || '').trim().toLowerCase();
+  const res = document.getElementById('search-results');
+  document.getElementById('bubbles').classList.toggle('hidden', !!q);
+  res.classList.toggle('hidden', !q);
+  if (!q) return;
+  const tagsOf = s => Array.isArray(s.g) ? s.g : Object.values(s.g || {});
+  const list = songs.filter(s => s.t.toLowerCase().includes(q) || tagsOf(s).some(t => String(t).toLowerCase().includes(q)))
+                    .sort((a, b) => a.t.localeCompare(b.t));
+  const mine = getMine();
+  res.innerHTML = list.map(s => songRow(s, mine)).join('') || '<p class="hint">Nessuna canzone trovata — prova con “Altro?” qui sotto</p>';
 }
 function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
 
