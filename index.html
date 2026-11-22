@@ -3328,33 +3328,46 @@ function crdAutoTick(ts) {
 // recognised from either signal:
 //   - the key stays down for CRD_HOLD_MS (true hold), or
 //   - presses of the same key arrive less than CRD_REPEAT_GAP_MS apart (repeat stream).
-// A short press is a tap: it plays/pauses auto-scroll on release (either key, same effect).
-// Presses within CRD_CHAIN_MS of each other form one gesture; if a gesture turns out to be a
-// hold, any play/pause its first taps already did is undone (a repeat stream usually starts
-// with a lone press, then a pause, then the fast repeats).
-// A hold changes the auto-scroll speed by one step (5 levels): Down (forward) faster, Up (back)
-// slower — once straight away, then another step every CRD_HOLD_STEP_MS (1 s) while still held. The sheet keeps scrolling during the
-// hold so you feel the new speed; a hold while paused stays paused (the new level shows in the
-// status pill and applies on Play).
+// Three gestures, per pedal side:
+//   - tap: plays/pauses auto-scroll on release (either side, same effect);
+//   - double press (a second deliberate press of the same side within CRD_DOUBLE_MS, slower than
+//     a repeat stream): changes the auto-scroll speed by one step of 5 — Down faster, Up slower.
+//     It is only confirmed once no further press follows for CRD_HOLD_IDLE_MS after the second
+//     release, so the start of a repeat stream is never mistaken for one;
+//   - hold: scrolls the sheet like the arrow keys, Down forward / Up back, one Scroll % jump
+//     straight away and another every CRD_HOLD_JUMP_MS while held (auto-scroll pauses meanwhile
+//     and carries on from there shortly after the hold ends).
+// Presses within CRD_CHAIN_MS of each other form one gesture (autoWas = play state when it
+// began); a double press or hold undoes any play/pause its first lone tap(s) already did.
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
-const CRD_HOLD_STEP_MS  = 1000;
+const CRD_HOLD_JUMP_MS  = 450;
 const CRD_REPEAT_GAP_MS = 150;
+const CRD_DOUBLE_MS     = 500;   // max time between the two presses of a double press
 const CRD_CHAIN_MS      = 800;
 const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
-let crdPedal = null;   // gesture in progress: { key, dir, down, last, autoWas, holding, holdTimer, jumpTimer, endTimer }
+// gesture in progress: { key, dir, down, last, presses, autoWas, holding, holdTimer, jumpTimer, endTimer, dblTimer }
+let crdPedal = null;
 
 function crdPedalDown(key, dir) {
   const now = performance.now();
   let p = crdPedal;
+  if (p && p.dblTimer && !p.down && (p.key !== key || now - p.last >= CRD_REPEAT_GAP_MS)) {
+    // Another deliberate press (or the other side) while a double press waits for
+    // confirmation: confirm it, and let this press start a fresh gesture.
+    crdPedalDoubleFire(); p = null;
+  }
   if (p && (p.key !== key || (!p.holding && !p.down && now - p.last > CRD_CHAIN_MS))) { crdPedalCancel(); p = null; }
-  if (!p) p = crdPedal = { key, dir, down: false, last: 0, autoWas: crdAutoOn, holding: false, holdTimer: 0, jumpTimer: 0, endTimer: 0 };
+  if (!p) p = crdPedal = { key, dir, down: false, last: 0, presses: 0, autoWas: crdAutoOn, holding: false,
+                           holdTimer: 0, jumpTimer: 0, endTimer: 0, dblTimer: 0 };
   const gap = p.last ? now - p.last : Infinity;
   const wasDown = p.down;
   p.last = now; p.down = true;
   if (p.holding) { crdPedalKeepHold(); return; }
   if (gap < CRD_REPEAT_GAP_MS) { crdPedalHoldStart(); return; }
   if (!wasDown) {
+    p.presses++;
+    p.pressGap = gap;
     clearTimeout(p.holdTimer);
     p.holdTimer = setTimeout(() => { if (crdPedal === p && p.down) crdPedalHoldStart(); }, CRD_HOLD_MS);
   }
@@ -3364,25 +3377,45 @@ function crdPedalUp(key) {
   if (!p || p.key !== key) return;
   p.down = false;
   clearTimeout(p.holdTimer);
-  if (p.holding) crdPedalKeepHold();
-  else crdAutoToggle();                            // short press = play / pause
+  if (p.holding) { crdPedalKeepHold(); return; }
+  if (p.presses === 2 && p.pressGap <= CRD_DOUBLE_MS) {
+    // Second press of a possible double press: wait briefly — more presses = a repeat stream (hold).
+    clearTimeout(p.dblTimer);
+    p.dblTimer = setTimeout(() => {
+      if (crdPedal === p && !p.down && performance.now() - p.last >= CRD_HOLD_IDLE_MS) crdPedalDoubleFire();
+    }, CRD_HOLD_IDLE_MS);
+    return;
+  }
+  crdAutoToggle();                                 // short press = play / pause
+}
+function crdPedalUndoTaps(p) {
+  if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }
+}
+function crdPedalDoubleFire() {
+  const p = crdPedal;
+  if (!p) return;
+  crdPedalUndoTaps(p);                             // the first press's play/pause was part of this
+  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (steps of 5, 5–60)
+  crdPedalCancel();
 }
 function crdPedalHoldStart() {
   const p = crdPedal;
   if (!p || p.holding) return;
-  clearTimeout(p.holdTimer);
+  clearTimeout(p.holdTimer); clearTimeout(p.dblTimer); p.dblTimer = 0;
   p.holding = true;
-  if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }  // undo taps that were the start of this hold
-  crdPedalSpeedStep();                             // one step now…
-  p.jumpTimer = setInterval(crdPedalSpeedStep, CRD_HOLD_STEP_MS);   // …and one per second while held
+  crdPedalUndoTaps(p);                             // undo taps that were the start of this hold
+  crdAutoForgetPause();
+  crdPedalScrollStep();                            // one jump now…
+  p.jumpTimer = setInterval(crdPedalScrollStep, CRD_HOLD_JUMP_MS);   // …and more while held
   crdPedalKeepHold();
 }
-function crdPedalSpeedStep() {
+function crdPedalScrollStep() {
   const p = crdPedal;
   if (!p) return;
-  // Released already (key up and no fresh repeat) but the hold hasn't timed out yet: no extra step.
+  // Released already (key up and no fresh repeat) but the hold hasn't timed out yet: no extra jump.
   if (!p.down && performance.now() - p.last > CRD_REPEAT_GAP_MS) return;
-  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (steps of 5, 5–60)
+  crdAutoNudge();                                  // auto-scroll waits, then carries on from here
+  crdJump(p.dir);                                  // Down = forward, Up = back (Scroll %)
 }
 // Keeps a hold alive while the key is still down or presses keep streaming in; ends it otherwise.
 function crdPedalKeepHold() {
@@ -3398,7 +3431,7 @@ function crdPedalKeepHold() {
 function crdPedalCancel() {
   const p = crdPedal;
   if (!p) return;
-  clearTimeout(p.holdTimer); clearInterval(p.jumpTimer); clearTimeout(p.endTimer);
+  clearTimeout(p.holdTimer); clearInterval(p.jumpTimer); clearTimeout(p.endTimer); clearTimeout(p.dblTimer);
   crdPedal = null;
 }
 window.addEventListener('blur', crdPedalCancel);   // never leave a hold stuck if focus is lost
