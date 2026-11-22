@@ -3404,6 +3404,8 @@ function crdPedalUp(key) {
 function setPedalTapSpeed(on) {
   pedalTapSpeed = !!on;
   localStorage.setItem('rep_pedal_tap_speed', pedalTapSpeed ? '1' : '0');
+  const lab = document.getElementById('crd-pedal-map-label');
+  if (lab) lab.textContent = pedalTapSpeed ? 'Tap speed' : 'Tap play';
   crdPedalCancel();
 }
 function crdPedalAction(p, isDouble) {
@@ -5867,7 +5869,7 @@ function livePlayBar(withPublish) {
       </select>
       <button class="btn btn-secondary btn-sm" onclick="openPlay(liveSetId())" ${setId ? '' : 'disabled'}>▶ Play</button>
       <span class="crd-pedal-mode" title="Pedal mode (chord reader, Pedal Auto-scroll): what a single tap and a double press do — a hold always scrolls">
-        <span class="btn btn-secondary btn-sm" aria-hidden="true">Pedal mode</span>
+        <span class="btn btn-secondary btn-sm" id="crd-pedal-map-label" aria-hidden="true">${pedalTapSpeed ? 'Tap speed' : 'Tap play'}</span>
         <select id="crd-pedal-map" aria-label="Pedal mode" onchange="setPedalTapSpeed(this.value === 'speed'); this.blur()">
           <option value="play" ${pedalTapSpeed ? '' : 'selected'}>Tap = play/pause · Double press = speed</option>
           <option value="speed" ${pedalTapSpeed ? 'selected' : ''}>Tap = speed · Double press = play/pause</option>
