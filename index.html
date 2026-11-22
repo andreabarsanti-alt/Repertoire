@@ -5708,6 +5708,20 @@ async function liveMarkReq(id, status) {
     }
   } catch (e) { toast('Failed: ' + e.message); }
 }
+// Removes one request from Firebase for good (the 🗑 on each request row). The owner's write on
+// `requests` already covers deleting a child, so no rule change is needed. The stream's put
+// with null would drop it too; dropping it locally right away keeps the list snappy.
+async function liveDeleteReq(id) {
+  const r = liveReqs[id];
+  if (!r) return;
+  const what = r.text ? `"${r.text}"` : (db.songs.find(x => x.id === r.songId)?.title || 'this song');
+  if (!confirm(`Delete the request for ${what}${r.name ? ' from ' + r.name : ''}? This can't be undone.`)) return;
+  try { await fbReq('DELETE', `requests/${encodeURIComponent(id)}`); }
+  catch (e) { toast('Delete failed: ' + e.message); return; }
+  liveFresh.delete(id);
+  if (liveReqs[id]) { delete liveReqs[id]; liveOnReqsChanged(); }
+  toast('Request deleted');
+}
 // closeCrdReader: closing the chord reader on a published song marks it played (Live tab and
 // audience page), whether or not a "Start live" recording is running. Undo with its ✓.
 function liveAutoPlayed(id) {
@@ -5973,7 +5987,8 @@ function renderLiveLists() {
       ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
       : `${r.songId ? '' : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>`}
-         <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`;
+         <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`
+    const del = `<button class="btn btn-danger btn-sm btn-icon" onclick="liveDeleteReq('${esc(r.id)}')" title="Delete this request">🗑</button>`;
     return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
       <div class="live-req-main">
         <div class="live-req-title">${title}</div>
@@ -5981,7 +5996,7 @@ function renderLiveLists() {
         ${r.msg ? `<div class="live-req-from">“${esc(r.msg)}”</div>` : ''}
         <div class="live-req-time">${time(r.at)}</div>
       </div>
-      <div class="live-req-actions">${actions}</div>
+      <div class="live-req-actions">${actions}${del}</div>
     </div>`;
   };
   reqEl.innerHTML =
