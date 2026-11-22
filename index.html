@@ -3329,7 +3329,8 @@ function crdAutoTick(ts) {
 //   - the key stays down for CRD_HOLD_MS (true hold), or
 //   - presses of the same key arrive less than CRD_REPEAT_GAP_MS apart (repeat stream).
 // Three gestures, per pedal side:
-//   - tap: plays/pauses auto-scroll on release (either side, same effect);
+//   - tap: plays/pauses auto-scroll (either side, same effect) — only once CRD_DOUBLE_MS has passed
+//     after release with no further press, so a double press or a hold never plays/pauses;
 //   - double press (a second deliberate press of the same side within CRD_DOUBLE_MS, slower than
 //     a repeat stream): changes the auto-scroll speed by one step of 5 — Down faster, Up slower.
 //     It is only confirmed once no further press follows for CRD_HOLD_IDLE_MS after the second
@@ -3338,7 +3339,7 @@ function crdAutoTick(ts) {
 //     straight away and another every CRD_HOLD_JUMP_MS while held (auto-scroll pauses meanwhile
 //     and carries on from there shortly after the hold ends).
 // Presses within CRD_CHAIN_MS of each other form one gesture (autoWas = play state when it
-// began); a double press or hold undoes any play/pause its first lone tap(s) already did.
+// began); as a safety net, a double press or hold restores that play state.
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
 const CRD_HOLD_JUMP_MS  = 450;
@@ -3357,9 +3358,11 @@ function crdPedalDown(key, dir) {
     // confirmation: confirm it, and let this press start a fresh gesture.
     crdPedalDoubleFire(); p = null;
   }
+  if (p && p.tapTimer && p.key !== key) { crdPedalTapFire(); p = null; }   // other side: the pending tap stands
+  if (p) { clearTimeout(p.tapTimer); p.tapTimer = 0; }                        // a further press: not a lone tap
   if (p && (p.key !== key || (!p.holding && !p.down && now - p.last > CRD_CHAIN_MS))) { crdPedalCancel(); p = null; }
   if (!p) p = crdPedal = { key, dir, down: false, last: 0, presses: 0, autoWas: crdAutoOn, holding: false,
-                           holdTimer: 0, jumpTimer: 0, endTimer: 0, dblTimer: 0 };
+                           holdTimer: 0, jumpTimer: 0, endTimer: 0, dblTimer: 0, tapTimer: 0 };
   const gap = p.last ? now - p.last : Infinity;
   const wasDown = p.down;
   p.last = now; p.down = true;
@@ -3367,7 +3370,6 @@ function crdPedalDown(key, dir) {
   if (gap < CRD_REPEAT_GAP_MS) { crdPedalHoldStart(); return; }
   if (!wasDown) {
     p.presses++;
-    p.pressGap = gap;
     clearTimeout(p.holdTimer);
     p.holdTimer = setTimeout(() => { if (crdPedal === p && p.down) crdPedalHoldStart(); }, CRD_HOLD_MS);
   }
@@ -3378,7 +3380,7 @@ function crdPedalUp(key) {
   p.down = false;
   clearTimeout(p.holdTimer);
   if (p.holding) { crdPedalKeepHold(); return; }
-  if (p.presses === 2 && p.pressGap <= CRD_DOUBLE_MS) {
+  if (p.presses >= 2) {
     // Second press of a possible double press: wait briefly — more presses = a repeat stream (hold).
     clearTimeout(p.dblTimer);
     p.dblTimer = setTimeout(() => {
@@ -3386,7 +3388,14 @@ function crdPedalUp(key) {
     }, CRD_HOLD_IDLE_MS);
     return;
   }
-  crdAutoToggle();                                 // short press = play / pause
+  // First press released: it is a tap only if nothing follows within CRD_DOUBLE_MS (no double
+  // press, no repeat-stream hold), so play/pause waits that long and never fires for those.
+  clearTimeout(p.tapTimer);
+  p.tapTimer = setTimeout(() => { if (crdPedal === p && !p.down) crdPedalTapFire(); }, CRD_DOUBLE_MS);
+}
+function crdPedalTapFire() {
+  crdPedalCancel();
+  crdAutoToggle();                                 // clean single tap = play / pause
 }
 function crdPedalUndoTaps(p) {
   if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }
@@ -3431,7 +3440,7 @@ function crdPedalKeepHold() {
 function crdPedalCancel() {
   const p = crdPedal;
   if (!p) return;
-  clearTimeout(p.holdTimer); clearInterval(p.jumpTimer); clearTimeout(p.endTimer); clearTimeout(p.dblTimer);
+  clearTimeout(p.holdTimer); clearInterval(p.jumpTimer); clearTimeout(p.endTimer); clearTimeout(p.dblTimer); clearTimeout(p.tapTimer);
   crdPedal = null;
 }
 window.addEventListener('blur', crdPedalCancel);   // never leave a hold stuck if focus is lost
