@@ -1389,7 +1389,7 @@ select.fi { cursor: pointer; }
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(-1)" title="Down a semitone">−</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyStep(1)" title="Up a semitone">+</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdTKeyReset()" title="Reset to this song's saved capo">↺</button>
-          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo (and the chord sheet in this playing key)" disabled>💾 Save capo</button>
+          <button class="btn btn-secondary btn-sm" id="crd-store-btn" onclick="crdCommit()" title="Save the capo, or rewrite the sheet into a new root key" disabled>💾 Save capo</button>
         </div>
         <div class="crd-toolbar-right" id="crd-auto-group" style="display:none">
           <span class="crd-toolbar-label">Auto</span>
@@ -1600,25 +1600,7 @@ function migrateSetlists() {
   return dirty;
 }
 
-// One-time conversion of chord sheets from the root key into the playing key. s.crd used to be
-// stored written in the song's root key (s.key) and transposed on screen to the playing key implied
-// by key/capo/tuning; since 2026-11-22 (Andrea) it's stored in that playing key itself, i.e. exactly
-// the chords that are played, and db.crdInPlayKey marks data that's already converted. Data
-// without the flag (older JSON from the repo, an old export, older localStorage) gets every sheet
-// transposed by (playing key − root) once, and the flag set. Key/capo are untouched. Returns
-// true if it changed anything.
-function migrateCrdPlayKey(data = db) {
-  if (!data || data.crdInPlayKey) return false;
-  (data.songs || []).forEach(s => {
-    if (!s.crd) return;
-    const sk = parseKeyName(s.key), tk = parseKeyName(playKeyFor(s, data.tuneUp));
-    if (sk && tk) s.crd = transposeCrdText(s.crd, tk.idx - sk.idx);
-  });
-  data.crdInPlayKey = true;
-  return true;
-}
-
-let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false, crdInPlayKey:true };
+let db = { songs:[], setlists:[], tagMeta:{}, tuneUp:false };
 // Keyboard Mode is a device-local *display* preference (not song data, not JSON-persisted/pushed):
 // it relabels every "Capo N" as "Transpose ±N", wrapping fret counts over 6 down an octave
 // (capo 7 → Transpose -5 … capo 11 → Transpose -1) so keyboard players see the shift they'd
@@ -1687,14 +1669,13 @@ async function boot() {
         }
       });
       if (migrateSetlists()) dirty = true;
-      if (migrateCrdPlayKey()) dirty = true;
       if (dirty) save();
     } catch {}
     checkRepoSync();
   } else {
     try {
       const d = await fetchRepoData();
-      if (d && Array.isArray(d.songs)) { db = d; migrateSetlists(); migrateCrdPlayKey(); save(); }
+      if (d && Array.isArray(d.songs)) { db = d; migrateSetlists(); save(); }
     } catch {}
   }
   if (!db.tagMeta) db.tagMeta = {};
@@ -1844,29 +1825,14 @@ function dbFingerprint(data) {
     setlists: byId(data.setlists, canonSetlist),
     tagMeta: canonVal(data.tagMeta) || null,
     tuneUp: !!data.tuneUp,
-    crdInPlayKey: !!data.crdInPlayKey,
   });
 }
 
 async function checkRepoSync() {
   try {
-    let repoData = await fetchRepoData();
+    const repoData = await fetchRepoData();
     if (!repoData || !Array.isArray(repoData.songs)) return;
     if (dbFingerprint(db) === dbFingerprint(repoData)) return;
-    // Repo data from before the playing-key conversion: compare against a converted copy, so the
-    // banner only counts real edits — and if the conversion is the only difference, just say so.
-    if (!repoData.crdInPlayKey) {
-      const conv = JSON.parse(JSON.stringify(repoData));
-      migrateCrdPlayKey(conv);
-      if (dbFingerprint(db) === dbFingerprint(conv)) {
-        document.getElementById('sync-msg').textContent = 'Chord sheets converted to the playing key on this device — ⬆ Push to save them to the repo.';
-        const b = document.getElementById('sync-banner');
-        b._repoData = repoData;
-        b.classList.remove('hidden');
-        return;
-      }
-      repoData = conv;
-    }
 
     const parts = [];
     const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
@@ -1900,7 +1866,7 @@ function acceptSync() {
   const localTagMeta = db.tagMeta || {};
   db = banner._repoData;
   if (!db.tagMeta) db.tagMeta = localTagMeta;
-  migrateSetlists(); migrateCrdPlayKey();
+  migrateSetlists();
   save(); renderAll();
   banner.classList.add('hidden');
   toast('Loaded from repo');
@@ -1923,7 +1889,7 @@ async function forceRefresh() {
     if (!d) throw new Error(SEED_FILE + ' not found on the ' + DATA_BRANCH + ' branch');
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-    db = d; migrateSetlists(); migrateCrdPlayKey();
+    db = d; migrateSetlists();
     save();
     // Data's refreshed in localStorage — now hard-reload the page itself (cache-busted URL, so
     // the browser can't serve a stale index.html out of its cache) so the app code (HTML/CSS/JS
@@ -1964,7 +1930,7 @@ function importJSON(e) {
       const d = JSON.parse(ev.target.result);
       if (Array.isArray(d.songs) && Array.isArray(d.setlists)) {
         if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-        db = d; migrateSetlists(); migrateCrdPlayKey();
+        db = d; migrateSetlists();
         save(); renderAll(); toast('Imported!');
       } else toast('Invalid JSON');
     } catch { toast('Error reading file'); }
@@ -2833,7 +2799,7 @@ function formatKeyName(idx, qual) {
 }
 
 // The key the chords are being displayed in right now, relative to the song's *actual saved*
-// key — independent of any pending root edit,
+// key (crd text is always stored written in s.key) — independent of any pending root edit,
 // so editing the root alone never re-transposes the sheet on screen. Falls back to 0 (no
 // transpose) while either side is unparsed/mid-typing. Only the pitch matters here — major vs.
 // minor doesn't change how far apart two keys are.
@@ -2842,9 +2808,7 @@ function chordsEffFor(keyStr, tkeyStr) {
   if (!sk || !tk) return 0;
   return ((tk.idx - sk.idx) % 12 + 12) % 12;
 }
-// s.crd is stored written in the song's saved playing key (see migrateCrdPlayKey), so the sheet
-// shows as-is on open and is only transposed while the Playing key is edited away from that.
-function crdChordsEff(s) { return chordsEffFor(deriveDefaultTKey(s), crdEditTKey); }
+function crdChordsEff(s) { return chordsEffFor(s.key, crdEditTKey); }
 
 // Capo implied by playing `tkeyStr` shapes over a song whose root is `rootStr`, plus the
 // half-step-down tuning bump. Null while either key is unparsed. Major/minor doesn't affect it.
@@ -2859,14 +2823,12 @@ function computeCapo(rootStr, tkeyStr) {
 // The playing key implied by a song's *saved* key/capo/tuning — i.e. what the reader defaults
 // to on open, before any pending edits. Carries the root key's major/minor-ness through, so an
 // "Am" song defaults to a minor playing key too, instead of silently turning major.
-// It's also the key s.crd is stored written in (see migrateCrdPlayKey).
-function deriveDefaultTKey(s) { return playKeyFor(s, db.tuneUp); }
-function playKeyFor(s, tuneUp) {
+function deriveDefaultTKey(s) {
   const sk = parseKeyName(s.key);
   if (!sk) return '';
   // Inverse of computeCapo's mod-12 wrap: a wrapped capo of e.g. 0 (which was really 11 before
   // the tuning bump rolled it over) has to unwrap the same way, not just subtract-and-clamp.
-  const baseCapo = (((parseInt(s.capo, 10) || 0) - (tuneUp ? 1 : 0)) % 12 + 12) % 12;
+  const baseCapo = (((parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0)) % 12 + 12) % 12;
   return formatKeyName(sk.idx - baseCapo, sk.qual);
 }
 
@@ -2942,9 +2904,9 @@ function crdMetaEdited(field, value) {
   crdUpdateStoreBtn();
 }
 
-// Keeps the save button's label/enabled-state in sync: it reads "Update root" once the root key
-// has actually changed, or "Save capo" when just the playing key/capo drifted from what's saved.
-// Either way a changed playing key also rewrites the stored sheet into it (see crdCommit).
+// Keeps the save button's label/enabled-state in sync: it reads "Update root" (rewrites the
+// sheet + capo together) once the root key has actually changed, or "Save capo" (capo only,
+// root and sheet untouched) when just the playing key/capo drifted from what's saved.
 function crdUpdateStoreBtn() {
   const s = db.songs.find(x => x.id === crdSongId);
   const btn = document.getElementById('crd-store-btn');
@@ -2955,8 +2917,8 @@ function crdUpdateStoreBtn() {
   btn.disabled = !(rootChanged || capoChanged);
   btn.textContent = rootChanged ? '💾 Update root' : `💾 Save ${capoWord().toLowerCase()}`;
   btn.title = rootChanged
-    ? `Save the new root key and ${capoWord().toLowerCase()} (and the chord sheet in this playing key)`
-    : `Save this ${capoWord().toLowerCase()} as the song's default, and the chord sheet in this playing key`;
+    ? `Rewrite the chord sheet into the new root key and update ${capoWord().toLowerCase()}`
+    : `Save this ${capoWord().toLowerCase()} as the song's default`;
 }
 
 function closeCrdReader() {
@@ -3103,18 +3065,18 @@ function crdCommit() {
   const capoChanged = pendingCapo !== (parseInt(s.capo, 10) || 0);
   if (!rootChanged && !capoChanged) return;
 
-  // s.crd is stored in the playing key: if that's changed, the saved sheet is rewritten into the
-  // new one (exactly the chords on screen now). A root edit alone never touches the sheet.
-  const semis = crdChordsEff(s);
-  const capoStr = `${capoWord().toLowerCase()} ${keyboardMode ? capoWrap(pendingCapo) : pendingCapo}`;
-  const sheet = semis ? ` and save the chord sheet in ${crdEditTKey}` : '';
   const msg = rootChanged
-    ? `Change the root key from ${s.key || '—'} to ${crdEditKey}, set ${capoStr}${sheet}?`
-    : `Save ${capoStr} as this song's default${sheet}?`;
+    ? `Rewrite the chord sheet from ${s.key || '—'} to ${crdEditKey}, and set ${capoWord().toLowerCase()} to ${keyboardMode ? capoWrap(pendingCapo) : pendingCapo}?`
+    : `Save ${capoText(pendingCapo).toLowerCase()} as this song's default?`;
   if (!confirm(msg)) return;
 
-  if (semis) s.crd = transposeCrdText(s.crd, semis);
-  if (rootChanged) s.key = crdEditKey;
+  if (rootChanged) {
+    // s.crd is always written in the song's current root — shift it by the exact interval
+    // between the old and new root so the sheet's chords match the new key name.
+    const oldKey = parseKeyName(s.key);
+    if (oldKey) s.crd = transposeCrdText(s.crd, parseKeyName(crdEditKey).idx - oldKey.idx);
+    s.key = crdEditKey;
+  }
   s.capo = pendingCapo ? String(pendingCapo) : '';
 
   save(); renderAll();
@@ -5123,7 +5085,7 @@ async function doPull(cfg) {
     if (!d) throw new Error(`${cfg.path} not found on branch ${cfg.branch}`);
     if (!Array.isArray(d.songs)) throw new Error('Invalid data');
     if (!d.tagMeta) d.tagMeta = db.tagMeta || {};
-    db = d; migrateSetlists(); migrateCrdPlayKey();
+    db = d; migrateSetlists();
     save(); renderAll();
     document.getElementById('sync-banner').classList.add('hidden');
     toast('Pulled from GitHub!');
