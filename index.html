@@ -1397,6 +1397,10 @@ select.fi { cursor: pointer; }
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(-1)" title="Slower">−</button>
           <span id="crd-auto-speed-label" class="crd-transpose-val" title="Auto-scroll speed (steps of 5) — 15 is about 3½ minutes for a full sheet">15</span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="crdAutoSpeedStep(1)" title="Faster">+</button>
+          <select id="crd-pedal-map" class="profile-select" onchange="setPedalTapSpeed(this.value === 'speed'); this.blur()" title="Pedal: what a single tap and a double press do (a hold always scrolls)">
+            <option value="play">Pedal: tap ▶⏸ · 2× speed</option>
+            <option value="speed">Pedal: tap speed · 2× ▶⏸</option>
+          </select>
         </div>
         <div class="crd-toolbar-right">
           <span class="crd-toolbar-label">Scroll</span>
@@ -1610,6 +1614,7 @@ let keyboardMode = localStorage.getItem('rep_keyboard_mode') === '1';
 // chord sheet as always. On: a short tap of Up/Down (or PageUp/PageDown) plays/pauses auto-scroll,
 // holding Down speeds auto-scroll up, holding Up slows it down. See the Auto-scroll section by the CRD reader.
 let pedalAutoMode = localStorage.getItem('rep_pedal_auto') === '1';
+let pedalTapSpeed = localStorage.getItem('rep_pedal_tap_speed') === '1';
 let activeBubble  = null;
 let inlineEditId  = null;
 let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
@@ -3253,6 +3258,8 @@ function crdAutoUpdateUI() {
 function crdApplyAutoMode() {
   const g = document.getElementById('crd-auto-group');
   if (g) g.style.display = pedalAutoMode ? '' : 'none';
+  const pm = document.getElementById('crd-pedal-map');
+  if (pm) pm.value = pedalTapSpeed ? 'speed' : 'play';
   crdAutoUpdateUI();
 }
 function togglePedalAutoMode() {
@@ -3329,17 +3336,17 @@ function crdAutoTick(ts) {
 //   - the key stays down for CRD_HOLD_MS (true hold), or
 //   - presses of the same key arrive less than CRD_REPEAT_GAP_MS apart (repeat stream).
 // Three gestures, per pedal side:
-//   - tap: plays/pauses auto-scroll (either side, same effect) — only once CRD_DOUBLE_MS has passed
-//     after release with no further press, so a double press or a hold never plays/pauses;
+//   - tap: by default plays/pauses auto-scroll (either side); with the swapped setting it changes
+//     the speed by one step of 5 (Down faster, Up slower). It only acts once CRD_DOUBLE_MS has
+//     passed after release with no further press, so a double press or a hold never triggers it;
 //   - double press (a second deliberate press of the same side within CRD_DOUBLE_MS, slower than
-//     a repeat stream): changes the auto-scroll speed by one step of 5 — Down faster, Up slower.
-//     It is only confirmed once no further press follows for CRD_HOLD_IDLE_MS after the second
+//     a repeat stream): the other action — by default the speed step, swapped play/pause. It is
+//     only confirmed once no further press follows for CRD_HOLD_IDLE_MS after the second
 //     release, so the start of a repeat stream is never mistaken for one;
 //   - hold: scrolls the sheet like the arrow keys, Down forward / Up back, one Scroll % jump
 //     straight away and another every CRD_HOLD_JUMP_MS while held (auto-scroll pauses meanwhile
 //     and carries on from there shortly after the hold ends).
-// Presses within CRD_CHAIN_MS of each other form one gesture (autoWas = play state when it
-// began); as a safety net, a double press or hold restores that play state.
+// Presses within CRD_CHAIN_MS of each other form one gesture.
 const CRD_PEDAL_KEYS = { ArrowUp: -1, PageUp: -1, ArrowDown: 1, PageDown: 1 };
 const CRD_HOLD_MS       = 350;
 const CRD_HOLD_JUMP_MS  = 450;
@@ -3347,7 +3354,7 @@ const CRD_REPEAT_GAP_MS = 150;
 const CRD_DOUBLE_MS     = 500;   // max time between the two presses of a double press
 const CRD_CHAIN_MS      = 800;
 const CRD_HOLD_IDLE_MS  = 250;   // repeat stream: hold ends this long after the last press
-// gesture in progress: { key, dir, down, last, presses, autoWas, holding, holdTimer, jumpTimer, endTimer, dblTimer }
+// gesture in progress: { key, dir, down, last, presses, holding, holdTimer, jumpTimer, endTimer, dblTimer }
 let crdPedal = null;
 
 function crdPedalDown(key, dir) {
@@ -3361,7 +3368,7 @@ function crdPedalDown(key, dir) {
   if (p && p.tapTimer && p.key !== key) { crdPedalTapFire(); p = null; }   // other side: the pending tap stands
   if (p) { clearTimeout(p.tapTimer); p.tapTimer = 0; }                        // a further press: not a lone tap
   if (p && (p.key !== key || (!p.holding && !p.down && now - p.last > CRD_CHAIN_MS))) { crdPedalCancel(); p = null; }
-  if (!p) p = crdPedal = { key, dir, down: false, last: 0, presses: 0, autoWas: crdAutoOn, holding: false,
+  if (!p) p = crdPedal = { key, dir, down: false, last: 0, presses: 0, holding: false,
                            holdTimer: 0, jumpTimer: 0, endTimer: 0, dblTimer: 0, tapTimer: 0 };
   const gap = p.last ? now - p.last : Infinity;
   const wasDown = p.down;
@@ -3393,26 +3400,35 @@ function crdPedalUp(key) {
   clearTimeout(p.tapTimer);
   p.tapTimer = setTimeout(() => { if (crdPedal === p && !p.down) crdPedalTapFire(); }, CRD_DOUBLE_MS);
 }
-function crdPedalTapFire() {
+// Which gesture does what is a device-local setting (#crd-pedal-map, localStorage
+// 'rep_pedal_tap_speed'): default = tap plays/pauses, double press changes speed; swapped =
+// tap changes speed, double press plays/pauses. A hold always scrolls.
+function setPedalTapSpeed(on) {
+  pedalTapSpeed = !!on;
+  localStorage.setItem('rep_pedal_tap_speed', pedalTapSpeed ? '1' : '0');
   crdPedalCancel();
-  crdAutoToggle();                                 // clean single tap = play / pause
 }
-function crdPedalUndoTaps(p) {
-  if (crdAutoOn !== p.autoWas) { p.autoWas ? crdAutoStart() : crdAutoStop(); }
+function crdPedalAction(p, isDouble) {
+  if (isDouble === pedalTapSpeed) crdAutoToggle();   // play / pause (either side)
+  else crdAutoSpeedStep(p.dir);                       // Down = faster, Up = slower (steps of 5, 5–60)
+}
+function crdPedalTapFire() {
+  const p = crdPedal;
+  if (!p) return;
+  crdPedalCancel();
+  crdPedalAction(p, false);
 }
 function crdPedalDoubleFire() {
   const p = crdPedal;
   if (!p) return;
-  crdPedalUndoTaps(p);                             // the first press's play/pause was part of this
-  crdAutoSpeedStep(p.dir);                         // Down = faster, Up = slower (steps of 5, 5–60)
   crdPedalCancel();
+  crdPedalAction(p, true);
 }
 function crdPedalHoldStart() {
   const p = crdPedal;
   if (!p || p.holding) return;
   clearTimeout(p.holdTimer); clearTimeout(p.dblTimer); p.dblTimer = 0;
   p.holding = true;
-  crdPedalUndoTaps(p);                             // undo taps that were the start of this hold
   crdAutoForgetPause();
   crdPedalScrollStep();                            // one jump now…
   p.jumpTimer = setInterval(crdPedalScrollStep, CRD_HOLD_JUMP_MS);   // …and more while held
