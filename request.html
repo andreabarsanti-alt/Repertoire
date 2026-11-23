@@ -137,7 +137,8 @@ textarea.fi { resize: vertical; min-height: 70px; }
   display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 16px;
   border-radius: 14px; background: var(--surface); border: 1px solid var(--accent);
 }
-.poster { display: block; width: 100%; margin: 0 0 14px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.poster { flex-shrink: 0; width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.gig.has-poster .gig-icon { display: none; }
 .gig-icon { font-size: 1.8rem; line-height: 1; }
 .gig-text { display: flex; flex-direction: column; min-width: 0; }
 .gig-text b { font-size: 1.05rem; color: var(--accent); overflow-wrap: anywhere; }
@@ -160,8 +161,8 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <h1 id="title">Richiedi una canzone</h1>
     <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
-  <img id="poster" class="poster hidden" alt="">
   <div id="gig" class="gig hidden">
+    <img id="poster" class="poster hidden" alt="">
     <span class="gig-icon">🎤</span>
     <span class="gig-text"><b id="gig-when"></b><span id="gig-place"></span></span>
   </div>
@@ -383,19 +384,21 @@ async function loadPoster() {
   const v = info?.posterV || null, el = document.getElementById('poster');
   if (v === posterV) return;
   posterV = v;
-  if (!v) { el.classList.add('hidden'); el.removeAttribute('src'); return; }
+  if (!v) { el.classList.add('hidden'); el.removeAttribute('src'); if (info) renderGig(); return; }
   try {
     const p = await getJSON('poster');
     const img = p && typeof p.img === 'string' && p.img.startsWith('data:image/jpeg;base64,') ? p.img : '';
     if (!img) throw 0;
     el.src = img; el.classList.remove('hidden');
+    renderGig();
   } catch { posterV = null; }   // try again on the next poll
 }
 function renderGig() {
   const box = document.getElementById('gig');
   const place = (info.gigPlace || '').trim(), at = +info.gigAt || 0;
-  box.classList.toggle('hidden', !place && !at);
-  if (!place && !at) return;
+  const poster = !document.getElementById('poster').classList.contains('hidden');
+  box.classList.toggle('has-poster', poster);
+  box.classList.toggle('hidden', !place && !at && !poster);
   let when = '';
   if (at) {
     const d = new Date(at), now = new Date();
@@ -404,7 +407,7 @@ function renderGig() {
     const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
     when = at > Date.now() ? `Si comincia ${day} alle ${time}` : `${day[0].toUpperCase() + day.slice(1)} alle ${time}`;
   }
-  document.getElementById('gig-when').textContent = when || '📍 ' + place;
+  document.getElementById('gig-when').textContent = when || (place ? '📍 ' + place : '');
   document.getElementById('gig-place').textContent = when && place ? '📍 ' + place : '';
 }
 
