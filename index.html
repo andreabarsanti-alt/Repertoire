@@ -1042,6 +1042,10 @@ select.fi { cursor: pointer; }
 .live-played-btn { min-width: 36px; }
 .live-extra-h { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 16px 0 4px; }
 .live-played-btn.on { background: var(--success); color: #fff; border-color: var(--success); }
+.live-gig { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 12px; }
+.live-gig-h { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); }
+.live-gig .fi { flex: 1 1 160px; min-width: 0; padding: 6px 9px; font-size: 0.85rem; }
+.live-gig #live-gig-when { flex: 0 1 210px; }
 .live-qr-card { margin-bottom: 16px; padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; display: flex; gap: 14px; align-items: center; }
 .live-qr-side { flex: 1; min-width: 0; }
 .live-qr-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
@@ -5305,6 +5309,7 @@ document.addEventListener('keydown', e => {
 const FB_CFG_KEY   = 'rep_firebase';                 // { apiKey, dbUrl, email, refreshToken } — device-local, shared by all profiles
 const LIVE_SET_KEY = 'rep_live_set_' + PROFILE;      // setlist chosen in the Live tab
 const LIVE_VIEW_KEY = 'rep_live_view_' + PROFILE;    // 'tags' (default) or 'titles': what the audience page shows
+const LIVE_GIG_KEY = 'rep_live_gig_' + PROFILE;     // { place, when: 'YYYY-MM-DDTHH:MM' } — gig venue/time shown on the audience page
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
@@ -5323,6 +5328,25 @@ let liveShowDone = true, liveEditingSetup = false;   // done requests shown by d
 // this device only, never sent to Firebase; each request's location is compared against it.
 const LIVE_LOC_KEY = 'rep_live_loc_' + PROFILE;     // {lat, lng, acc, at}
 const LIVE_NEAR_M = 300;                            // base radius counted as "in the audience"
+// Gig place and start time, typed in the Live tab and published to the audience page (info.gigPlace /
+// info.gigAt, ms) so people can see where and when before the show starts.
+function getLiveGig() { try { return JSON.parse(localStorage.getItem(LIVE_GIG_KEY) || 'null') || {}; } catch { return {}; } }
+function liveGigPatch() {
+  const g = getLiveGig(), at = g.when ? new Date(g.when).getTime() : NaN;
+  return { gigPlace: (g.place || '').trim().slice(0, 120) || null, gigAt: Number.isFinite(at) ? at : null };
+}
+let liveGigTimer = null;
+function liveSetGig() {
+  const place = document.getElementById('live-gig-place')?.value || '';
+  const when = document.getElementById('live-gig-when')?.value || '';
+  localStorage.setItem(LIVE_GIG_KEY, JSON.stringify({ place, when }));
+  if (!livePublished()) return;
+  clearTimeout(liveGigTimer);   // typing the place: one write once it settles
+  liveGigTimer = setTimeout(async () => {
+    try { await fbReq('PATCH', 'info', liveGigPatch()); toast('Gig place/time updated on the audience page'); }
+    catch (e) { toast('Update failed: ' + e.message, 4500); }
+  }, 800);
+}
 function getVenueLoc() { try { return JSON.parse(localStorage.getItem(LIVE_LOC_KEY) || 'null'); } catch { return null; } }
 function liveCaptureVenue(manual) {
   if (!navigator.geolocation) { if (manual) toast('Location isn\'t available on this device'); return; }
@@ -5636,7 +5660,7 @@ async function livePublish() {
   const prof = getProfiles().find(p => p.id === PROFILE);
   try {
     await fbReq('PUT', 'songs', payload);
-    const patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now() };
+    const patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now(), ...liveGigPatch() };
     if (!wasPub || !liveInfo) patch.open = true;
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
@@ -5944,6 +5968,11 @@ function renderLive() {
     </div>
     <div class="live-cols">
       <section class="live-col">
+        <div class="live-gig" title="Shown at the top of the audience page">
+          <span class="live-gig-h">🎤 Gig</span>
+          <input class="fi" id="live-gig-place" placeholder="Place (e.g. Bar Centrale, Lucca)" maxlength="120" value="${esc(getLiveGig().place || '')}" oninput="liveSetGig()">
+          <input class="fi" id="live-gig-when" type="datetime-local" value="${esc(getLiveGig().when || '')}" onchange="liveSetGig()">
+        </div>
         ${pub ? `<div class="live-qr-card">
           <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>
           <div class="live-qr-side">

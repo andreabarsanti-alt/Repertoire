@@ -133,6 +133,14 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .thanks .big { font-size: 3rem; margin-bottom: 8px; }
 .thanks h2 { color: var(--accent); margin-bottom: 6px; }
 .thanks p { color: var(--text-dim); margin-bottom: 18px; }
+.gig {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 16px;
+  border-radius: 14px; background: var(--surface); border: 1px solid var(--accent);
+}
+.gig-icon { font-size: 1.8rem; line-height: 1; }
+.gig-text { display: flex; flex-direction: column; min-width: 0; }
+.gig-text b { font-size: 1.05rem; color: var(--accent); overflow-wrap: anywhere; }
+.gig-text span { font-size: 0.92rem; color: var(--text); overflow-wrap: anywhere; }
 .ig {
   display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 14px;
   padding: 14px 16px; border-radius: 14px; text-decoration: none; color: #fff;
@@ -151,6 +159,10 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <h1 id="title">Richiedi una canzone</h1>
     <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
+  <div id="gig" class="gig hidden">
+    <span class="gig-icon">🎤</span>
+    <span class="gig-text"><b id="gig-when"></b><span id="gig-place"></span></span>
+  </div>
   <a id="ig" class="ig hidden" target="_blank" rel="noopener">
     <span class="ig-icon">📸</span>
     <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
@@ -292,6 +304,7 @@ function render() {
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
+  renderGig();
   const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
@@ -305,6 +318,26 @@ function render() {
   if (titles) renderTitles(); else renderBubbles();
   // An open song list refreshes in place with the new played/requested state.
   if (!document.getElementById('list-sheet').classList.contains('hidden')) renderList(currentTag);
+}
+
+// Gig place and start time (info.gigPlace / info.gigAt, set in the app's Live tab), shown at the top
+// so people can see where and when before the show: "Si comincia …" until the start time, then the
+// date and time as they are.
+function renderGig() {
+  const box = document.getElementById('gig');
+  const place = (info.gigPlace || '').trim(), at = +info.gigAt || 0;
+  box.classList.toggle('hidden', !place && !at);
+  if (!place && !at) return;
+  let when = '';
+  if (at) {
+    const d = new Date(at), now = new Date();
+    const day = d.toDateString() === now.toDateString() ? 'stasera'
+      : d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    when = at > Date.now() ? `Si comincia ${day} alle ${time}` : `${day[0].toUpperCase() + day.slice(1)} alle ${time}`;
+  }
+  document.getElementById('gig-when').textContent = when || '📍 ' + place;
+  document.getElementById('gig-place').textContent = when && place ? '📍 ' + place : '';
 }
 
 // Circle packing — the same approach as the app's Visualizer (largest first, each new circle at
