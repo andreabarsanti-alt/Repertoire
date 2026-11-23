@@ -291,7 +291,8 @@
       "tags": "Bob Dylan",
       "ugLink": "https://tabs.ultimate-guitar.com/user/tab/view?h=w_-QChlnDhk-PV8K7r88Ttqa&tab_id=31365665",
       "crd": "[Verse 1]\n\nF                  C              Dm\nIt ain't no use to sit and wonder why, babe\n  Bb                 F    C\nIf you don't know by now\n  F                      C              Dm\nAnd it ain't no use to sit and wonder why, babe\nG7                  C    C7\nIt'll never do somehow\n  F                             F7\nWhen the rooster crows at the break of dawn\n  Bb                       G7\nLook out your window and I'll be gone\n F          C          Dm         Bb\nYou're the reason I'm travellin' on\n F           C            F        C\nDon't think twice, it's alright\n\n\n[Verse 2]\n\nF                    C               Dm\nIt ain't no use in a-turnin' on your light, babe\n  Bb                 F    C\nA light I never knowed\n  F                      C              Dm\nIt ain't no use in turnin' on your light, babe\nG7                           C    C7\nI'm on the dark side of the road\n  F                                          F7\nStill I wish there were something you would do or say\n  Bb                          G7\nTo try and make me change my mind and stay\nF          C          Dm         Bb\nWe never did too much talkin' anyway\nF                C            F      C\nSo don't think twice, it's alright\n\n\n[Verse 3]\n\nF                  C              Dm\nIt ain't no use in callin' out my name, gal\n  Bb                 F    C\nLike you never done before\nF                  C              Dm\nIt ain't no use in callin' out my name, gal\nG7                   C    C7\nI can't hear you anymore\n  F                             F7\nI'm a-thinkin' and a-wonderin' all the way down the road\n  Bb                       G7\nI once loved a woman, a child I am told\nF            C              Dm           Bb\nI'd give her my heart but she wanted my soul\nF                 C           F       C\nBut don't think twice, it's alright\n\n\n[Verse 4]\n\nF                      C             Dm\nI'm walkin' down that long lonesome road, babe\n  Bb                      F    C\nWhere I'm bound, I can't tell\n  F         C           Dm\nGoodbye is too good a word, babe\nG7                   C           C7\nSo I'll just say, fare thee well\n F                            F7\nI ain't sayin' you treated me unkind\n  Bb                       G7\nYou could have done better but I don't mind\nF          C          Dm            Bb\nYou just kinda wasted my precious time\nF           C                F        C\nBut don't think twice, it's alright",
-      "tryOut": false
+      "tryOut": false,
+      "lyricsOnly": true
     },
     {
       "id": "s17",
@@ -2679,10 +2680,16 @@
       "date": "2026-10-31"
     },
     {
-      "id": "78a109b5-2640-44d0-9c9d-ca165fe4731a",
+      "id": "e063c66c-9607-4acd-914f-0a76510f44e9",
       "name": "Il Nove",
       "type": "live",
+      "liveType": "gig",
+      "date": "2026-11-22",
       "items": [
+        {
+          "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
+        },
         {
           "type": "song",
           "songId": "s37"
@@ -2693,171 +2700,7 @@
         },
         {
           "type": "song",
-          "songId": "s05"
-        },
-        {
-          "type": "song",
-          "songId": "s01"
-        },
-        {
-          "type": "song",
-          "songId": "e9e7e2b8-920f-4092-815f-45f8f03f42d0"
-        },
-        {
-          "type": "song",
-          "songId": "12836013-3483-4122-a342-218470148f7d"
-        },
-        {
-          "type": "song",
-          "songId": "s24"
-        },
-        {
-          "type": "song",
-          "songId": "s16"
-        },
-        {
-          "type": "song",
-          "songId": "s25"
-        },
-        {
-          "type": "song",
-          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
-        },
-        {
-          "type": "song",
-          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
-        },
-        {
-          "type": "song",
-          "songId": "s32"
-        },
-        {
-          "type": "song",
-          "songId": "s33"
-        },
-        {
-          "type": "song",
-          "songId": "s35"
-        },
-        {
-          "type": "song",
-          "songId": "s34"
-        },
-        {
-          "type": "song",
-          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
-        },
-        {
-          "type": "song",
-          "songId": "48059d27-3a58-415f-8814-1199e07162e4"
-        },
-        {
-          "type": "song",
-          "songId": "4f4fa897-b1ba-428a-aa84-cc6756cf8682"
-        },
-        {
-          "type": "song",
-          "songId": "s11"
-        },
-        {
-          "type": "song",
-          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
-        },
-        {
-          "type": "song",
-          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
-        },
-        {
-          "type": "song",
-          "songId": "s12"
-        },
-        {
-          "type": "song",
-          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
-        },
-        {
-          "type": "song",
-          "songId": "9c48510e-81f5-4da4-b1d7-e7f4c1272caa"
-        },
-        {
-          "type": "song",
-          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
-        },
-        {
-          "type": "song",
-          "songId": "s14"
-        },
-        {
-          "type": "song",
-          "songId": "s15"
-        },
-        {
-          "type": "song",
-          "songId": "mobx34z6fdygx"
-        },
-        {
-          "type": "song",
-          "songId": "s30"
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "song",
-          "songId": "bb8f7695-7028-4240-af53-f03bab19a1da"
-        },
-        {
-          "type": "song",
-          "songId": "mobx10bto98vo"
-        },
-        {
-          "type": "song",
-          "songId": "s36"
-        },
-        {
-          "type": "song",
-          "songId": "8b195afc-2191-4028-976a-b77044a54478"
-        },
-        {
-          "type": "song",
-          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
-        },
-        {
-          "type": "song",
-          "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
-        },
-        {
-          "type": "section",
-          "name": "Encore",
-          "collapsed": true
-        },
-        {
-          "type": "song",
-          "songId": "s38"
-        },
-        {
-          "type": "song",
-          "songId": "mobwy45ykmxg3"
-        },
-        {
-          "type": "song",
           "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
-        },
-        {
-          "type": "song",
-          "songId": "s39"
-        },
-        {
-          "type": "song",
-          "songId": "mobvrnnwqd8gq"
-        },
-        {
-          "type": "song",
-          "songId": "mobwz3ketsbt7"
-        },
-        {
-          "type": "song",
-          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
         },
         {
           "type": "song",
@@ -2865,15 +2708,7 @@
         },
         {
           "type": "song",
-          "songId": "20e8b656-fd0b-4b06-8364-c2dc41bae4bf"
-        },
-        {
-          "type": "section-end"
-        },
-        {
-          "type": "section",
-          "name": "Italiana (Vediamo dove e quali)",
-          "collapsed": true
+          "songId": "mobxcagv7zvgk"
         },
         {
           "type": "song",
@@ -2881,26 +2716,77 @@
         },
         {
           "type": "song",
-          "songId": "s19"
+          "songId": "s41"
         },
         {
           "type": "song",
-          "songId": "s20"
+          "songId": "5515c491-abc2-43a8-99a8-4c2d5471822c"
         },
         {
           "type": "song",
-          "songId": "s21"
+          "songId": "48059d27-3a58-415f-8814-1199e07162e4"
         },
         {
           "type": "song",
-          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+          "songId": "5515c491-abc2-43a8-99a8-4c2d5471822c"
         },
         {
-          "type": "section-end"
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
+        },
+        {
+          "type": "song",
+          "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
+          "songId": "cd672d55-d11a-49ec-90a7-97dcbcdbdf24"
+        },
+        {
+          "type": "song",
+          "songId": "8e900ad9-1ca7-4ee9-ae07-aecb5476cb4a"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "s40"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "7bd19725-c158-4cfd-a661-dc3a1c5f9349"
+        },
+        {
+          "type": "song",
+          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
+        },
+        {
+          "type": "song",
+          "songId": "fde76324-becf-4df7-8c8b-17e03d8c8c1e"
         }
-      ],
-      "date": "2026-11-22",
-      "liveType": "gig"
+      ]
     }
   ],
   "tuneUp": true
