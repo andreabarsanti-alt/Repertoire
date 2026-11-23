@@ -50,6 +50,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
           ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           "$req": {
+            ".read": true,
             ".write": "!data.exists() && newData.exists() && root.child('gigs').child($gig).child('info').child('open').val() === true",
             ".validate": "newData.hasChild('at') && (newData.hasChild('songId') || newData.hasChild('text'))",
             "at":     { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() === now)" },
@@ -108,4 +109,5 @@ Before each gig, tap **Clear requests** to start with an empty list and an empty
 - **"Email/Password sign-in is not enabled"**: redo step 4.2.
 - **Every request says "📍 No location"**: if you set up Firebase before the location check was added, open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**. Until then requests still arrive, just without a location. It's also normal for people who refuse the location prompt.
 - **"Published, but the image failed"** or the gig image doesn't show: your rules are from before the gig image was added. Open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**, then tap Update audience page.
+- **"L'hai chiesta tu" stays on a phone after you deleted the request**: your rules are from before phones could check their own requests. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

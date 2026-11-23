@@ -243,26 +243,55 @@ function esc(s) {
 }
 // Same key mapping the app uses for info.played / info.requested.
 function fbKey(id) { return String(id).replace(/[.#$\[\]\/]/g, '_'); }
-// Songs this phone asked for ("L'hai chiesta tu"), stored as { r, ids } where r is the request round
-// (info.reqRound) they belong to. Clear requests in the app starts a new round, so marks from an
-// older round are dropped (older phones stored a bare array of ids: treated as round-less).
+// Songs this phone asked for ("L'hai chiesta tu"), stored as { r, reqs: {requestId: songId}, ids: [songId] }.
+// r is the request round (info.reqRound): Clear requests in the app starts a new one, and marks from
+// an older round are dropped. reqs keeps each request's database id, so checkMine can read it back
+// (the rules let anyone read a single request by its unguessable id, never the list) and drop the mark
+// once the band has deleted it. Marks saved before request ids were kept (a bare array of song ids, or
+// { r, ids }) can't be checked, so they are simply dropped. ids is only for this page load: a sent
+// request whose id didn't come back is marked until reload.
+let mineNoId = [];
 function readMine() {
   try {
     const v = JSON.parse(localStorage.getItem(MINE_KEY) || 'null');
-    return Array.isArray(v) ? { r: null, ids: v } : (v && Array.isArray(v.ids) ? v : { r: null, ids: [] });
-  } catch { return { r: null, ids: [] }; }
+    return { r: v?.r || null, reqs: (v && !Array.isArray(v) && typeof v.reqs === 'object' && v.reqs) || {}, ids: mineNoId };
+  } catch { return { r: null, reqs: {}, ids: mineNoId }; }
 }
-function getMine() {
+function saveMine(m) { mineNoId = m.ids; try { localStorage.setItem(MINE_KEY, JSON.stringify({ r: m.r, reqs: m.reqs })); } catch {} }
+function mineState() {
   const m = readMine(), round = info?.reqRound || null;
-  if (round && m.r !== round) { try { localStorage.setItem(MINE_KEY, JSON.stringify({ r: round, ids: [] })); } catch {} return []; }
-  return m.ids;
+  if (round && m.r !== round) { const fresh = { r: round, reqs: {}, ids: [] }; saveMine(fresh); return fresh; }
+  return m;
 }
-function addMine(id) {
-  try {
-    const ids = getMine();
-    if (!ids.includes(id)) ids.push(id);
-    localStorage.setItem(MINE_KEY, JSON.stringify({ r: info?.reqRound || null, ids }));
-  } catch {}
+function getMine() { const m = mineState(); return [...new Set([...m.ids, ...Object.values(m.reqs)])]; }
+function addMine(songId, reqId) {
+  const m = mineState();
+  if (reqId) m.reqs[reqId] = songId; else if (!m.ids.includes(songId)) m.ids.push(songId);
+  saveMine(m);
+}
+// Every MINE_CHECK_MS (on a poll), read back this phone's own song requests; a deleted one (🗑 or
+// Clear requests in the app) comes back null and loses its mark. Rules from before this was added
+// refuse the read (401): stop checking until the page is reloaded.
+const MINE_CHECK_MS = 30000;
+let mineChecked = 0, mineCheckOff = false;
+async function checkMine() {
+  if (mineCheckOff || Date.now() - mineChecked < MINE_CHECK_MS) return;
+  mineChecked = Date.now();
+  const ids = Object.keys(mineState().reqs);
+  if (!ids.length) return;
+  let changed = false;
+  for (const id of ids) {
+    try {
+      const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/requests/${encodeURIComponent(id)}.json`, { cache: 'no-store' });
+      if (r.status === 401 || r.status === 403) { mineCheckOff = true; return; }
+      if (!r.ok) continue;
+      if (await r.json() === null) {
+        const m = readMine();
+        if (m.reqs[id] !== undefined) { delete m.reqs[id]; saveMine(m); changed = true; }
+      }
+    } catch {}
+  }
+  if (changed && info) render();
 }
 function lastSent() { try { return +localStorage.getItem(LAST_KEY) || 0; } catch { return 0; } }
 function setLastSent() { try { localStorage.setItem(LAST_KEY, String(Date.now())); } catch {} }
@@ -297,6 +326,7 @@ async function poll() {
       }
       info = i;
       loadPoster();
+      checkMine();
       render();
     }
   } catch {
@@ -594,19 +624,21 @@ async function sendRequest() {
   const post = b => fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/requests.json`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b),
   });
+  let reqId = null;
   try {
     let r = await post(body);
     // Database rules from before locations were added refuse the extra field: send it without.
     if (!r.ok && body.loc) { delete body.loc; r = await post(body); }
     if (r.status === 401 || r.status === 403) { err.textContent = 'Le richieste sono chiuse in questo momento'; btn.disabled = false; btn.textContent = label; poll(); return; }
     if (!r.ok) throw new Error();
+    reqId = (await r.json().catch(() => null))?.name || null;
   } catch {
     err.textContent = 'Invio non riuscito — controlla la connessione e riprova';
     btn.disabled = false; btn.textContent = label; return;
   }
   setLastSent();
   if (formSongId) {
-    addMine(formSongId);
+    addMine(formSongId, reqId);
     // Show it as requested in the song lists straight away; the next poll brings the real count.
     const s = songById(formSongId);
     if (s && info) { info.requested = info.requested || {}; const k = s.k || fbKey(s.id); info.requested[k] = (+info.requested[k] || 0) + 1; render(); }
