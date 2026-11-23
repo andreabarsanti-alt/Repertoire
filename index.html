@@ -1046,6 +1046,8 @@ select.fi { cursor: pointer; }
 .live-gig-h { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); }
 .live-gig .fi { flex: 1 1 160px; min-width: 0; padding: 6px 9px; font-size: 0.85rem; }
 .live-gig #live-gig-when { flex: 0 1 210px; }
+.live-gig-img { display: flex; align-items: center; gap: 6px; }
+.live-gig-img img { height: 38px; max-width: 70px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
 .live-qr-card { margin-bottom: 16px; padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; display: flex; gap: 14px; align-items: center; }
 .live-qr-side { flex: 1; min-width: 0; }
 .live-qr-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
@@ -5310,6 +5312,7 @@ const FB_CFG_KEY   = 'rep_firebase';                 // { apiKey, dbUrl, email, 
 const LIVE_SET_KEY = 'rep_live_set_' + PROFILE;      // setlist chosen in the Live tab
 const LIVE_VIEW_KEY = 'rep_live_view_' + PROFILE;    // 'tags' (default) or 'titles': what the audience page shows
 const LIVE_GIG_KEY = 'rep_live_gig_' + PROFILE;     // { place, when: 'YYYY-MM-DDTHH:MM' } — gig venue/time shown on the audience page
+const LIVE_IMG_KEY = 'rep_live_img_' + PROFILE;     // gig image (JPEG data URL, resized) shown on the audience page
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
@@ -5346,6 +5349,61 @@ function liveSetGig() {
     try { await fbReq('PATCH', 'info', liveGigPatch()); toast('Gig place/time updated on the audience page'); }
     catch (e) { toast('Update failed: ' + e.message, 4500); }
   }, 800);
+}
+// Gig image (a poster/flyer): picked in the Live tab, shrunk to a JPEG of at most LIVE_IMG_MAX px on
+// its long side, kept on the iPad and published to its own node gigs/<profile>/poster = {img, at},
+// with info.posterV = at so the audience page (which polls info) only downloads it when it changes.
+const LIVE_IMG_MAX = 1200, LIVE_IMG_BYTES = 450000;
+function getLiveImg() { return localStorage.getItem(LIVE_IMG_KEY) || ''; }
+function liveShrinkImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      URL.revokeObjectURL(url);
+      const k = Math.min(1, LIVE_IMG_MAX / Math.max(im.naturalWidth, im.naturalHeight));
+      let w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k), out = '';
+      for (let i = 0; i < 6; i++) {
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h);
+        out = c.toDataURL('image/jpeg', i < 3 ? 0.82 - i * 0.12 : 0.6);
+        if (out.length <= LIVE_IMG_BYTES) break;
+        if (i >= 2) { w = Math.round(w * 0.8); h = Math.round(h * 0.8); }
+      }
+      resolve(out);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('not an image this device can read')); };
+    im.src = url;
+  });
+}
+async function livePushImg() {
+  const img = getLiveImg();
+  if (img) {
+    const at = Date.now();
+    await fbReq('PUT', 'poster', { img, at });
+    await fbReq('PATCH', 'info', { posterV: at });
+  } else {
+    await fbReq('PATCH', 'info', { posterV: null });
+    await fbReq('DELETE', 'poster');
+  }
+}
+async function livePickImg(input) {
+  const f = input.files?.[0]; input.value = '';
+  if (!f) return;
+  let img;
+  try { img = await liveShrinkImage(f); } catch (e) { toast('Image failed: ' + e.message, 4500); return; }
+  try { localStorage.setItem(LIVE_IMG_KEY, img); } catch { toast('Image too big to keep on this device'); return; }
+  renderLive();
+  if (!livePublished()) { toast('Image saved — it goes on the audience page when you publish'); return; }
+  try { await livePushImg(); toast('Image updated on the audience page'); }
+  catch (e) { toast('Image upload failed: ' + e.message, 4500); }
+}
+async function liveRemoveImg() {
+  if (!confirm('Remove the gig image?')) return;
+  localStorage.removeItem(LIVE_IMG_KEY);
+  renderLive();
+  if (!livePublished()) return;
+  try { await livePushImg(); toast('Image removed from the audience page'); }
+  catch (e) { toast('Update failed: ' + e.message, 4500); }
 }
 function getVenueLoc() { try { return JSON.parse(localStorage.getItem(LIVE_LOC_KEY) || 'null'); } catch { return null; } }
 function liveCaptureVenue(manual) {
@@ -5664,6 +5722,8 @@ async function livePublish() {
     if (!wasPub || !liveInfo) patch.open = true;
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
+  try { await livePushImg(); }
+  catch (e) { toast('Published, but the image failed: ' + e.message + ' — check the Firebase rules (poster)', 6000); }
   setLivePub(songs.map(s => s.id));
   if (!getVenueLoc()) liveCaptureVenue(false);
   toast(wasPub ? 'Audience page updated' : `Published "${sl.name}" — requests are open`);
@@ -5679,7 +5739,7 @@ async function liveSetView(v) {
 }
 async function liveUnpublish() {
   if (!confirm('Take the setlist off the audience page? It will say nothing is on right now. Requests already sent stay here until you clear them.')) return;
-  try { await fbReq('DELETE', 'info'); await fbReq('DELETE', 'songs'); }
+  try { await fbReq('DELETE', 'info'); await fbReq('DELETE', 'songs'); await fbReq('DELETE', 'poster').catch(() => {}); }
   catch (e) { toast('Unpublish failed: ' + e.message, 4500); return; }
   setLivePub(null); liveInfo = null; liveBoardLast = null; liveDisconnect();
   renderLive(); toast('Audience page cleared');
@@ -5972,6 +6032,11 @@ function renderLive() {
           <span class="live-gig-h">🎤 Gig</span>
           <input class="fi" id="live-gig-place" placeholder="Place (e.g. Bar Centrale, Lucca)" maxlength="120" value="${esc(getLiveGig().place || '')}" oninput="liveSetGig()">
           <input class="fi" id="live-gig-when" type="datetime-local" value="${esc(getLiveGig().when || '')}" onchange="liveSetGig()">
+          <span class="live-gig-img">
+            ${getLiveImg() ? `<img src="${getLiveImg()}" alt="Gig image">` : ''}
+            <label class="btn btn-secondary btn-sm">🖼 ${getLiveImg() ? 'Change image' : 'Add image'}<input type="file" accept="image/*" hidden onchange="livePickImg(this)"></label>
+            ${getLiveImg() ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="liveRemoveImg()" title="Remove the image">✕</button>` : ''}
+          </span>
         </div>
         ${pub ? `<div class="live-qr-card">
           <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>

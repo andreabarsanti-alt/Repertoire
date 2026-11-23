@@ -2,7 +2,7 @@
 
 The **Live** tab lets your audience see one setlist on their phones (as tag bubbles, by scanning a QR code) and send you song requests, which pop up in the app in real time. GitHub Pages can only serve files, so the requests go through a small free Firebase database instead. You set it up once, which takes about 15 minutes. Your audience never needs an account or any setup.
 
-What goes into Firebase: only the published setlist's **song titles and tags**, which songs were played and how many times each was requested, plus the requests themselves. No chords, keys, capos, links or other setlists. Your GitHub token never leaves your iPad.
+What goes into Firebase: only the published setlist's **song titles and tags**, the gig's place, time and image if you add them, which songs were played and how many times each was requested, plus the requests themselves. No chords, keys, capos, links or other setlists. Your GitHub token never leaves your iPad.
 
 The free "Spark" plan is enough. You don't need a credit card. Its limits (100 people connected at the same time, 10 GB of downloads a month) are far above what this needs, because the audience page checks for updates every 15 seconds instead of staying connected.
 
@@ -25,7 +25,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
 
 1. Still in Realtime Database, open the **Rules** tab.
 2. Delete everything in the box and paste the rules below.
-3. Replace every `YOUR_EMAIL` (there are five) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
+3. Replace every `YOUR_EMAIL` (there are six) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
 4. Click **Publish**.
 
 ```json
@@ -40,6 +40,11 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
         "songs": {
           ".read": true,
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'"
+        },
+        "poster": {
+          ".read": true,
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          ".validate": "newData.child('img').isString() && newData.child('img').val().beginsWith('data:image/jpeg;base64,') && newData.child('img').val().length <= 1000000"
         },
         "requests": {
           ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
@@ -102,4 +107,5 @@ Before each gig, tap **Clear requests** to start with an empty list and an empty
 - **"Permission denied — check the Firebase rules"**: the email in the rules must match your sign-in email exactly, in lowercase, and the rules must be published.
 - **"Email/Password sign-in is not enabled"**: redo step 4.2.
 - **Every request says "📍 No location"**: if you set up Firebase before the location check was added, open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**. Until then requests still arrive, just without a location. It's also normal for people who refuse the location prompt.
+- **"Published, but the image failed"** or the gig image doesn't show: your rules are from before the gig image was added. Open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**, then tap Update audience page.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

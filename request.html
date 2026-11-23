@@ -137,6 +137,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
   display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 16px;
   border-radius: 14px; background: var(--surface); border: 1px solid var(--accent);
 }
+.poster { display: block; width: 100%; margin: 0 0 14px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
 .gig-icon { font-size: 1.8rem; line-height: 1; }
 .gig-text { display: flex; flex-direction: column; min-width: 0; }
 .gig-text b { font-size: 1.05rem; color: var(--accent); overflow-wrap: anywhere; }
@@ -159,6 +160,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <h1 id="title">Richiedi una canzone</h1>
     <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
+  <img id="poster" class="poster hidden" alt="">
   <div id="gig" class="gig hidden">
     <span class="gig-icon">🎤</span>
     <span class="gig-text"><b id="gig-when"></b><span id="gig-place"></span></span>
@@ -266,6 +268,7 @@ async function poll() {
     failCount = 0;
     if (!i) {
       info = null; songs = []; songsV = null;
+      loadPoster();
       showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     } else {
       if (i.songsV !== songsV || !songs.length) {
@@ -274,6 +277,7 @@ async function poll() {
         songsV = i.songsV;
       }
       info = i;
+      loadPoster();
       render();
     }
   } catch {
@@ -323,6 +327,21 @@ function render() {
 // Gig place and start time (info.gigPlace / info.gigAt, set in the app's Live tab), shown at the top
 // so people can see where and when before the show: "Si comincia …" until the start time, then the
 // date and time as they are.
+// Gig image (info.posterV = when it was uploaded): fetched from its own node only when that changes,
+// so the 15 s info poll stays small.
+let posterV = null;
+async function loadPoster() {
+  const v = info?.posterV || null, el = document.getElementById('poster');
+  if (v === posterV) return;
+  posterV = v;
+  if (!v) { el.classList.add('hidden'); el.removeAttribute('src'); return; }
+  try {
+    const p = await getJSON('poster');
+    const img = p && typeof p.img === 'string' && p.img.startsWith('data:image/jpeg;base64,') ? p.img : '';
+    if (!img) throw 0;
+    el.src = img; el.classList.remove('hidden');
+  } catch { posterV = null; }   // try again on the next poll
+}
 function renderGig() {
   const box = document.getElementById('gig');
   const place = (info.gigPlace || '').trim(), at = +info.gigAt || 0;
