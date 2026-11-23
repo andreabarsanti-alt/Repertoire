@@ -5313,6 +5313,7 @@ const LIVE_SET_KEY = 'rep_live_set_' + PROFILE;      // setlist chosen in the Li
 const LIVE_VIEW_KEY = 'rep_live_view_' + PROFILE;    // 'tags' (default) or 'titles': what the audience page shows
 const LIVE_GIG_KEY = 'rep_live_gig_' + PROFILE;     // { place, when: 'YYYY-MM-DDTHH:MM' } — gig venue/time shown on the audience page
 const LIVE_IMG_KEY = 'rep_live_img_' + PROFILE;     // gig image (JPEG data URL, resized) shown on the audience page
+const LIVE_ROUND_KEY = 'rep_live_round_' + PROFILE; // request round (ms), new on every Clear requests: published as info.reqRound
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
@@ -5719,6 +5720,8 @@ async function livePublish() {
   try {
     await fbReq('PUT', 'songs', payload);
     const patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now(), ...liveGigPatch() };
+    const round = +localStorage.getItem(LIVE_ROUND_KEY) || 0;
+    if (round) patch.reqRound = round;
     if (!wasPub || !liveInfo) patch.open = true;
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
@@ -5752,9 +5755,12 @@ async function liveSetOpen(open) {
 }
 async function liveClearRequests() {
   if (!confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested boards are emptied too.')) return;
+  // A new request round makes audience phones forget their "L'hai chiesta tu" marks.
+  const round = Date.now();
+  localStorage.setItem(LIVE_ROUND_KEY, String(round));
   try {
     await fbReq('DELETE', 'requests');
-    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null });
+    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null, reqRound: round });
   } catch (e) { toast('Clear failed: ' + e.message, 4500); return; }
   liveReqs = {}; liveSeen = new Set(); liveFresh.clear(); liveBoardLast = '{}';
   if (liveInfo) { delete liveInfo.played; delete liveInfo.requested; }

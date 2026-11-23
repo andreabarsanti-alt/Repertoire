@@ -243,8 +243,27 @@ function esc(s) {
 }
 // Same key mapping the app uses for info.played / info.requested.
 function fbKey(id) { return String(id).replace(/[.#$\[\]\/]/g, '_'); }
-function getMine() { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; } }
-function addMine(id) { try { const m = getMine(); if (!m.includes(id)) m.push(id); localStorage.setItem(MINE_KEY, JSON.stringify(m)); } catch {} }
+// Songs this phone asked for ("L'hai chiesta tu"), stored as { r, ids } where r is the request round
+// (info.reqRound) they belong to. Clear requests in the app starts a new round, so marks from an
+// older round are dropped (older phones stored a bare array of ids: treated as round-less).
+function readMine() {
+  try {
+    const v = JSON.parse(localStorage.getItem(MINE_KEY) || 'null');
+    return Array.isArray(v) ? { r: null, ids: v } : (v && Array.isArray(v.ids) ? v : { r: null, ids: [] });
+  } catch { return { r: null, ids: [] }; }
+}
+function getMine() {
+  const m = readMine(), round = info?.reqRound || null;
+  if (round && m.r !== round) { try { localStorage.setItem(MINE_KEY, JSON.stringify({ r: round, ids: [] })); } catch {} return []; }
+  return m.ids;
+}
+function addMine(id) {
+  try {
+    const ids = getMine();
+    if (!ids.includes(id)) ids.push(id);
+    localStorage.setItem(MINE_KEY, JSON.stringify({ r: info?.reqRound || null, ids }));
+  } catch {}
+}
 function lastSent() { try { return +localStorage.getItem(LAST_KEY) || 0; } catch { return 0; } }
 function setLastSent() { try { localStorage.setItem(LAST_KEY, String(Date.now())); } catch {} }
 
