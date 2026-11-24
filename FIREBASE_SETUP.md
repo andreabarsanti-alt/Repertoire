@@ -25,7 +25,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
 
 1. Still in Realtime Database, open the **Rules** tab.
 2. Delete everything in the box and paste the rules below.
-3. Replace every `YOUR_EMAIL` (there are six) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
+3. Replace every `YOUR_EMAIL` (there are eight) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
 4. Click **Publish**.
 
 ```json
@@ -45,6 +45,19 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
           ".read": true,
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           ".validate": "newData.child('img').isString() && newData.child('img').val().beginsWith('data:image/jpeg;base64,') && newData.child('img').val().length <= 1000000"
+        },
+        "visits": {
+          ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          "$vid": {
+            ".read": true,
+            ".write": "newData.exists() && $vid.length >= 16 && $vid.length <= 40",
+            ".validate": "newData.hasChildren(['first', 'last', 'n'])",
+            "first": { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() === now)" },
+            "last":  { ".validate": "newData.isNumber() && newData.val() === now" },
+            "n":     { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
+            "$other": { ".validate": false }
+          }
         },
         "requests": {
           ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
@@ -102,6 +115,8 @@ The app remembers where the iPad was when you tap **● Start live** (or when yo
 
 Before each gig, tap **Clear requests** to start with an empty list and an empty "played" board.
 
+The Live tab also shows how many phones opened the audience page (👀 phones · visits · today · last hour). A visit is counted when a phone opens the page, or comes back to it, at least 30 minutes after its last counted visit. Tap **Reset** there to start counting from zero, e.g. before a gig.
+
 ## Troubleshooting
 
 - **"Wrong email or password"**: check the user in Authentication → Users. You can reset the password there.
@@ -110,4 +125,5 @@ Before each gig, tap **Clear requests** to start with an empty list and an empty
 - **Every request says "📍 No location"**: if you set up Firebase before the location check was added, open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**. Until then requests still arrive, just without a location. It's also normal for people who refuse the location prompt.
 - **"Published, but the image failed"** or the gig image doesn't show: your rules are from before the gig image was added. Open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**, then tap Update audience page.
 - **"L'hai chiesta tu" stays on a phone after you deleted the request**: your rules are from before phones could check their own requests. Paste the rules from step 3 again (with your email) and click **Publish**.
+- **"Visits aren't counted yet"** in the Live tab: your rules are from before the visit counter. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

@@ -1025,6 +1025,8 @@ select.fi { cursor: pointer; }
 .live-loc.far { color: #ff8a7a; border-color: rgba(255,120,100,.6); background: rgba(255,90,70,.1); font-weight: 600; }
 .live-loc.unknown { color: var(--text-dim); }
 .live-venue { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--text-dim); margin: 0 0 10px; }
+.live-visits b { color: var(--text); }
+.live-visits-btns { display: flex; gap: 6px; flex-shrink: 0; }
 .live-req-time { font-size: 0.68rem; color: var(--text-dim); font-family: var(--fm); margin-top: 3px; }
 .live-req-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
 .live-req-state { font-size: 0.72rem; color: var(--text-dim); }
@@ -6053,6 +6055,7 @@ function renderLive() {
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
+        <div class="live-venue live-visits" id="live-visits"></div>
         <div class="live-venue">${(() => { const v = getVenueLoc(); return v
           ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
           : '📍 Venue location not set — requests can\'t be checked'; })()}
@@ -6067,8 +6070,61 @@ function renderLive() {
     </div>`;
   renderLiveStatus();
   renderLiveLists();
+  renderLiveVisits();
+  if (Date.now() - liveVisitsAt > LIVE_VISITS_MS) liveLoadVisits();
   if (pub) liveFillQr('live-qr-svg');
 }
+
+// ── Audience page visits: gigs/<profile>/visits/<phone id> = { first, last, n } (written by request.html) ──
+const LIVE_VISITS_MS = 60000;
+let liveVisits = null, liveVisitsAt = 0, liveVisitsErr = '', liveVisitsBusy = false;
+async function liveLoadVisits() {
+  if (liveVisitsBusy || !liveSignedIn()) return;
+  liveVisitsBusy = true; liveVisitsAt = Date.now();
+  try { liveVisits = (await fbReq('GET', 'visits')) || {}; liveVisitsErr = ''; }
+  catch (e) { liveVisitsErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
+  liveVisitsBusy = false;
+  renderLiveVisits();
+}
+function liveVisitStats() {
+  const list = Object.values(liveVisits || {}).filter(v => v && typeof v === 'object');
+  const day = new Date(); day.setHours(0, 0, 0, 0);
+  const hour = Date.now() - 3600000;
+  return {
+    phones: list.length,
+    visits: list.reduce((a, v) => a + (+v.n || 0), 0),
+    today: list.filter(v => (v.last || 0) >= day.getTime()).length,
+    hour: list.filter(v => (v.last || 0) >= hour).length,
+    last: Math.max(0, ...list.map(v => v.last || 0)),
+  };
+}
+function renderLiveVisits() {
+  const el = document.getElementById('live-visits');
+  if (!el) return;
+  let txt;
+  if (liveVisitsErr === 'rules') txt = '👀 Visits aren\'t counted yet — paste the new Firebase rules (setup guide, step 3)';
+  else if (liveVisits === null) txt = liveVisitsErr ? '👀 Visits: couldn\'t load' : '👀 Visits: loading…';
+  else {
+    const st = liveVisitStats();
+    const t = st.last ? new Date(st.last).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    txt = st.phones
+      ? `👀 Audience page: <b>${st.phones}</b> phone${st.phones === 1 ? '' : 's'} · <b>${st.visits}</b> visit${st.visits === 1 ? '' : 's'} · today ${st.today} · last hour ${st.hour} · last ${esc(t)}`
+      : '👀 Audience page: no visits yet';
+  }
+  el.innerHTML = `<span>${txt}</span><span class="live-visits-btns">
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="liveLoadVisits()" title="Refresh">↻</button>
+    <button class="btn btn-secondary btn-sm" onclick="liveResetVisits()" title="Start counting from zero (e.g. before a gig)">Reset</button></span>`;
+}
+async function liveResetVisits() {
+  if (!confirm('Reset the audience page visit counter to zero?')) return;
+  try { await fbReq('DELETE', 'visits'); }
+  catch (e) { toast('Reset failed: ' + e.message, 4500); return; }
+  liveVisits = {}; liveVisitsErr = ''; renderLiveVisits(); toast('Visit counter reset');
+}
+// Keep the numbers fresh while the Live tab is on screen.
+setInterval(() => {
+  if (!document.hidden && document.getElementById('tab-live')?.classList.contains('active') && document.getElementById('live-visits')) liveLoadVisits();
+}, LIVE_VISITS_MS);
 function renderLiveLists() {
   const reqEl = document.getElementById('live-reqs');
   const songEl = document.getElementById('live-songs');

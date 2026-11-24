@@ -336,7 +336,38 @@ async function poll() {
   }
   if (!document.hidden) pollTimer = setTimeout(poll, failCount ? Math.min(60000, POLL_MS * (failCount + 1)) : POLL_MS);
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); else clearTimeout(pollTimer); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { poll(); countVisit(); } else clearTimeout(pollTimer); });
+
+// ── Visit counter: gigs/<gig>/visits/<phone id> = { first, last, n } ──
+// One random id per phone (localStorage); a visit is a page open (or a return to it) at least
+// VISIT_GAP_MS after the last one counted on this phone. Only the band can list the visits;
+// the phone reads its own node (by its unguessable id) to send n + 1, as the rules require.
+const VID_KEY = 'rq_vid_' + GIG, VISIT_KEY = 'rq_visit_' + GIG, VISIT_GAP_MS = 30 * 60000;
+let visitBusy = false;
+async function countVisit() {
+  if (visitBusy || !DB_BASE || !GIG) return;
+  let vid = null, last = 0;
+  try { vid = localStorage.getItem(VID_KEY); last = +localStorage.getItem(VISIT_KEY) || 0; } catch {}
+  if (Date.now() - last < VISIT_GAP_MS) return;
+  if (!/^[A-Za-z0-9_-]{16,40}$/.test(vid || '')) {
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    vid = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    try { localStorage.setItem(VID_KEY, vid); } catch {}
+  }
+  visitBusy = true;
+  const url = `${DB_BASE}/gigs/${encodeURIComponent(GIG)}/visits/${vid}.json`;
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) return;          // rules from before the counter: nothing to do
+    const cur = await r.json();
+    const ts = { '.sv': 'timestamp' };
+    const w = await fetch(url, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ first: cur && typeof cur.first === 'number' ? cur.first : ts, last: ts, n: (cur && +cur.n || 0) + 1 }),
+    });
+    if (w.ok) try { localStorage.setItem(VISIT_KEY, String(Date.now())); } catch {}
+  } catch {} finally { visitBusy = false; }
+}
 
 function songById(id) { return songs.find(s => s.id === id); }
 function isPlayed(s) { return !!info?.played?.[s.k || fbKey(s.id)]; }
@@ -656,7 +687,7 @@ document.addEventListener('keydown', e => {
 });
 
 if (!DB_BASE || !GIG) showState('🤔', 'Link incompleto', 'Scansiona di nuovo il codice QR, o chiedi il link alla band.');
-else poll();
+else { poll(); countVisit(); }
 </script>
 </body>
 </html>
