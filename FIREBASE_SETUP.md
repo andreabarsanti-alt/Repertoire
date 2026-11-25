@@ -127,7 +127,7 @@ Before each gig, tap **Clear requests** to start with an empty list, an empty "p
 
 The Live tab also shows how many phones opened the audience page (👀 phones · visits · today · last hour). A visit is counted when a phone opens the page, or comes back to it, at least 30 minutes after its last counted visit. Tap **Reset** there to start counting from zero, e.g. before a gig.
 
-The audience can tap a ♡ next to any song (and next to "Now playing") to like it; the Live tab shows **❤ N** on each liked song and the total, with **Reset** to set them back to zero. **🎶 Now playing** in the Live tab (**▶ Start** / **■ Stop** / **Clear**) shows the song open in your chord reader and the previous one at the top of the audience page.
+The audience can tap a ♡ next to the "Now playing" song or the previous one to like it; the Live tab shows **❤ N** on each liked song and the total, with **Reset** to set them back to zero. **🎶 Now playing** in the Live tab (on by default; **■ Stop** / **▶ Start** / **Clear**) shows the song open in your chord reader and the previous one at the top of the audience page.
 
 ## Troubleshooting
 

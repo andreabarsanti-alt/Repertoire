@@ -12,7 +12,7 @@
   Audience song-request page (see CLAUDE.md, "Audience requests"). Opened from the QR code shown
   in the app's Live tab: request.html?db=<firebase database host>&g=<profile id>.
   Reads only the public gigs/<g>/info and gigs/<g>/songs nodes (titles and tags — no chords or
-  anything else from the repertoire) and can only create requests and hearts (likes); it never
+  anything else from the repertoire) and can only create requests and hearts (likes, on the Now playing songs); it never
   sees other people's requests, names, messages or like counts. Plain REST, no SDK; polls instead of streaming so a full room
   doesn't use up the free plan's simultaneous-connection limit.
 -->
@@ -155,8 +155,6 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .now-row.prev .now-text b { font-size: 0.95rem; font-weight: 500; opacity: .8; }
 .now-eq { display: inline-block; margin-right: 6px; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-.song-line { display: flex; gap: 6px; margin-bottom: 6px; }
-.song-line .song { margin-bottom: 0; flex: 1; min-width: 0; }
 .heart {
   flex-shrink: 0; width: 48px; min-height: 46px; border-radius: 10px; cursor: pointer; font-size: 1.25rem; line-height: 1;
   background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
@@ -399,6 +397,7 @@ async function countVisit() {
 }
 
 // ── Likes (hearts): gigs/<gig>/likes/<song key>/<phone id> = true ──
+// Only the Now playing card has hearts (the current and the previous song — Andrea).
 // Only the band can read the counts; this phone remembers its own hearts as { r, ids: [songId] },
 // where r is the like round (info.likeRound): resetting the likes (or Clear requests) in the app
 // starts a new round and the hearts empty here too.
@@ -622,9 +621,9 @@ function songRow(s, mine) {
   if (isPlayed(s)) tags.push('<span class="tag played">✓ Suonata</span>');
   else if (reqCount(s)) tags.push(`<span class="tag req">Richiesta${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
   if (mine.includes(s.id)) tags.push('<span class="tag mine">L\'hai chiesta tu</span>');
-  return `<div class="song-line"><button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
+  return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
     <span class="song-title">${esc(s.t)}</span>${tags.join('')}
-  </button>${heartBtn(s.id)}</div>`;
+  </button>`;
 }
 // Song search: matches titles and tags; while it has text, the results replace the bubbles.
 // "All titles" view (info.view === 'titles', chosen in the app when publishing): every song as a
