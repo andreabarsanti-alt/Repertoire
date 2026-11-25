@@ -1024,6 +1024,19 @@ select.fi { cursor: pointer; }
 .live-loc.near { color: var(--accent); border-color: rgba(61,158,140,.5); }
 .live-loc.far { color: #ff8a7a; border-color: rgba(255,120,100,.6); background: rgba(255,90,70,.1); font-weight: 600; }
 .live-loc.unknown { color: var(--text-dim); }
+.live-box { margin-bottom: 12px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.live-box > summary {
+  list-style: none; cursor: pointer; padding: 10px 0; display: flex; align-items: center; gap: 8px;
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); font-weight: 600;
+}
+.live-box > summary::-webkit-details-marker { display: none; }
+.live-box > summary::before { content: '▸'; font-size: 0.8rem; transition: transform .15s; }
+.live-box[open] > summary::before { transform: rotate(90deg); }
+.live-box-sum { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-box-body { padding-bottom: 10px; }
+.live-box-body > :last-child { margin-bottom: 0; }
+.live-like-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--border); font-size: 0.85rem; }
+.live-like-row span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .live-venue { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--text-dim); margin: 0 0 10px; }
 .live-visits b { color: var(--text); }
 .live-visits-btns { display: flex; gap: 6px; flex-shrink: 0; }
@@ -5901,7 +5914,9 @@ function renderLiveNow() {
   const t = s => s ? `<b>${esc(s.title)}</b>` : '—';
   const what = cur || prev ? `${t(cur)} · before: ${t(prev)}` : 'open a song in the chord reader';
   const where = !v.on ? ' <i>(stopped)</i>' : !livePublished() ? ' <i>(shown once published)</i>' : '';
-  el.innerHTML = `<span>🎶 Now playing${where}: ${what}</span><span class="live-visits-btns">
+  const sum = document.getElementById('live-now-sum');
+  if (sum) sum.textContent = !v.on ? '· stopped' : cur ? '· ' + cur.title : '';
+  el.innerHTML = `<span>${where ? where.trim() + ' ' : ''}${what}</span><span class="live-visits-btns">
     <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveNowSetOn(${!v.on})" title="${v.on ? 'Hide it from the audience page' : 'Show the song open in the chord reader and the previous one on the audience page'}">${v.on ? '■ Stop' : '▶ Start'}</button>
     <button class="btn btn-secondary btn-sm" onclick="liveNowClear()" title="Forget the current and previous song">Clear</button></span>`;
 }
@@ -5925,16 +5940,24 @@ function liveLikeCounts() {
 function renderLiveLikes() {
   const el = document.getElementById('live-likes');
   if (!el) return;
-  let txt;
-  if (liveLikesErr === 'rules') txt = '❤ Likes aren\'t counted yet — paste the new Firebase rules (setup guide, step 3)';
-  else if (liveLikes === null) txt = liveLikesErr ? '❤ Likes: couldn\'t load' : '❤ Likes: loading…';
+  let txt, rows = '', sum = '';
+  if (liveLikesErr === 'rules') txt = 'Likes aren\'t counted yet — paste the new Firebase rules (setup guide, step 3)';
+  else if (liveLikes === null) txt = liveLikesErr ? 'Couldn\'t load' : 'Loading…';
   else {
-    const c = Object.values(liveLikeCounts()), total = c.reduce((a, n) => a + n, 0);
-    txt = total ? `❤ Likes: <b>${total}</b> on <b>${c.length}</b> song${c.length === 1 ? '' : 's'}` : '❤ Likes: none yet';
+    // Every liked song with its count, most liked first.
+    const counts = liveLikeCounts();
+    const list = Object.keys(counts).map(id => db.songs.find(s => s.id === id)).filter(Boolean)
+      .sort((a, b) => counts[b.id] - counts[a.id] || (a.title || '').localeCompare(b.title || ''));
+    const total = list.reduce((a, s) => a + counts[s.id], 0);
+    txt = total ? `<b>${total}</b> like${total === 1 ? '' : 's'} on <b>${list.length}</b> song${list.length === 1 ? '' : 's'}` : 'No likes yet';
+    sum = total ? `· ${total}` : '';
+    rows = list.map(s => `<div class="live-like-row"><span>${esc(s.title)}</span><span class="live-likes">❤ ${counts[s.id]}</span></div>`).join('');
   }
-  el.innerHTML = `<span>${txt}</span><span class="live-visits-btns">
+  const sumEl = document.getElementById('live-likes-sum');
+  if (sumEl) sumEl.textContent = sum;
+  el.innerHTML = `<div class="live-venue live-visits"><span>${txt}</span><span class="live-visits-btns">
     <button class="btn btn-secondary btn-sm btn-icon" onclick="liveLoadLikes()" title="Refresh">↻</button>
-    <button class="btn btn-secondary btn-sm" onclick="liveResetLikes()" title="Set every song's likes back to zero">Reset</button></span>`;
+    <button class="btn btn-secondary btn-sm" onclick="liveResetLikes()" title="Set every song's likes back to zero">Reset</button></span></div>${rows}`;
 }
 async function liveResetLikes() {
   if (!confirm('Reset all likes to zero? The hearts on the audience phones are emptied too.')) return;
@@ -6106,6 +6129,20 @@ function livePlayBar(withPublish) {
         </select>
       </span>`;
 }
+// Collapsible boxes in the Live tab's left column (Andrea: all collapsible). Open/closed is kept
+// per device (rep_live_boxes), since renderLive rebuilds the whole tab on every change.
+const LIVE_BOXES_KEY = 'rep_live_boxes';
+function liveBoxState() { try { return JSON.parse(localStorage.getItem(LIVE_BOXES_KEY) || '{}') || {}; } catch { return {}; } }
+function liveBoxToggle(el) {
+  const st = liveBoxState(); st[el.dataset.box] = el.open;
+  try { localStorage.setItem(LIVE_BOXES_KEY, JSON.stringify(st)); } catch {}
+  if (el.open && el.dataset.box === 'qr' && livePublished()) liveFillQr('live-qr-svg');
+}
+function liveBox(id, title, body, defOpen = true) {
+  const st = liveBoxState(), open = id in st ? !!st[id] : defOpen;
+  return `<details class="live-box" data-box="${id}" ${open ? 'open' : ''} ontoggle="liveBoxToggle(this)">
+    <summary>${title}</summary><div class="live-box-body">${body}</div></details>`;
+}
 function renderLive() {
   const el = document.getElementById('live-root');
   if (!el) return;
@@ -6160,8 +6197,8 @@ function renderLive() {
     </div>
     <div class="live-cols">
       <section class="live-col">
+        ${liveBox('gig', '🎤 Gig &amp; venue', `
         <div class="live-gig" title="Shown at the top of the audience page">
-          <span class="live-gig-h">🎤 Gig</span>
           <input class="fi" id="live-gig-place" placeholder="Place (e.g. Bar Centrale, Lucca)" maxlength="120" value="${esc(getLiveGig().place || '')}" oninput="liveSetGig()">
           <input class="fi" id="live-gig-when" type="datetime-local" value="${esc(getLiveGig().when || '')}" onchange="liveSetGig()">
           <span class="live-gig-img">
@@ -6170,6 +6207,11 @@ function renderLive() {
             ${getLiveImg() ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="liveRemoveImg()" title="Remove the image">✕</button>` : ''}
           </span>
         </div>
+        <div class="live-venue">${(() => { const v = getVenueLoc(); return v
+          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+          : '📍 Venue location not set — requests can\'t be checked'; })()}
+          <button class="btn btn-secondary btn-sm" onclick="liveCaptureVenue(true)" title="Use this iPad's current position as the venue">Set here</button></div>`)}
+        ${liveBox('qr', '📱 Audience page', `
         ${pub ? `<div class="live-qr-card">
           <div class="live-qr-svg" id="live-qr-svg">Loading QR code…</div>
           <div class="live-qr-side">
@@ -6179,15 +6221,10 @@ function renderLive() {
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
-        <div class="live-venue live-visits" id="live-now"></div>
-        <div class="live-venue live-visits" id="live-visits"></div>
-        <div class="live-venue live-visits" id="live-likes"></div>
-        <div class="live-venue">${(() => { const v = getVenueLoc(); return v
-          ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-          : '📍 Venue location not set — requests can\'t be checked'; })()}
-          <button class="btn btn-secondary btn-sm" onclick="liveCaptureVenue(true)" title="Use this iPad's current position as the venue">Set here</button></div>
-        <h3>Requests <span id="live-req-count"></span></h3>
-        <div id="live-reqs"></div>
+        <div class="live-venue live-visits" id="live-visits"></div>`)}
+        ${liveBox('now', '🎶 Now playing <span class="live-box-sum" id="live-now-sum"></span>', '<div class="live-venue live-visits" id="live-now"></div>')}
+        ${liveBox('likes', '❤ Likes <span class="live-box-sum" id="live-likes-sum"></span>', '<div id="live-likes"></div>', false)}
+        ${liveBox('reqs', 'Requests <span class="live-box-sum" id="live-req-count"></span>', '<div id="live-reqs"></div>')}
       </section>
       <section class="live-col">
         <h3>Setlist${pub ? ' — tap ✓ when played' : ''}</h3>
