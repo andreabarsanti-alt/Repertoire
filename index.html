@@ -5845,10 +5845,12 @@ function liveAutoPlayed(id) {
 // open on hist[0]); "on" decides whether it's shown. Closing the reader moves the song to
 // "previous" (closing is also what marks it played). Start/Stop flip "on", Clear empties hist.
 function getLiveNow() {
-  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return v; } catch {}
-  return { on: true, open: false, hist: [] };   // shown by default; ■ Stop hides it
+  // Stored as { stopped, open, hist }: shown unless ■ Stop was tapped. (The first version stored
+  // `on`, which started false, so a saved `on` is ignored.)
+  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return { on: !v.stopped, open: !!v.open, hist: v.hist }; } catch {}
+  return { on: true, open: false, hist: [] };
 }
-function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify(v)); }
+function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ stopped: !v.on, open: v.open, hist: v.hist })); }
 function liveNowSongs() {
   const v = getLiveNow(), song = id => db.songs.find(s => s.id === id) || null;
   return v.open ? { cur: song(v.hist[0]), prev: song(v.hist[1]) } : { cur: null, prev: song(v.hist[0]) };
