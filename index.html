@@ -1042,6 +1042,7 @@ select.fi { cursor: pointer; }
 .live-song.played .live-song-title { opacity: .45; text-decoration: line-through; }
 .live-count { font-family: var(--fm); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: rgba(196,90,90,.2); color: #ff9a9a; border: 1px solid rgba(196,90,90,.45); }
 .live-played-btn { min-width: 36px; }
+.live-likes { font-family: var(--fm); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: rgba(221,42,123,.16); color: #ff8fc0; border: 1px solid rgba(221,42,123,.4); white-space: nowrap; }
 .live-extra-h { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 16px 0 4px; }
 .live-played-btn.on { background: var(--success); color: #fff; border-color: var(--success); }
 .live-gig { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 12px; }
@@ -2854,6 +2855,7 @@ function openCrdReader(id) {
   document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
   liveRecNote(id);                                 // "Start a live" recording, if one is running
+  liveNowOpen(id);                                 // "Now playing" on the audience page
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
@@ -2940,6 +2942,7 @@ function closeCrdReader() {
   crdPedalCancel();
   closeModal('crd-reader');
   if (crdSongId) liveAutoPlayed(crdSongId);         // closing a published song marks it played
+  if (crdSongId) liveNowClose(crdSongId);           // and moves it to "previous" in Now playing
   crdSongId = null;
 }
 
@@ -5307,6 +5310,8 @@ document.addEventListener('keydown', e => {
 //   gigs/<profile>/info      public  { title, open, songsV, updatedAt, played:{key:ms}, requested:{key:n} }
 //   gigs/<profile>/songs     public  [ { id, k, t, g:[tags] } ] — title and tags only, never chords/key/capo
 //   gigs/<profile>/requests  owner-only read; anyone may create one while info.open is true
+//   gigs/<profile>/likes     owner-only read; likes/<song key>/<phone id> = true, written by the audience
+//   info.now = { cur, prev: { id, k, t } } — Now playing (the song open in the chord reader and the one before)
 // Only this app (signed in with Andrea's Firebase email/password account) writes info/songs or
 // reads requests; the database rules (FIREBASE_SETUP.md) enforce that. The gig id is the profile
 // id, so each profile's audience link/QR code never changes and can be printed once.
@@ -5317,6 +5322,8 @@ const LIVE_GIG_KEY = 'rep_live_gig_' + PROFILE;     // { place, when: 'YYYY-MM-D
 const LIVE_IMG_KEY = 'rep_live_img_' + PROFILE;     // gig image (JPEG data URL, resized) shown on the audience page
 const LIVE_ROUND_KEY = 'rep_live_round_' + PROFILE; // request round (ms), new on every Clear requests: published as info.reqRound
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
+const LIVE_NOW_KEY = 'rep_live_now_' + PROFILE;      // { on, open, hist: [songId, …] } — Now playing on the audience page
+const LIVE_LIKE_ROUND_KEY = 'rep_live_like_round_' + PROFILE; // like round (ms), new on every likes reset: published as info.likeRound
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
 const QR_LIB_URLS  = ['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
@@ -5719,17 +5726,22 @@ async function livePublish() {
     g: (s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
   }));
   const prof = getProfiles().find(p => p.id === PROFILE);
+  let patch;
   try {
     await fbReq('PUT', 'songs', payload);
-    const patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now(), ...liveGigPatch() };
+    patch = { title: prof?.name || PROFILE, view: liveView(), songsV: Date.now(), updatedAt: Date.now(), ...liveGigPatch() };
     const round = +localStorage.getItem(LIVE_ROUND_KEY) || 0;
     if (round) patch.reqRound = round;
+    const likeRound = +localStorage.getItem(LIVE_LIKE_ROUND_KEY) || 0;
+    if (likeRound) patch.likeRound = likeRound;
+    patch.now = liveNowPayload();
     if (!wasPub || !liveInfo) patch.open = true;
     await fbReq('PATCH', 'info', patch);
   } catch (e) { toast('Publish failed: ' + e.message, 4500); return; }
   try { await livePushImg(); }
   catch (e) { toast('Published, but the image failed: ' + e.message + ' — check the Firebase rules (poster)', 6000); }
   setLivePub(songs.map(s => s.id));
+  liveNowLast = JSON.stringify(patch.now ?? null);
   if (!getVenueLoc()) liveCaptureVenue(false);
   toast(wasPub ? 'Audience page updated' : `Published "${sl.name}" — requests are open`);
   if (!wasPub || liveESState !== 'live') liveConnect(); else liveFetchInfo();
@@ -5746,7 +5758,7 @@ async function liveUnpublish() {
   if (!confirm('Take the setlist off the audience page? It will say nothing is on right now. Requests already sent stay here until you clear them.')) return;
   try { await fbReq('DELETE', 'info'); await fbReq('DELETE', 'songs'); await fbReq('DELETE', 'poster').catch(() => {}); }
   catch (e) { toast('Unpublish failed: ' + e.message, 4500); return; }
-  setLivePub(null); liveInfo = null; liveBoardLast = null; liveDisconnect();
+  setLivePub(null); liveInfo = null; liveBoardLast = null; liveNowLast = null; liveDisconnect();
   renderLive(); toast('Audience page cleared');
 }
 async function liveSetOpen(open) {
@@ -5756,15 +5768,19 @@ async function liveSetOpen(open) {
   toast(open ? 'Requests open' : 'Requests closed');
 }
 async function liveClearRequests() {
-  if (!confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested boards are emptied too.')) return;
-  // A new request round makes audience phones forget their "L'hai chiesta tu" marks.
+  if (!confirm('Clear all requests, the played list and the likes? Do this before each gig — the audience page\'s Played and Requested marks and its hearts are emptied too.')) return;
+  // A new request round makes audience phones forget their "L'hai chiesta tu" marks, and a new
+  // like round their hearts (Andrea: clearing also clears the likes).
   const round = Date.now();
   localStorage.setItem(LIVE_ROUND_KEY, String(round));
+  localStorage.setItem(LIVE_LIKE_ROUND_KEY, String(round));
   try {
     await fbReq('DELETE', 'requests');
-    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null, reqRound: round });
+    await fbReq('DELETE', 'likes').catch(() => {});   // rules without `likes`: nothing to clear
+    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null, reqRound: round, likeRound: round });
   } catch (e) { toast('Clear failed: ' + e.message, 4500); return; }
   liveReqs = {}; liveSeen = new Set(); liveFresh.clear(); liveBoardLast = '{}';
+  liveLikes = {}; renderLiveLikes();
   if (liveInfo) { delete liveInfo.played; delete liveInfo.requested; }
   renderLiveBadge(); renderLive(); toast('Requests cleared');
 }
@@ -5821,6 +5837,109 @@ function liveAutoPlayed(id) {
   const ids = livePubIds();
   if (!ids || !ids.includes(id) || liveInfo?.played?.[fbKey(id)]) return;
   liveSetPlayed(id, true).catch(() => {});
+}
+
+// ── Now playing (info.now on the audience page) ──
+// The song open in the chord reader and the one before it. Tracked on this iPad whatever the
+// switch says (hist = the last two distinct songs opened, newest first; open = the reader is
+// open on hist[0]); "on" decides whether it's shown. Closing the reader moves the song to
+// "previous" (closing is also what marks it played). Start/Stop flip "on", Clear empties hist.
+function getLiveNow() {
+  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return v; } catch {}
+  return { on: false, open: false, hist: [] };
+}
+function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify(v)); }
+function liveNowSongs() {
+  const v = getLiveNow(), song = id => db.songs.find(s => s.id === id) || null;
+  return v.open ? { cur: song(v.hist[0]), prev: song(v.hist[1]) } : { cur: null, prev: song(v.hist[0]) };
+}
+// What goes to info/now: null when stopped or empty, so the audience card disappears.
+function liveNowPayload() {
+  if (!getLiveNow().on) return null;
+  const { cur, prev } = liveNowSongs();
+  const one = s => s ? { id: s.id, k: fbKey(s.id), t: s.title || '' } : null;
+  return cur || prev ? { cur: one(cur), prev: one(prev), at: Date.now() } : null;
+}
+let liveNowLast = null;
+async function liveNowPush() {
+  renderLiveNow();
+  if (!liveSignedIn() || !livePublished()) return;
+  const now = liveNowPayload();
+  const sig = JSON.stringify(now && { cur: now.cur, prev: now.prev });
+  if (sig === liveNowLast) return;
+  try { await fbReq('PUT', 'info/now', now); liveNowLast = sig; if (liveInfo) liveInfo.now = now; } catch {}
+}
+function liveNowOpen(id) {
+  const v = getLiveNow();
+  v.hist = [id, ...v.hist.filter(x => x !== id)].slice(0, 2);
+  v.open = true;
+  saveLiveNow(v); liveNowPush();
+}
+function liveNowClose(id) {
+  const v = getLiveNow();
+  if (v.hist[0] !== id || !v.open) return;
+  v.open = false;
+  saveLiveNow(v); liveNowPush();
+}
+function liveNowSetOn(on) {
+  const v = getLiveNow(); v.on = on; saveLiveNow(v);
+  liveNowPush();
+  toast(on ? 'Now playing shown on the audience page' : 'Now playing hidden from the audience page');
+}
+function liveNowClear() {
+  const v = getLiveNow(); v.hist = []; v.open = false; saveLiveNow(v);
+  liveNowPush();
+  toast('Now playing cleared');
+}
+function renderLiveNow() {
+  const el = document.getElementById('live-now');
+  if (!el) return;
+  const v = getLiveNow(), { cur, prev } = liveNowSongs();
+  const t = s => s ? `<b>${esc(s.title)}</b>` : '—';
+  el.innerHTML = `<span>🎶 Now playing${v.on ? '' : ' <i>(stopped)</i>'}: ${t(cur)} · before: ${t(prev)}</span><span class="live-visits-btns">
+    <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveNowSetOn(${!v.on})" title="${v.on ? 'Hide it from the audience page' : 'Show the song open in the chord reader and the previous one on the audience page'}">${v.on ? '■ Stop' : '▶ Start'}</button>
+    <button class="btn btn-secondary btn-sm" onclick="liveNowClear()" title="Forget the current and previous song">Clear</button></span>`;
+}
+
+// ── Likes: gigs/<profile>/likes/<song key>/<phone id> = true (hearts from request.html) ──
+let liveLikes = null, liveLikesErr = '';
+async function liveLoadLikes() {
+  if (!liveSignedIn()) return;
+  try { liveLikes = (await fbReq('GET', 'likes')) || {}; liveLikesErr = ''; }
+  catch (e) { liveLikesErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
+  renderLiveLikes(); renderLiveLists();
+}
+// song id -> number of hearts
+function liveLikeCounts() {
+  const byKey = {};
+  Object.entries(liveLikes || {}).forEach(([k, v]) => { const n = v && typeof v === 'object' ? Object.keys(v).length : 0; if (n) byKey[k] = n; });
+  const out = {};
+  db.songs.forEach(s => { const n = byKey[fbKey(s.id)]; if (n) out[s.id] = n; });
+  return out;
+}
+function renderLiveLikes() {
+  const el = document.getElementById('live-likes');
+  if (!el) return;
+  let txt;
+  if (liveLikesErr === 'rules') txt = '❤ Likes aren\'t counted yet — paste the new Firebase rules (setup guide, step 3)';
+  else if (liveLikes === null) txt = liveLikesErr ? '❤ Likes: couldn\'t load' : '❤ Likes: loading…';
+  else {
+    const c = Object.values(liveLikeCounts()), total = c.reduce((a, n) => a + n, 0);
+    txt = total ? `❤ Likes: <b>${total}</b> on <b>${c.length}</b> song${c.length === 1 ? '' : 's'}` : '❤ Likes: none yet';
+  }
+  el.innerHTML = `<span>${txt}</span><span class="live-visits-btns">
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="liveLoadLikes()" title="Refresh">↻</button>
+    <button class="btn btn-secondary btn-sm" onclick="liveResetLikes()" title="Set every song's likes back to zero">Reset</button></span>`;
+}
+async function liveResetLikes() {
+  if (!confirm('Reset all likes to zero? The hearts on the audience phones are emptied too.')) return;
+  const round = Date.now();
+  localStorage.setItem(LIVE_LIKE_ROUND_KEY, String(round));
+  try {
+    await fbReq('DELETE', 'likes');
+    if (livePublished()) await fbReq('PATCH', 'info', { likeRound: round });
+  } catch (e) { toast('Reset failed: ' + e.message, 4500); return; }
+  liveLikes = {}; liveLikesErr = ''; renderLiveLikes(); renderLiveLists(); toast('Likes reset');
 }
 
 // ── Audience link / QR ──
@@ -6055,7 +6174,9 @@ function renderLive() {
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
+        <div class="live-venue live-visits" id="live-now"></div>
         <div class="live-venue live-visits" id="live-visits"></div>
+        <div class="live-venue live-visits" id="live-likes"></div>
         <div class="live-venue">${(() => { const v = getVenueLoc(); return v
           ? `📍 Venue set ${new Date(v.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
           : '📍 Venue location not set — requests can\'t be checked'; })()}
@@ -6071,6 +6192,8 @@ function renderLive() {
   renderLiveStatus();
   renderLiveLists();
   renderLiveVisits();
+  renderLiveNow();
+  renderLiveLikes();
   if (Date.now() - liveVisitsAt > LIVE_VISITS_MS) liveLoadVisits();
   if (pub) liveFillQr('live-qr-svg');
 }
@@ -6085,6 +6208,7 @@ async function liveLoadVisits() {
   catch (e) { liveVisitsErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   liveVisitsBusy = false;
   renderLiveVisits();
+  liveLoadLikes();                     // like counts refresh on the same schedule
 }
 function liveVisitStats() {
   const list = Object.values(liveVisits || {}).filter(v => v && typeof v === 'object');
@@ -6168,22 +6292,25 @@ function renderLiveLists() {
   const counts = {};
   pending.forEach(r => { if (r.songId) counts[r.songId] = (counts[r.songId] || 0) + 1; });
   const played = liveInfo?.played || {};
-  // Requested songs that aren't in the setlist (the audience sees the whole ready repertoire)
-  // get their own rows underneath, so their ✓ is still one tap away.
+  const likes = liveLikeCounts();
+  // Requested or liked songs that aren't in the setlist (the audience sees the whole ready
+  // repertoire) get their own rows underneath, so their ✓ and hearts are still on screen.
   const setSongs = liveSetSongs(sl), inSet = new Set(setSongs.map(x => x.id));
-  const extra = Object.keys(counts).filter(id => !inSet.has(id)).map(id => db.songs.find(x => x.id === id)).filter(Boolean)
-    .sort((a, b) => counts[b.id] - counts[a.id] || (a.title || '').localeCompare(b.title || ''));
+  const extra = [...new Set([...Object.keys(counts), ...Object.keys(likes)])].filter(id => !inSet.has(id))
+    .map(id => db.songs.find(x => x.id === id)).filter(Boolean)
+    .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0) || (likes[b.id] || 0) - (likes[a.id] || 0) || (a.title || '').localeCompare(b.title || ''));
   const row = (s, num) => {
     const isPlayed = !!played[fbKey(s.id)];
     return `<div class="live-song${isPlayed ? ' played' : ''}">
       <span class="live-song-num">${num}</span>
       <span class="live-song-title">${songTitleLink(s)}<span class="live-song-kch">${kchBadges(s)}</span></span>
+      ${likes[s.id] ? `<span class="live-likes" title="Likes from the audience">❤ ${likes[s.id]}</span>` : ''}
       ${counts[s.id] ? `<span class="live-count" title="Pending requests">×${counts[s.id]}</span>` : ''}
       ${pub ? `<button class="btn btn-secondary btn-sm btn-icon live-played-btn${isPlayed ? ' on' : ''}" onclick="liveToggleSongPlayed('${esc(s.id)}')" title="${isPlayed ? 'Played — tap to undo' : 'Mark played'}">✓</button>` : ''}
     </div>`;
   };
   songEl.innerHTML = (setSongs.map((s, i) => row(s, i + 1)).join('') || '<div class="empty" style="padding:24px 10px">This setlist has no songs</div>') +
-    (extra.length ? `<div class="live-extra-h">Requested, not in this setlist</div>` + extra.map(s => row(s, '+')).join('') : '');
+    (extra.length ? `<div class="live-extra-h">Requested or liked, not in this setlist</div>` + extra.map(s => row(s, '+')).join('') : '');
 }
 
 function liveInit() {

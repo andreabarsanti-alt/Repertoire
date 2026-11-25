@@ -59,6 +59,16 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
             "$other": { ".validate": false }
           }
         },
+        "likes": {
+          ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          "$song": {
+            "$vid": {
+              ".write": "$song.length <= 64 && $vid.length >= 16 && $vid.length <= 40 && root.child('gigs').child($gig).child('info').exists()",
+              ".validate": "newData.val() === true"
+            }
+          }
+        },
         "requests": {
           ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
@@ -113,9 +123,11 @@ On the iPad, open Repertoire and tap the **Live** tab:
 
 The app remembers where the iPad was when you tap **● Start live** (or when you first publish) as the venue, and marks each request **📍 In the audience** or **⚠ Not in the audience** by comparing it with the phone's location, if the person allowed their phone to share it. Tap **Set here** in the Live tab to set the venue again. The venue location stays on the iPad and is never sent to Firebase.
 
-Before each gig, tap **Clear requests** to start with an empty list and an empty "played" board.
+Before each gig, tap **Clear requests** to start with an empty list, an empty "played" board and no likes.
 
 The Live tab also shows how many phones opened the audience page (👀 phones · visits · today · last hour). A visit is counted when a phone opens the page, or comes back to it, at least 30 minutes after its last counted visit. Tap **Reset** there to start counting from zero, e.g. before a gig.
+
+The audience can tap a ♡ next to any song (and next to "Now playing") to like it; the Live tab shows **❤ N** on each liked song and the total, with **Reset** to set them back to zero. **🎶 Now playing** in the Live tab (**▶ Start** / **■ Stop** / **Clear**) shows the song open in your chord reader and the previous one at the top of the audience page.
 
 ## Troubleshooting
 
@@ -126,4 +138,5 @@ The Live tab also shows how many phones opened the audience page (👀 phones ·
 - **"Published, but the image failed"** or the gig image doesn't show: your rules are from before the gig image was added. Open Realtime Database → Rules, paste the rules from step 3 again (with your email) and click **Publish**, then tap Update audience page.
 - **"L'hai chiesta tu" stays on a phone after you deleted the request**: your rules are from before phones could check their own requests. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **"Visits aren't counted yet"** in the Live tab: your rules are from before the visit counter. Paste the rules from step 3 again (with your email) and click **Publish**.
+- **"Likes aren't counted yet"** in the Live tab, or hearts on the audience page jump back empty: your rules are from before likes. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

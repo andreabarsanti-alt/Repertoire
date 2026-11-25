@@ -12,8 +12,8 @@
   Audience song-request page (see CLAUDE.md, "Audience requests"). Opened from the QR code shown
   in the app's Live tab: request.html?db=<firebase database host>&g=<profile id>.
   Reads only the public gigs/<g>/info and gigs/<g>/songs nodes (titles and tags — no chords or
-  anything else from the repertoire) and can only create requests; it never sees other people's
-  requests, names or messages. Plain REST, no SDK; polls instead of streaming so a full room
+  anything else from the repertoire) and can only create requests and hearts (likes); it never
+  sees other people's requests, names, messages or like counts. Plain REST, no SDK; polls instead of streaming so a full room
   doesn't use up the free plan's simultaneous-connection limit.
 -->
 <style>
@@ -143,6 +143,26 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .gig-text { display: flex; flex-direction: column; min-width: 0; }
 .gig-text b { font-size: 1.05rem; color: var(--accent); overflow-wrap: anywhere; }
 .gig-text span { font-size: 0.92rem; color: var(--text); overflow-wrap: anywhere; }
+.now {
+  margin: 0 0 14px; padding: 10px 14px; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(61,158,140,.22), rgba(61,158,140,.06)); border: 1px solid rgba(61,158,140,.55);
+}
+.now-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.now-row + .now-row { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+.now-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.now-text small { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); }
+.now-text b { font-size: 1.1rem; overflow-wrap: anywhere; }
+.now-row.prev .now-text b { font-size: 0.95rem; font-weight: 500; opacity: .8; }
+.now-eq { display: inline-block; margin-right: 6px; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.song-line { display: flex; gap: 6px; margin-bottom: 6px; }
+.song-line .song { margin-bottom: 0; flex: 1; min-width: 0; }
+.heart {
+  flex-shrink: 0; width: 48px; min-height: 46px; border-radius: 10px; cursor: pointer; font-size: 1.25rem; line-height: 1;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
+}
+.heart.on { color: #ff4f8b; border-color: rgba(255,79,139,.5); background: rgba(255,79,139,.1); }
+.heart:active { transform: scale(.9); }
 .ig {
   display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 14px;
   padding: 14px 16px; border-radius: 14px; text-decoration: none; color: #fff;
@@ -166,6 +186,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <span class="gig-icon">🎤</span>
     <span class="gig-text"><b id="gig-when"></b><span id="gig-place"></span></span>
   </div>
+  <div id="now" class="now hidden"></div>
   <a id="ig" class="ig hidden" target="_blank" rel="noopener">
     <span class="ig-icon">📸</span>
     <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
@@ -227,6 +248,7 @@ const POLL_MS = 15000;
 const COOLDOWN_MS = 20000;
 const MINE_KEY = 'rq_mine_' + GIG;
 const LAST_KEY = 'rq_last_' + GIG;
+const LIKES_KEY = 'rq_likes_' + GIG;
 
 let info = null, songs = [], songsV = null, pollTimer = null, failCount = 0;
 
@@ -317,7 +339,7 @@ async function poll() {
     failCount = 0;
     if (!i) {
       info = null; songs = []; songsV = null;
-      loadPoster();
+      loadPoster(); renderNow();
       showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     } else {
       if (i.songsV !== songsV || !songs.length) {
@@ -343,17 +365,24 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { po
 // VISIT_GAP_MS after the last one counted on this phone. Only the band can list the visits;
 // the phone reads its own node (by its unguessable id) to send n + 1, as the rules require.
 const VID_KEY = 'rq_vid_' + GIG, VISIT_KEY = 'rq_visit_' + GIG, VISIT_GAP_MS = 30 * 60000;
-let visitBusy = false;
-async function countVisit() {
-  if (visitBusy || !DB_BASE || !GIG) return;
-  let vid = null, last = 0;
-  try { vid = localStorage.getItem(VID_KEY); last = +localStorage.getItem(VISIT_KEY) || 0; } catch {}
-  if (Date.now() - last < VISIT_GAP_MS) return;
+let visitBusy = false, memVid = null;
+// This phone's random id (also used for its likes); kept in memory if storage is blocked.
+function phoneId() {
+  let vid = memVid;
+  try { vid = localStorage.getItem(VID_KEY) || vid; } catch {}
   if (!/^[A-Za-z0-9_-]{16,40}$/.test(vid || '')) {
     const b = crypto.getRandomValues(new Uint8Array(16));
     vid = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     try { localStorage.setItem(VID_KEY, vid); } catch {}
   }
+  return (memVid = vid);
+}
+async function countVisit() {
+  if (visitBusy || !DB_BASE || !GIG) return;
+  let last = 0;
+  try { last = +localStorage.getItem(VISIT_KEY) || 0; } catch {}
+  if (Date.now() - last < VISIT_GAP_MS) return;
+  const vid = phoneId();
   visitBusy = true;
   const url = `${DB_BASE}/gigs/${encodeURIComponent(GIG)}/visits/${vid}.json`;
   try {
@@ -367,6 +396,54 @@ async function countVisit() {
     });
     if (w.ok) try { localStorage.setItem(VISIT_KEY, String(Date.now())); } catch {}
   } catch {} finally { visitBusy = false; }
+}
+
+// ── Likes (hearts): gigs/<gig>/likes/<song key>/<phone id> = true ──
+// Only the band can read the counts; this phone remembers its own hearts as { r, ids: [songId] },
+// where r is the like round (info.likeRound): resetting the likes (or Clear requests) in the app
+// starts a new round and the hearts empty here too.
+function likeState() {
+  let v = null;
+  try { v = JSON.parse(localStorage.getItem(LIKES_KEY) || 'null'); } catch {}
+  const round = info?.likeRound || null;
+  const st = { r: v?.r || null, ids: Array.isArray(v?.ids) ? v.ids : [] };
+  if (round && st.r !== round) { st.r = round; st.ids = []; saveLikes(st); }
+  return st;
+}
+function saveLikes(st) { try { localStorage.setItem(LIKES_KEY, JSON.stringify(st)); } catch {} }
+function isLiked(id) { return likeState().ids.includes(id); }
+const likeBusy = new Set();
+async function toggleLike(id, ev) {
+  ev?.stopPropagation();
+  if (!info || likeBusy.has(id)) return;
+  const st = likeState(), on = !st.ids.includes(id);
+  st.ids = on ? [...st.ids, id] : st.ids.filter(x => x !== id);
+  saveLikes(st); render();
+  likeBusy.add(id);
+  try {
+    const url = `${DB_BASE}/gigs/${encodeURIComponent(GIG)}/likes/${encodeURIComponent(fbKey(id))}/${phoneId()}.json`;
+    const r = await fetch(url, on ? { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: 'true' } : { method: 'DELETE' });
+    if (!r.ok) throw 0;
+  } catch {
+    // Not saved (offline, or rules without likes): put the heart back as it was.
+    const back = likeState();
+    back.ids = on ? back.ids.filter(x => x !== id) : [...back.ids, id];
+    saveLikes(back); render();
+  } finally { likeBusy.delete(id); }
+}
+function heartBtn(id) {
+  const on = isLiked(id);
+  return `<button class="heart${on ? ' on' : ''}" onclick="toggleLike('${esc(id)}', event)" aria-pressed="${on}" aria-label="${on ? 'Non mi piace più' : 'Mi piace'}">${on ? '❤' : '♡'}</button>`;
+}
+
+// Now playing (info.now, set from the app): the song open in the band's chord reader and the one before.
+function renderNow() {
+  const box = document.getElementById('now');
+  const n = info?.now, cur = n?.cur, prev = n?.prev;
+  if (!cur && !prev) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const row = (s, label, cls) => `<div class="now-row ${cls}"><span class="now-text"><small>${label}</small><b>${cls === 'cur' ? '<span class="now-eq">🎶</span>' : ''}${esc(s.t)}</b></span>${s.id ? heartBtn(s.id) : ''}</div>`;
+  box.innerHTML = (cur ? row(cur, 'Ora suoniamo', 'cur') : '') + (prev ? row(prev, cur ? 'Prima' : 'Abbiamo appena suonato', 'prev') : '');
+  box.classList.remove('hidden');
 }
 
 function songById(id) { return songs.find(s => s.id === id); }
@@ -390,6 +467,7 @@ function render() {
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
   renderGig();
+  renderNow();
   const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
@@ -544,9 +622,9 @@ function songRow(s, mine) {
   if (isPlayed(s)) tags.push('<span class="tag played">✓ Suonata</span>');
   else if (reqCount(s)) tags.push(`<span class="tag req">Richiesta${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
   if (mine.includes(s.id)) tags.push('<span class="tag mine">L\'hai chiesta tu</span>');
-  return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
+  return `<div class="song-line"><button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
     <span class="song-title">${esc(s.t)}</span>${tags.join('')}
-  </button>`;
+  </button>${heartBtn(s.id)}</div>`;
 }
 // Song search: matches titles and tags; while it has text, the results replace the bubbles.
 // "All titles" view (info.view === 'titles', chosen in the app when publishing): every song as a
