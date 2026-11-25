@@ -397,7 +397,7 @@ async function countVisit() {
 }
 
 // ── Likes (hearts): gigs/<gig>/likes/<song key>/<phone id> = true ──
-// Only the Now playing card has hearts (the current and the previous song — Andrea).
+// Only the Now playing card has hearts (the current and the earlier songs shown there — Andrea).
 // Only the band can read the counts; this phone remembers its own hearts as { r, ids: [songId] },
 // where r is the like round (info.likeRound): resetting the likes (or Clear requests) in the app
 // starts a new round and the hearts empty here too.
@@ -435,13 +435,18 @@ function heartBtn(id) {
   return `<button class="heart${on ? ' on' : ''}" onclick="toggleLike('${esc(id)}', event)" aria-pressed="${on}" aria-label="${on ? 'Non mi piace più' : 'Mi piace'}">${on ? '❤' : '♡'}</button>`;
 }
 
-// Now playing (info.now, set from the app): the song open in the band's chord reader and the one before.
+// Now playing (info.now, set from the app): the song open in the band's chord reader and up to two
+// before it (three songs at most).
 function renderNow() {
   const box = document.getElementById('now');
-  const n = info?.now, cur = n?.cur, prev = n?.prev;
-  if (!cur && !prev) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const n = info?.now, cur = n?.cur;
+  // Up to two earlier songs with the current one, or the last three when nothing is open.
+  const prevs = (Array.isArray(n?.prevs) ? n.prevs : Object.values(n?.prevs || {})).filter(Boolean);
+  if (!prevs.length && n?.prev) prevs.push(n.prev);
+  if (!cur && !prevs.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   const row = (s, label, cls) => `<div class="now-row ${cls}"><span class="now-text"><small>${label}</small><b>${cls === 'cur' ? '<span class="now-eq">🎶</span>' : ''}${esc(s.t)}</b></span>${s.id ? heartBtn(s.id) : ''}</div>`;
-  box.innerHTML = (cur ? row(cur, 'Ora suoniamo', 'cur') : '') + (prev ? row(prev, cur ? 'Prima' : 'Abbiamo appena suonato', 'prev') : '');
+  box.innerHTML = (cur ? row(cur, 'Ora suoniamo', 'cur') : '')
+    + prevs.slice(0, cur ? 2 : 3).map((s, i) => row(s, i ? 'Prima ancora' : cur ? 'Prima' : 'Abbiamo appena suonato', 'prev')).join('');
   box.classList.remove('hidden');
 }
 

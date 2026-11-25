@@ -5866,27 +5866,30 @@ function getLiveNow() {
 function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ stopped: !v.on, open: v.open, hist: v.hist })); }
 function liveNowSongs() {
   const v = getLiveNow(), song = id => db.songs.find(s => s.id === id) || null;
-  return v.open ? { cur: song(v.hist[0]), prev: song(v.hist[1]) } : { cur: null, prev: song(v.hist[0]) };
+  // At most three songs in all (Andrea): the open one plus the two before it, or the last three.
+  const list = v.hist.map(song).filter(Boolean).slice(0, 3);
+  return v.open && list.length && list[0].id === v.hist[0] ? { cur: list[0], prevs: list.slice(1) } : { cur: null, prevs: list };
 }
 // What goes to info/now: null when stopped or empty, so the audience card disappears.
 function liveNowPayload() {
   if (!getLiveNow().on) return null;
-  const { cur, prev } = liveNowSongs();
+  const { cur, prevs } = liveNowSongs();
   const one = s => s ? { id: s.id, k: fbKey(s.id), t: s.title || '' } : null;
-  return cur || prev ? { cur: one(cur), prev: one(prev), at: Date.now() } : null;
+  // prev (the first earlier song) is kept for audience pages loaded before prevs existed.
+  return cur || prevs.length ? { cur: one(cur), prevs: prevs.map(one), prev: one(prevs[0]), at: Date.now() } : null;
 }
 let liveNowLast = null;
 async function liveNowPush() {
   renderLiveNow();
   if (!liveSignedIn() || !livePublished()) return;
   const now = liveNowPayload();
-  const sig = JSON.stringify(now && { cur: now.cur, prev: now.prev });
+  const sig = JSON.stringify(now && { cur: now.cur, prevs: now.prevs });
   if (sig === liveNowLast) return;
   try { await fbReq('PUT', 'info/now', now); liveNowLast = sig; if (liveInfo) liveInfo.now = now; } catch {}
 }
 function liveNowOpen(id) {
   const v = getLiveNow();
-  v.hist = [id, ...v.hist.filter(x => x !== id)].slice(0, 2);
+  v.hist = [id, ...v.hist.filter(x => x !== id)].slice(0, 3);
   v.open = true;
   saveLiveNow(v); liveNowPush();
 }
@@ -5910,15 +5913,15 @@ function liveNowClear() {
 function renderLiveNow() {
   const el = document.getElementById('live-now');
   if (!el) return;
-  const v = getLiveNow(), { cur, prev } = liveNowSongs();
+  const v = getLiveNow(), { cur, prevs } = liveNowSongs();
   const t = s => s ? `<b>${esc(s.title)}</b>` : '—';
-  const what = cur || prev ? `${t(cur)} · before: ${t(prev)}` : 'open a song in the chord reader';
+  const what = cur || prevs.length ? `${t(cur)} · before: ${prevs.length ? prevs.map(t).join(', ') : '—'}` : 'open a song in the chord reader';
   const where = !v.on ? ' <i>(stopped)</i>' : !livePublished() ? ' <i>(shown once published)</i>' : '';
   const sum = document.getElementById('live-now-sum');
   if (sum) sum.textContent = !v.on ? '· stopped' : cur ? '· ' + cur.title : '';
   el.innerHTML = `<span>${where ? where.trim() + ' ' : ''}${what}</span><span class="live-visits-btns">
-    <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveNowSetOn(${!v.on})" title="${v.on ? 'Hide it from the audience page' : 'Show the song open in the chord reader and the previous one on the audience page'}">${v.on ? '■ Stop' : '▶ Start'}</button>
-    <button class="btn btn-secondary btn-sm" onclick="liveNowClear()" title="Forget the current and previous song">Clear</button></span>`;
+    <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveNowSetOn(${!v.on})" title="${v.on ? 'Hide it from the audience page' : 'Show the song open in the chord reader and the two before it on the audience page'}">${v.on ? '■ Stop' : '▶ Start'}</button>
+    <button class="btn btn-secondary btn-sm" onclick="liveNowClear()" title="Forget the current and earlier songs">Clear</button></span>`;
 }
 
 // ── Likes: gigs/<profile>/likes/<song key>/<phone id> = true (hearts from request.html) ──
