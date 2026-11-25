@@ -59,7 +59,8 @@ header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 }
 .tchip:active { transform: scale(.96); }
 .search { position: relative; margin: 14px 0 10px; }
-#other-btn { margin: 0 0 12px; }
+#other-btn { margin: 0 0 4px; }
+.or-pick { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin: 0 0 10px; }
 .search .fi { padding-left: 40px; }
 .search::before { content: '🔍'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; opacity: .7; pointer-events: none; }
 #search-results { margin-bottom: 14px; }
@@ -195,6 +196,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
     <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Chiedi una canzone qualsiasi</button>
+    <p class="or-pick">o scegli tra</p>
     <div class="view-toggle">
       <span class="vt-ico" aria-hidden="true">🏷️</span>
       <button class="vswitch" id="vswitch" role="switch" aria-checked="false" aria-label="Mostra tutte le canzoni" onclick="setUserView(currentView() === 'titles' ? 'tags' : 'titles')"><span></span></button>

@@ -6302,7 +6302,8 @@ function renderLiveLists() {
   const list = liveReqList();
   const pending = list.filter(r => !r.status).sort((a, b) => (a.at || 0) - (b.at || 0));
   const done = list.filter(r => r.status).sort((a, b) => (b.at || 0) - (a.at || 0));
-  const time = ms => ms ? new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  // Date and time a request was sent (Andrea), e.g. "25 Nov 23:41".
+  const time = ms => ms ? new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
   const reqRow = r => {
     const s = r.songId ? db.songs.find(x => x.id === r.songId) : null;
     const title = r.text ? `<span class="live-free">✎ ${esc(r.text)}</span>`
