@@ -852,6 +852,8 @@ select.fi { cursor: pointer; }
   padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
 }
 .live-bar .profile-select { max-width: 260px; }
+.live-grp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.live-grp-l { font-size: 0.62rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin-right: 2px; }
 .live-bar-right { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 .live-status { font-size: 0.75rem; font-family: var(--fm); color: var(--text-dim); white-space: nowrap; }
 .live-status.live { color: var(--success); }
@@ -4972,7 +4974,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:56';
+const APP_BUILD = '2026-11-27 00:58';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6232,18 +6234,20 @@ function renderLive() {
   const open = liveInfo ? liveInfo.open === true : true;
   el.innerHTML = `
     <div class="live-bar">
-      ${livePlayBar()}
-      <select class="profile-select" id="live-view-select" onchange="liveSetView(this.value)" title="What the audience page shows">
-        <option value="tags" ${liveView() === 'tags' ? 'selected' : ''}>Audience: tags</option>
-        <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Audience: all titles</option>
-      </select>
-      <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
-      <button class="btn btn-secondary btn-sm" onclick="liveSnapshot()" title="Save the audience page, requests and likes to the GitHub archive">📸 Snapshot live</button>
-      ${pub ? `<button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
-      <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Saved live snapshots">🗂 Show past</button>
-      <span class="live-status" id="live-status"></span>
+      <span class="live-grp"><span class="live-grp-l">Play</span>${livePlayBar()}</span>
+      <span class="live-grp"><span class="live-grp-l">Audience page</span>
+        <select class="profile-select" id="live-view-select" onchange="liveSetView(this.value)" title="What the audience page shows">
+          <option value="tags" ${liveView() === 'tags' ? 'selected' : ''}>Show: tags</option>
+          <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Show: all titles</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update' : '📣 Publish'}</button>
+        ${pub ? `<button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
+        <span class="live-status" id="live-status"></span></span>
+      <span class="live-grp"><span class="live-grp-l">Archive</span>
+        <button class="btn btn-secondary btn-sm" onclick="liveSnapshot()" title="Save the audience page, requests and likes to the GitHub archive">📸 Snapshot live</button>
+        <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Saved live snapshots">🗂 Show past</button></span>
       <span class="live-bar-right">
-        <button class="btn btn-secondary btn-sm" onclick="liveSignOut()">Sign out</button>
+        <button class="btn btn-secondary btn-sm" onclick="liveSignOut()" title="Sign out of Firebase on this iPad">Sign out</button>
       </span>
     </div>
     <div class="live-cols">
