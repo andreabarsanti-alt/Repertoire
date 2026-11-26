@@ -1,17 +1,12 @@
 # Repertoire
 
-A single-page web app for managing a musical repertoire — built to run on an iPad via GitHub Pages, with no backend or build step required. Export and Import live behind the header's `⋯` button. Also usable on a phone: under 600px wide, the header folds all its less-used controls behind `⋯` and the visualizer's bubbles get a bit more breathing room for their labels.
+A single-page web app for managing a musical repertoire — built to run on an iPad via GitHub Pages, with no backend or build step required. Export and Import live behind the header's `⋯` button. Also usable on a phone: under 600px wide, the header folds all its less-used controls behind `⋯`.
 
 ## Features
 
-### Visualizer
-- Songs displayed as animated floating glass bubbles, grouped by tag
-- Bubble size scales with the number of songs in the group
-- Click a bubble to open an overlay listing all songs in that group with Key / Capo / Harp badges
-- Click a song title to open it in Ultimate Guitar
-
 ### Songs
-- Sortable, searchable table of all songs
+- Sortable, searchable table of all songs — the first tab the app opens on (the old tag-bubble Visualizer tab was removed)
+- **Sort and group by artist** — a song's artist is its first tag. Tap the **Artist · Tags** column header to sort by artist (then title); pick **Group by artist** in the toolbar to list songs under one heading per artist (with a count, "No artist" last). The grouping choice is remembered on the device
 - Two filter dropdowns, alongside the text search: chord sheet (Any chords / **Has chords** / **No chords**) and repertoire scope (Any song / **In repertoire** / **❓ Not ready**)
 - Check a song **❓ Not ready** right from its row — no need to type a tag — and it's excluded from "In repertoire" above until you uncheck it again
 - Check **🎤 Lyrics only** (row, Add Song or edit) and the chord reader shows just the lyrics and section labels — the chords stay in the sheet, untouched

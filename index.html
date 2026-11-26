@@ -180,143 +180,8 @@ nav { display: flex; gap: 3px; flex: 1; }
 .tab { display: none; }
 .tab.active { display: flex; flex-direction: column; }
 
-/* ══════════════════════════════════════════
-   VISUALIZER
-══════════════════════════════════════════ */
-#tab-viz {
-  padding: 18px;
-  min-height: calc(100dvh - var(--hdr-h));
-  /* Faint staff lines + warm glow */
-  background-image:
-    radial-gradient(ellipse at 50% -10%, rgba(61,158,140,.06) 0%, transparent 55%),
-    repeating-linear-gradient(
-      180deg,
-      transparent 0px,
-      transparent 38px,
-      rgba(61,158,140,.025) 38px,
-      rgba(61,158,140,.025) 39px
-    );
-}
-
-#bubbles-wrap {
-  position: relative;
-  min-height: 300px;
-}
-
-/* Bubble glass */
-.bubble {
-  border-radius: 50%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  cursor: pointer; text-align: center; padding: 14px;
-  position: absolute; overflow: hidden;
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
-  animation: floatBubble var(--bdur, 4s) ease-in-out infinite;
-  user-select: none; -webkit-user-select: none;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,.1);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 36px rgba(0,0,0,.55);
-}
-/* Top-left specular highlight */
-.bubble::before {
-  content: '';
-  position: absolute; top: 7%; left: 10%;
-  width: 58%; height: 44%;
-  background: radial-gradient(ellipse, rgba(255,255,255,.2) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-/* Bottom rim glow */
-.bubble::after {
-  content: '';
-  position: absolute; bottom: 0; left: 10%; right: 10%; height: 30%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255,255,255,.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-.bubble:hover, .bubble:active {
-  transform: scale(1.1) translateY(-5px) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 20px 48px rgba(0,0,0,.65);
-}
-.bubble.active-bubble {
-  box-shadow:
-    0 0 0 3px rgba(61,158,140,.9),
-    0 0 28px rgba(61,158,140,.35),
-    inset 0 1px 0 rgba(255,255,255,.18);
-}
-@keyframes floatBubble {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-8px); }
-}
-.bubble-name {
-  font-weight: 700; font-size: 0.8rem; line-height: 1.2;
-  max-width: 88%; overflow-wrap: normal; hyphens: none;
-  text-shadow: 0 1px 6px rgba(0,0,0,.6);
-  position: relative; z-index: 1;
-}
-.bubble-count {
-  font-size: 0.7rem; opacity: .72; margin-top: 3px;
-  text-shadow: 0 1px 4px rgba(0,0,0,.5);
-  position: relative; z-index: 1;
-}
-
-/* ── VIZ TOOLBAR ──────────────────────────── */
-#viz-toolbar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 0 0 14px 0; flex-wrap: wrap;
-}
-#viz-filters { display: flex; gap: 4px; }
 #songs-filters { display: flex; gap: 6px; }
-.viz-filter-btn {
-  padding: 7px 16px; border: 1px solid var(--border);
-  border-radius: 20px; cursor: pointer;
-  font-size: 0.78rem; font-weight: 500;
-  background: transparent; color: var(--text-dim);
-  transition: all .18s;
-}
-.viz-filter-btn.active {
-  background: var(--accent); color: #e8f8f5;
-  border-color: var(--accent); font-weight: 600;
-}
-.viz-filter-btn:not(.active):hover { background: var(--surface2); color: var(--text); }
 
-/* Detail overlay */
-#bubble-detail {
-  position: fixed; inset: 0; z-index: 500;
-  background: rgba(0,0,0,.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  animation: fadeOverlay .2s ease;
-}
-#bubble-detail.hidden { display: none; }
-@keyframes fadeOverlay {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-#bubble-detail-inner {
-  background: rgba(20,17,11,.96);
-  border: 1px solid rgba(61,158,140,.18);
-  border-radius: 18px; padding: 22px;
-  width: 100%; max-width: 620px;
-  max-height: 80dvh; overflow-y: auto;
-  box-shadow: 0 24px 64px rgba(0,0,0,.75);
-  animation: popIn .22s cubic-bezier(.34,1.1,.64,1);
-}
-@keyframes popIn {
-  from { opacity: 0; transform: scale(.95) translateY(10px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-.detail-header {
-  display: flex; justify-content: space-between;
-  align-items: center; margin-bottom: 14px;
-  border-bottom: 1px solid var(--border); padding-bottom: 12px;
-}
-.detail-header h2 {
-  font-family: var(--fd); font-size: 1.1rem; font-weight: 600;
-  color: var(--accent);
-}
 .close-x {
   background: none; border: none; color: var(--text-dim);
   cursor: pointer; font-size: 1.3rem; line-height: 1;
@@ -324,21 +189,6 @@ nav { display: flex; gap: 3px; flex: 1; }
   display: flex; align-items: center; justify-content: center;
 }
 .close-x:hover { background: var(--surface2); color: var(--text); }
-.pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.pill {
-  padding: 8px 15px; border-radius: 20px;
-  background: var(--surface2); border: 1px solid var(--border);
-  cursor: pointer; font-size: 0.8rem; transition: all .15s;
-  text-decoration: none; color: var(--text); -webkit-text-fill-color: var(--text);
-  display: flex; flex-direction: column; gap: 2px;
-}
-.pill:hover { background: var(--accent); border-color: var(--accent); color: #0d0b08; }
-.pill:hover .pill-sub { color: rgba(13,11,8,.65); }
-.pill:hover .kch { background: rgba(0,0,0,.15); border-color: rgba(0,0,0,.2); color: #0d0b08; }
-.pill:hover .kch.harp { background: rgba(0,0,0,.15); border-color: rgba(0,0,0,.2); color: #0d0b08; }
-a.pill > span:first-child { text-decoration: underline; text-underline-offset: 3px; }
-.pill-sub { font-size: 0.7rem; color: var(--text-dim); }
-
 /* ── KEY / CAPO / HARP BADGES ── */
 .kch-wrap { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
 .kch {
@@ -389,6 +239,11 @@ th:hover { color: var(--accent); }
 td { padding: 10px 12px; border-top: 1px solid rgba(52,44,32,.7); vertical-align: middle; }
 tr:nth-child(even) td { background: rgba(255,255,255,.018); }
 tr:hover td { background: rgba(61,158,140,.07) !important; }
+tr.songs-group-row td, tr.songs-group-row:hover td {
+  background: var(--surface2) !important; color: var(--accent);
+  font-family: var(--fd); font-weight: 600; font-size: 0.85rem; padding: 8px 12px;
+}
+.songs-group-count { color: var(--text-dim); font-weight: 400; font-size: 0.75rem; margin-left: 6px; }
 .tag-chip {
   display: inline-block; padding: 2px 8px; border-radius: 10px;
   background: rgba(61,158,140,.12); color: #4db5a2;
@@ -462,12 +317,6 @@ input:checked + .lyrics-icon { opacity: 1; }
   /* Bigger, more legible touch targets across the board */
   .btn-sm { padding: 9px 14px; font-size: 0.8rem; min-height: 40px; }
   .tab-btn { padding: 9px 14px; font-size: 0.85rem; }
-
-  /* Bubble view: fixed px sizing from renderBubbles() gets cramped on a narrow screen —
-     give the label text more room to breathe and clamp the smallest bubbles a bit larger
-     so tag names don't get crushed against the circle edge (see renderBubbles' BUBBLE_MIN_R). */
-  .bubble-name { font-size: 0.85rem; }
-  .bubble-count { font-size: 0.72rem; }
 }
 .sets-sidebar {
   width: max-content; min-width: 200px; max-width: 340px;
@@ -1089,8 +938,7 @@ select.fi { cursor: pointer; }
   <h1>Repertoire</h1>
   <select class="profile-select" id="profile-select" title="Switch profile" onchange="switchProfile(this.value)"></select>
   <nav>
-    <button class="tab-btn active" data-tab="viz">Visualizer</button>
-    <button class="tab-btn" data-tab="songs">Songs</button>
+    <button class="tab-btn active" data-tab="songs">Songs</button>
     <button class="tab-btn" data-tab="sets">Setlists</button>
     <button class="tab-btn" data-tab="live" title="Audience song requests">Live<span class="tab-badge hidden" id="live-badge"></span></button>
   </nav>
@@ -1132,24 +980,8 @@ select.fi { cursor: pointer; }
   </div>
 </div>
 
-<!-- ══ VISUALIZER ══ -->
-<div id="tab-viz" class="tab active">
-  <div id="viz-toolbar">
-  </div>
-  <div id="bubbles-wrap"></div>
-  <div id="bubble-detail" class="hidden" onclick="if(event.target===this)closeDetail()">
-    <div id="bubble-detail-inner">
-      <div class="detail-header">
-        <h2 id="detail-title"></h2>
-        <button class="close-x" onclick="closeDetail()">×</button>
-      </div>
-      <div id="detail-pills" class="pills"></div>
-    </div>
-  </div>
-</div>
-
 <!-- ══ SONGS ══ -->
-<div id="tab-songs" class="tab">
+<div id="tab-songs" class="tab active">
   <div class="toolbar">
     <button class="btn btn-primary" onclick="openSongModal()">+ Add Song</button>
     <button class="btn btn-secondary btn-sm" onclick="openPrintModal('songs')" title="Print song list">⎙ Print</button>
@@ -1163,6 +995,10 @@ select.fi { cursor: pointer; }
         <option value="all">Any song</option>
         <option value="repertoire">In repertoire</option>
         <option value="tryout">❓ Not ready</option>
+      </select>
+      <select class="profile-select" id="songs-group-select" onchange="setSongsGroup(this.value)" title="Group songs by artist (first tag)">
+        <option value="none">No grouping</option>
+        <option value="artist">Group by artist</option>
       </select>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
@@ -1650,13 +1486,13 @@ let keyboardMode = localStorage.getItem('rep_keyboard_mode') === '1';
 // holding Down speeds auto-scroll up, holding Up slows it down. See the Auto-scroll section by the CRD reader.
 let pedalAutoMode = localStorage.getItem('rep_pedal_auto') === '1';
 let pedalTapSpeed = localStorage.getItem('rep_pedal_tap_speed') === '1';
-let activeBubble  = null;
 let inlineEditId  = null;
 let slEditSongId  = null; // song being inline-edited from within a setlist row (separate from inlineEditId/the Songs tab, so the two never collide on the same DOM ids)
 let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
+let songsGroup = (() => { try { return localStorage.getItem('rep_songs_group') === 'artist' ? 'artist' : 'none'; } catch { return 'none'; } })(); // device-local Songs tab grouping
 let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
 let slCrdFilter = 'all'; // 'all' | 'with' | 'without' — Setlist detail toolbar filter on whether the resolved song has crd; view-only, never touches sl.items
 let slDrag = null; // active setlist pointer-drag, see initDrag()
@@ -1990,189 +1826,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   if (btn.dataset.tab === 'live') renderLive();
 }));
 
-function renderAll() { renderBubbles(); renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); renderLiveLists(); }
-
-// ─────────────────────────────────────────
-// BUBBLE COLOURS — warm, semi-transparent for glass
-// ─────────────────────────────────────────
-const PALETTE = [
-  ['rgba(61,158,140,0.82)','rgba(34,108,96,0.72)'],
-  ['rgba(70,130,180,0.82)','rgba(38,88,140,0.72)'],
-  ['rgba(130,80,168,0.82)','rgba(88,46,128,0.72)'],
-  ['rgba(48,158,108,0.82)','rgba(26,108,70,0.72)'],
-  ['rgba(80,148,190,0.82)','rgba(44,100,148,0.72)'],
-  ['rgba(168,80,108,0.82)','rgba(120,40,70,0.72)'],
-  ['rgba(58,140,160,0.82)','rgba(30,96,116,0.72)'],
-  ['rgba(110,80,176,0.82)','rgba(68,42,136,0.72)'],
-  ['rgba(46,168,128,0.82)','rgba(24,116,84,0.72)'],
-  ['rgba(88,126,176,0.82)','rgba(50,82,138,0.72)'],
-  ['rgba(176,80,90,0.82)','rgba(130,40,52,0.72)'],
-  ['rgba(60,150,148,0.82)','rgba(32,100,98,0.72)'],
-];
-function bubbleColor(i) {
-  return PALETTE[i % PALETTE.length];
-}
-
-// ─────────────────────────────────────────
-// VISUALIZER
-// ─────────────────────────────────────────
-function getGroups() {
-  const g = {};
-  db.songs.forEach(s => {
-    const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-    if (!tags.length) {
-      (g['Untagged'] = g['Untagged'] || []).push(s);
-    } else {
-      tags.forEach(t => { (g[t] = g[t] || []).push(s); });
-    }
-  });
-  return g;
-}
-
-function twoCircleIntersect(x1, y1, r1, x2, y2, r2) {
-  const dx = x2 - x1, dy = y2 - y1;
-  const d = Math.sqrt(dx * dx + dy * dy);
-  if (d > r1 + r2 || d < Math.abs(r1 - r2) || d < 1e-9) return [];
-  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
-  const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
-  const mx = x1 + a * dx / d, my = y1 + a * dy / d;
-  return [
-    { x: mx + h * dy / d, y: my - h * dx / d },
-    { x: mx - h * dy / d, y: my + h * dx / d }
-  ];
-}
-
-function packBubbles(items) {
-  if (!items.length) return;
-  items.sort((a, b) => b.r - a.r);
-  items[0].x = 0; items[0].y = 0;
-  const GAP = 6;
-  for (let i = 1; i < items.length; i++) {
-    const c = items[i];
-    const placed = items.slice(0, i);
-    const cands = [];
-    for (const p of placed) {
-      const d = p.r + c.r + GAP;
-      for (let a = 0; a < 32; a++) {
-        const angle = (a / 32) * Math.PI * 2;
-        cands.push({ x: p.x + d * Math.cos(angle), y: p.y + d * Math.sin(angle) });
-      }
-    }
-    for (let a = 0; a < placed.length; a++) {
-      for (let b = a + 1; b < placed.length; b++) {
-        cands.push(...twoCircleIntersect(
-          placed[a].x, placed[a].y, placed[a].r + c.r + GAP,
-          placed[b].x, placed[b].y, placed[b].r + c.r + GAP
-        ));
-      }
-    }
-    let best = null, bestD = Infinity;
-    for (const cand of cands) {
-      let ok = true;
-      for (const p of placed) {
-        const dx = cand.x - p.x, dy = cand.y - p.y;
-        if (Math.sqrt(dx * dx + dy * dy) < p.r + c.r + GAP - 0.5) { ok = false; break; }
-      }
-      if (ok) {
-        const d = Math.sqrt(cand.x * cand.x + cand.y * cand.y);
-        if (d < bestD) { bestD = d; best = cand; }
-      }
-    }
-    c.x = best ? best.x : i * (c.r * 2 + GAP);
-    c.y = best ? best.y : 0;
-  }
-}
-
-function renderBubbles() {
-  const wrap   = document.getElementById('bubbles-wrap');
-  const groups = getGroups();
-  const keys   = Object.keys(groups);
-
-  if (!keys.length) {
-    wrap.style.height = '';
-    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🎸</div>No songs yet — add some in the Songs tab</div>';
-    document.getElementById('bubble-detail').classList.add('hidden');
-    return;
-  }
-
-  const max   = Math.max(...keys.map(k => groups[k].length));
-  // On a narrow phone screen, raise the floor radius (same ceiling as before) so the smallest
-  // bubbles still have room for their label instead of crushing it against the glass edge.
-  const narrow  = window.innerWidth < 600;
-  const BUBBLE_MIN_R = narrow ? 44 : 38, BUBBLE_ADD_R = narrow ? 46 : 52;
-  const items = keys.map((key, i) => ({
-    key, count: groups[key].length, i,
-    r: Math.round(BUBBLE_MIN_R + (groups[key].length / max) * BUBBLE_ADD_R)
-  }));
-
-  packBubbles(items);
-
-  const PAD = 28;
-  const minX = Math.min(...items.map(c => c.x - c.r));
-  const maxX = Math.max(...items.map(c => c.x + c.r));
-  const minY = Math.min(...items.map(c => c.y - c.r));
-  const maxY = Math.max(...items.map(c => c.y + c.r));
-  const packW = maxX - minX;
-  const packH = maxY - minY;
-  const containerW = wrap.clientWidth || (window.innerWidth - 36);
-  const offsetX = -minX + PAD + Math.max(0, (containerW - packW - 2 * PAD) / 2);
-  const offsetY = -minY + PAD;
-  wrap.style.height = (packH + 2 * PAD) + 'px';
-
-  wrap.innerHTML = items.map(c => {
-    const [c1, c2] = bubbleColor(c.i);
-    const dur   = (3.4 + (c.i % 7) * 0.38).toFixed(2);
-    const delay = -((c.i * 0.41) % 4);
-    const sel   = activeBubble === c.key;
-    const left  = Math.round(c.x + offsetX - c.r);
-    const top   = Math.round(c.y + offsetY - c.r);
-    const size  = c.r * 2;
-    return `<div class="bubble${sel ? ' active-bubble' : ''}"
-      style="width:${size}px;height:${size}px;left:${left}px;top:${top}px;
-             background:radial-gradient(circle at 38% 38%, ${c1}, ${c2});
-             --bdur:${dur}s;animation-delay:${delay}s"
-      data-key="${esc(c.key)}"
-      onclick="clickBubble(this.dataset.key)">
-      <span class="bubble-name">${esc(c.key)}</span>
-      <span class="bubble-count">${c.count} song${c.count !== 1 ? 's' : ''}</span>
-    </div>`;
-  }).join('');
-
-  if (activeBubble && groups[activeBubble]) {
-    showDetail(activeBubble, groups[activeBubble]);
-  } else {
-    document.getElementById('bubble-detail').classList.add('hidden');
-  }
-}
+function renderAll() { renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); renderLiveLists(); }
 
 let _resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
-  _resizeTimer = setTimeout(() => { syncHeaderHeight(); renderBubbles(); }, 150);
+  _resizeTimer = setTimeout(() => { syncHeaderHeight(); }, 150);
 });
-
-function clickBubble(key) {
-  activeBubble = activeBubble === key ? null : key;
-  renderBubbles();
-}
-
-function showDetail(name, songs) {
-  document.getElementById('detail-title').textContent = name;
-  document.getElementById('detail-pills').innerHTML = songs.map(s => {
-    const tag    = s.crd ? 'a' : (s.ugLink ? 'a' : 'div');
-    const href   = s.crd
-      ? `href="javascript:void(0)" onclick="event.stopPropagation();openCrdReader('${s.id}')" class="pill crd-open"`
-      : s.ugLink ? `href="${esc(s.ugLink)}" target="_blank" class="pill"` : `class="pill"`;
-    const badges = kchBadges(s);
-    return `<${tag} ${href}>
-      <span>${esc(s.title)}</span>
-      ${badges ? `<div class="kch-wrap">${badges}</div>` : ''}
-    </${tag}>`;
-  }).join('');
-  document.getElementById('bubble-detail').classList.remove('hidden');
-}
-
-function closeDetail() { activeBubble = null; renderBubbles(); }
 
 // ─────────────────────────────────────────
 // KEY / CAPO / HARP BADGES
@@ -2222,7 +1882,7 @@ function renderSongsHeader() {
   const cls = c => sortCol === c ? (sortDir === 'asc' ? 'sort-asc' : 'sort-desc') : 'sort-ind';
   document.getElementById('songs-thead').innerHTML = `<tr>
     <th class="${cls('title')}"  data-col="title"  onclick="sortBy('title')">Title</th>
-    <th class="${cls('tags')}"   data-col="tags"   onclick="sortBy('tags')">Tags</th>
+    <th class="${cls('artist')}" data-col="artist" onclick="sortBy('artist')" title="Sort by artist (a song's first tag)">Artist · Tags</th>
     <th class="${cls('ugLink')}" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
     <th></th>
   </tr>`;
@@ -2230,6 +1890,17 @@ function renderSongsHeader() {
 
 function setSongsCrdFilter(f) {
   songsCrdFilter = f;
+  renderSongs();
+}
+
+// A song's artist = its first tag (same rule as the Add Songs picker's "Artists" list).
+function songArtist(s) {
+  return ((s.tags || '').split(',')[0] || '').trim();
+}
+
+function setSongsGroup(g) {
+  songsGroup = g === 'artist' ? 'artist' : 'none';
+  try { localStorage.setItem('rep_songs_group', songsGroup); } catch {}
   renderSongs();
 }
 
@@ -2254,13 +1925,20 @@ function renderSongs() {
     (songsScopeFilter === 'all' || (songsScopeFilter === 'tryout' ? !!s.tryOut : !s.tryOut))
   );
 
-  rows.sort((a, b) => {
-    const av = String(a[sortCol] || '').toLowerCase();
-    const bv = String(b[sortCol] || '').toLowerCase();
-    return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-  });
+  // Sort by the clicked column; 'artist' sorts by first tag, then title. Songs with no
+  // artist always go last. Ties fall back to title so the order is stable.
+  const val = (s, col) => String(col === 'artist' ? songArtist(s) : (s[col] || '')).toLowerCase();
+  const cmpCol = (a, b, col, dir) => {
+    const av = val(a, col), bv = val(b, col);
+    if (col === 'artist' && !av !== !bv) return av ? -1 : 1;
+    return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+  };
+  rows.sort((a, b) => cmpCol(a, b, sortCol, sortDir)
+    || (sortCol !== 'title' ? val(a, 'title').localeCompare(val(b, 'title')) : 0));
 
   renderSongsHeader();
+  const gs = document.getElementById('songs-group-select');
+  if (gs) gs.value = songsGroup;
 
   const colCount = 4;
   const tbody = document.getElementById('songs-tbody');
@@ -2277,9 +1955,27 @@ function renderSongs() {
     return;
   }
 
-  tbody.innerHTML = rows.map(s =>
-    inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s)
-  ).join('');
+  const rowHtml = s => inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s);
+  if (songsGroup !== 'artist') { tbody.innerHTML = rows.map(rowHtml).join(''); return; }
+
+  // Group by artist: one heading row per artist, in A–Z order (Z–A when sorting the
+  // Artist column descending), "No artist" last; songs keep the current sort inside each group.
+  const groups = new Map();
+  rows.forEach(s => {
+    const a = songArtist(s), k = a.toLowerCase();
+    if (!groups.has(k)) groups.set(k, { name: a, songs: [] });
+    const g = groups.get(k);
+    if (g.name === g.name.toLowerCase() && a !== a.toLowerCase()) g.name = a; // prefer a capitalised spelling
+    g.songs.push(s);
+  });
+  const desc = sortCol === 'artist' && sortDir === 'desc';
+  const keys = [...groups.keys()].sort((a, b) =>
+    (!a !== !b) ? (a ? -1 : 1) : (desc ? b.localeCompare(a) : a.localeCompare(b)));
+  tbody.innerHTML = keys.map(k => {
+    const g = groups.get(k);
+    return `<tr class="songs-group-row"><td colspan="${colCount}">${g.name ? esc(g.name) : 'No artist'} <span class="songs-group-count">${g.songs.length}</span></td></tr>`
+      + g.songs.map(rowHtml).join('');
+  }).join('');
 }
 
 function songDisplayRow(s) {
@@ -3905,7 +3601,7 @@ function doMove(items, idx, len, toIdx) {
   const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
   moveBlockTo(items, idx, len, toIdx);
   reindexSelection(items, selectedItem);
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
 }
 
 // Closes the current section right where `idx` stands, without moving it: a pure membership
@@ -3916,7 +3612,7 @@ function exitSectionInPlace(items, idx) {
   const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
   items.splice(idx, 0, { type: 'section-end' });
   reindexSelection(items, selectedItem);
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
   toast('Left the section');
 }
 
@@ -3948,7 +3644,7 @@ function moveSlSongTo(idx) {
     if (items[j].type === 'section') { items[j].collapsed = false; break; }
   }
   reindexSelection(items, selectedItem);
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
   toast(`Moved to #${n}`);
 }
 
@@ -4012,7 +3708,7 @@ function removeSlItem(idx) {
     if (selectedItemIdx === idx) selectedItemIdx = null;
     else if (selectedItemIdx > idx) selectedItemIdx--;
   }
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
 }
 
 function toggleAltUse(idx) {
@@ -4126,7 +3822,7 @@ function saveSection() {
       sl.items.push(newItem);
     }
   }
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
   closeModal('section-modal');
   toast(editSectionIdx !== null ? 'Section renamed' : 'Section added');
 }
@@ -4231,7 +3927,7 @@ function endSlDrag(e) {
   const selectedItem = selectedItemIdx !== null ? items[selectedItemIdx] : null;
   moveBlockTo(items, fromIdx, blockLen, dropIdx);
   reindexSelection(items, selectedItem);
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
 }
 
 function cancelSlDrag() { cleanupSlDrag(); }
@@ -4284,7 +3980,7 @@ function saveSetlist() {
     db.setlists.push(sl);
     activeSetId = sl.id;
   }
-  save(); renderSets(); renderSetDetail(); renderBubbles();
+  save(); renderSets(); renderSetDetail();
   closeModal('setlist-modal');
   toast(editSetId ? 'Setlist updated' : 'Setlist created');
 }
@@ -4368,7 +4064,7 @@ function stopLiveRec() {
   activeSetId = sl.id;
   save();
   liveRec = null; saveLiveRec(); renderLiveRec();
-  renderSets(); renderSetDetail(); renderBubbles();
+  renderSets(); renderSetDetail();
   toast(`Saved "${name}"`);
   const cfg = getGithubConfig();
   if (cfg && cfg.token && cfg.owner && cfg.repo) doPush(cfg);
@@ -4383,7 +4079,7 @@ function duplicateSetlist(id) {
   copy.name = src.name + ' (copy)';
   db.setlists.push(copy);
   activeSetId = copy.id;
-  save(); renderSets(); renderSetDetail(); renderBubbles();
+  save(); renderSets(); renderSetDetail();
   toast('Setlist duplicated');
 }
 
@@ -4391,7 +4087,7 @@ function deleteSetlist(id) {
   if (!confirm('Delete this setlist?')) return;
   db.setlists = db.setlists.filter(s => s.id !== id);
   if (activeSetId === id) activeSetId = null;
-  save(); renderSets(); renderSetDetail(); renderBubbles();
+  save(); renderSets(); renderSetDetail();
   toast('Setlist deleted');
 }
 
@@ -4456,7 +4152,7 @@ function bulkAddSongs(match, what) {
   const toAdd = add.map(s => ({ type: 'song', songId: s.id }));
   if (selectedItemIdx !== null && selectedItemIdx < sl.items.length) sl.items.splice(selectedItemIdx + 1, 0, ...toAdd);
   else sl.items.push(...toAdd);
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
   closeModal('add-songs-modal');
   toast(`${toAdd.length} song${toAdd.length!==1?'s':''} added` + (skipped ? ` · ${skipped} already in setlist` : ''));
 }
@@ -4511,7 +4207,7 @@ function confirmAddSongs() {
   } else {
     sl.items.push(...toAdd);
   }
-  save(); renderSetDetail(); renderBubbles();
+  save(); renderSetDetail();
   closeModal('add-songs-modal');
   toast(`${toAdd.length} song${toAdd.length!==1?'s':''} added`);
 }
@@ -5190,7 +4886,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 23:17';
+const APP_BUILD = '2026-11-26 23:42';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
