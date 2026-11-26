@@ -5349,8 +5349,19 @@ const UG_BOOKMARKLET = 'javascript:' + encodeURIComponent((function () {
   if (!d) { try { d = window.UGAPP.store.page.data; } catch (e) {} }
   try { c = d.tab_view.wiki_tab.content || ''; } catch (e) {}
   try { t = d.tab.song_name || ''; a = d.tab.artist_name || ''; } catch (e) {}
-  if (!c) { var pre = document.querySelector('pre'); if (pre) c = pre.innerText; }
-  if (!c) { alert('No chord sheet found on this page.'); return; }
+  var ty = ''; try { ty = String(d.tab.type || d.tab.type_name || ''); } catch (e) {}
+  var special = /official|pro|power|video/i.test(ty) || /-(official|pro|power|video)(-tab)?-\d+$/i.test(location.pathname.split('?')[0]);
+  if (!c && !special) { var pre = document.querySelector('pre'); if (pre) c = pre.innerText; }
+  if (!c) {
+    var best = null;
+    try { (d.tab_view.versions || []).concat(d.tab_view.recommendations || []).forEach(function (v) {
+      if (/^chords$/i.test(v.type || v.type_name || '') && v.tab_url && (!best || (v.votes || 0) > (best.votes || 0))) best = v;
+    }); } catch (e) {}
+    var q = ((a || '') + ' ' + (t || '')).trim() || document.title.replace(/\s*\|.*$/, '').replace(/\(official\)|official|by\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    var go = best ? best.tab_url : 'https://www.ultimate-guitar.com/search.php?search_type=title&value=' + encodeURIComponent(q);
+    if (confirm((special ? 'This is an ' + (ty || 'Official') + ' tab: UG keeps it as an interactive tab, not as a text chord sheet, so it can\'t be copied.' : 'No chord sheet found on this page.') + '\n\n' + (best ? 'Open the regular Chords version of this song instead?' : 'Search UG for a regular Chords version instead?'))) location.href = go;
+    return;
+  }
   c = c.replace(/\r\n?/g, '\n').replace(/\[\/?(ch|tab)\]/g, '');
   var out = 'UG: ' + location.href.split(/[?#]/)[0] + '\nTitle: ' + t + '\nArtist: ' + a + '\n\n' + c;
   var old = document.getElementById('rep-ug-box'); if (old) old.remove();
