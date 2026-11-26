@@ -1108,6 +1108,7 @@ select.fi { cursor: pointer; }
       </label>
       </div>
       <button class="btn btn-secondary btn-sm" onclick="liveRecButton()" id="btn-live-rec" title="Start a live: every song you open in the chord reader is noted down, in order; Stop saves them as a live setlist and pushes it">● Start live</button>
+      <button class="btn btn-secondary btn-sm" onclick="pasteUGLink()" id="btn-paste-ug" title="New song from Ultimate Guitar: copy the song's link in the UG app (Share → Copy link), then tap this">📋 Paste UG</button>
       <div class="hdr-more-file">
         <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
         <label class="btn btn-secondary btn-sm" style="cursor:pointer">
@@ -1151,7 +1152,6 @@ select.fi { cursor: pointer; }
 <div id="tab-songs" class="tab">
   <div class="toolbar">
     <button class="btn btn-primary" onclick="openSongModal()">+ Add Song</button>
-    <button class="btn btn-secondary btn-sm" onclick="openUGImport()" title="Import from Ultimate Guitar">⬇ UG</button>
     <button class="btn btn-secondary btn-sm" onclick="openPrintModal('songs')" title="Print song list">⎙ Print</button>
     <div id="songs-filters">
       <select class="profile-select" id="songs-crd-select" onchange="setSongsCrdFilter(this.value)" title="Filter by chord sheet">
@@ -1474,7 +1474,8 @@ select.fi { cursor: pointer; }
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
     <div class="fg">
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (optional) <button type="button" class="crd-expand-btn" onclick="pasteCrdInto('ug-import-crd')" title="Paste chords copied from the UG app (or a UG link)">📋 Paste</button></label>
+      <label>Chord Sheet (optional)</label>
+      <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="pasteCrdInto('ug-import-crd')" title="Copy the chords in the UG app, then tap this">📋 Paste chords</button>
       <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet"></textarea>
     </div>
     <div class="modal-footer">
@@ -5176,7 +5177,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 23:01';
+const APP_BUILD = '2026-11-26 23:04';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5194,7 +5195,7 @@ function parseUGUrl(url) {
   return { title: toTitle(titleSlug), artist: toTitle(artistSlug), ugLink: normalizeUG(url) };
 }
 
-function openUGImport() {
+function openUGImport(noFocus) {
   document.getElementById('ug-import-url').value = '';
   document.getElementById('ug-import-tags').value = '';
   document.getElementById('ug-import-crd').value = '';
@@ -5202,7 +5203,25 @@ function openUGImport() {
   document.getElementById('ug-import-btn').disabled = true;
   document.getElementById('ug-import-more-btn').disabled = true;
   openModal('ug-import-modal');
-  setTimeout(() => document.getElementById('ug-import-url').focus(), 0);
+  if (!noFocus) setTimeout(() => document.getElementById('ug-import-url').focus(), 0);
+}
+
+// Header "📋 Paste UG": reads a UG link from the clipboard (the UG app's Share → Copy link),
+// opens the import dialog with title/artist filled in; its "📋 Paste chords" button then takes
+// the chords copied next.
+function pasteUGLink() {
+  const more = document.getElementById('hdr-more');
+  if (more.classList.contains('open')) toggleHdrMore();
+  const fail = () => toast('Can\u2019t read the clipboard');
+  if (!navigator.clipboard?.readText) { fail(); return; }
+  navigator.clipboard.readText().then(t => {
+    const link = String(t || '').match(UG_LINK_RE);
+    if (!link) { toast('No Ultimate Guitar link in the clipboard \u2014 in the UG app: Share \u2192 Copy link'); return; }
+    openUGImport(true);
+    document.getElementById('ug-import-url').value = link[0];
+    onUGImportInput();
+    toast('Now copy the chords in the UG app and tap \ud83d\udccb Paste chords');
+  }, fail);
 }
 
 function onUGImportInput() {
@@ -5277,6 +5296,10 @@ function pasteCrdInto(id) {
     if (!t || !t.trim()) { toast('Clipboard is empty'); return; }
     // A UG link on its own (UG app: Share → Copy link) goes into the song's UG link field.
     const link = t.length < 400 && t.match(UG_LINK_RE);
+    if (link && id === 'ug-import-crd' && document.getElementById('ug-import-url').value.trim()) {
+      toast('The clipboard still holds the link \u2014 copy the chords in the UG app first');
+      return;
+    }
     if (link && CRD_LINK_FIELD[id]) {
       const lf = document.getElementById(CRD_LINK_FIELD[id]);
       if (lf) {
