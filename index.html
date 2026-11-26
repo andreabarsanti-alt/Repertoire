@@ -1473,6 +1473,15 @@ select.fi { cursor: pointer; }
       <label>Tags (comma separated)</label>
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
+    <div class="fg-row">
+      <div class="fg"><label>Key (root)</label><input class="fi" id="ug-import-key" type="text" placeholder="G"></div>
+      <div class="fg"><label id="lbl-ug-capo">Capo</label><input class="fi" id="ug-import-capo" type="text" placeholder="2"></div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ug-import-tryout"> <span class="tryout-icon">?</span> Not ready
+      </label>
+    </div>
     <div class="fg">
       <label>Chord Sheet (optional)</label>
       <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="pasteCrdInto('ug-import-crd')" title="Copy the chords in the UG app, then tap this">📋 Paste chords</button>
@@ -1480,7 +1489,6 @@ select.fi { cursor: pointer; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
-      <button class="btn btn-secondary" id="ug-import-more-btn" onclick="confirmUGImport()" disabled title="Open the full Add Song form, pre-filled, to set Key/Capo/Harp before saving">More details…</button>
       <button class="btn btn-primary" id="ug-import-btn" onclick="quickAddUGImport()" disabled>Add Song</button>
     </div>
   </div>
@@ -3004,6 +3012,8 @@ function syncTuneToggles() {
   if (pa) pa.checked = pedalAutoMode;
   const lblF = document.getElementById('lbl-f-capo');
   if (lblF) lblF.textContent = capoWord();
+  const lblU = document.getElementById('lbl-ug-capo');
+  if (lblU) lblU.textContent = capoWord();
   const lblP = document.getElementById('lbl-print-capo');
   if (lblP) lblP.textContent = capoWord();
 }
@@ -5177,7 +5187,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 23:04';
+const APP_BUILD = '2026-11-26 23:10';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5199,9 +5209,11 @@ function openUGImport(noFocus) {
   document.getElementById('ug-import-url').value = '';
   document.getElementById('ug-import-tags').value = '';
   document.getElementById('ug-import-crd').value = '';
+  document.getElementById('ug-import-key').value = '';
+  document.getElementById('ug-import-capo').value = '';
+  document.getElementById('ug-import-tryout').checked = false;
   document.getElementById('ug-import-preview').style.display = 'none';
   document.getElementById('ug-import-btn').disabled = true;
-  document.getElementById('ug-import-more-btn').disabled = true;
   openModal('ug-import-modal');
   if (!noFocus) setTimeout(() => document.getElementById('ug-import-url').focus(), 0);
 }
@@ -5237,7 +5249,6 @@ function onUGImportInput() {
     preview.style.display = 'none';
     btn.disabled = true;
   }
-  document.getElementById('ug-import-more-btn').disabled = btn.disabled;
 }
 
 // "Add Song" in the import dialog: saves straight away (title, artist tags, UG link, and the
@@ -5248,32 +5259,19 @@ function quickAddUGImport() {
   if (!parsed) return;
   const tags = document.getElementById('ug-import-tags').value.trim() || parsed.artist || '';
   db.songs.push({
-    id: uid(), title: parsed.title, tags, key: '', capo: '', harp: '',
+    id: uid(), title: parsed.title, tags,
+    key: document.getElementById('ug-import-key').value.trim(),
+    capo: document.getElementById('ug-import-capo').value.trim(),
+    harp: '',
     ugLink: normalizeUG(parsed.ugLink || url),
     crd: document.getElementById('ug-import-crd').value || '',
-    tryOut: false,
+    tryOut: document.getElementById('ug-import-tryout').checked,
     lyricsOnly: false,
   });
   save(); renderAll(); closeModal('ug-import-modal');
   toast('Song added');
 }
 
-// "More details…": the old path — opens the full Add Song form pre-filled (chord sheet included)
-// so Key/Capo/Harp can be set before saving.
-function confirmUGImport() {
-  const url    = document.getElementById('ug-import-url').value.trim();
-  const tags   = document.getElementById('ug-import-tags').value.trim();
-  const crd    = document.getElementById('ug-import-crd').value;
-  const parsed = parseUGUrl(url);
-  closeModal('ug-import-modal');
-  resetSongForm();
-  document.getElementById('f-title').value  = parsed?.title  || '';
-  document.getElementById('f-tags').value   = tags || (parsed?.artist ? parsed.artist + ', ' : '');
-  document.getElementById('f-uglink').value = parsed?.ugLink || url;
-  document.getElementById('f-crd').value    = crd || '';
-  openModal('song-modal');
-  setTimeout(() => document.getElementById('f-key').focus(), 0);
-}
 
 // ── 📋 Paste chords ──
 // The app can't fetch UG pages (no CORS, and the sign-in lives in the UG app/Safari), so chords
@@ -5317,10 +5315,10 @@ function pasteCrdInto(id) {
 }
 
 document.getElementById('ug-import-url').addEventListener('keydown', e => {
-  if (e.key === 'Enter') confirmUGImport();
+  if (e.key === 'Enter' && !document.getElementById('ug-import-btn').disabled) quickAddUGImport();
 });
 document.getElementById('ug-import-tags').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && tagAcEl.style.display === 'none') confirmUGImport();
+  if (e.key === 'Enter' && tagAcEl.style.display === 'none' && !document.getElementById('ug-import-btn').disabled) quickAddUGImport();
 });
 
 // ─────────────────────────────────────────
