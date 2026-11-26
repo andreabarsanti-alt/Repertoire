@@ -1113,6 +1113,7 @@ select.fi { cursor: pointer; }
         <label class="btn btn-secondary btn-sm" style="cursor:pointer">
           Import <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
         </label>
+        <div id="app-build" style="font-size:0.72rem;color:var(--text-dim);text-align:center;padding:2px 4px;white-space:nowrap"></div>
       </div>
     </div>
     <button type="button" class="btn btn-secondary btn-sm hdr-more-toggle" id="hdr-more-toggle" onclick="toggleHdrMore()" title="More options">⋯</button>
@@ -5185,6 +5186,11 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // UG QUICK IMPORT
 // ─────────────────────────────────────────
+// App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
+// checked against the latest deploy. Bump it in every commit that changes the app.
+const APP_BUILD = '2026-11-26 22:50';
+document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
+
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
 
 function parseUGUrl(url) {

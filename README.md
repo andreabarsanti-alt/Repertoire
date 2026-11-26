@@ -66,6 +66,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - On first load, seeds from the profile's file (read from the `data` branch through the GitHub API, no login needed) if no saved data exists
 - Detects when the repo file differs from local data — comparing everything: every song field (chord sheet, Try out, Lyrics only, scroll speed…), setlists, tag colours and tuning — and offers to sync, saying how many songs/setlists differ
 - **🔄 Refresh** — hard-reloads both the app itself and its data from the repo (`repertoire_<profile>.json` from the `data` branch, `index.html` from the published site), bypassing the browser cache on both — no GitHub login needed, replaces local data after a confirm
+- **Build stamp** — the bottom of the ⋯ menu shows "Build <date time>", so you can check after a Refresh that the latest version loaded
 - **Export** — downloads current state as `repertoire_<profile>.json`
 - **Import** — loads a previously exported JSON file
 - **Push / Pull** — pushes the profile's `repertoire_<profile>.json` to the repo's `data` branch (or pulls it back) via the GitHub API
