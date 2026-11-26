@@ -1463,6 +1463,18 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="ug-import-modal">
   <div class="modal">
     <h2>Import from Ultimate Guitar</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <button class="btn btn-secondary btn-sm" onclick="pasteUGClip()" title="Fill the link and chord sheet from what the UG bookmarklet copied">📋 Paste from UG</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleUGHelp()">How?</button>
+    </div>
+    <div id="ug-import-help" style="display:none;padding:10px 13px;background:var(--surface2);border-radius:var(--radius);margin-bottom:10px;font-size:0.8rem;color:var(--text-dim);line-height:1.5">
+      UG doesn't let other sites read its pages, so the chords come over with a bookmarklet:
+      <ol style="margin:6px 0 6px 18px;padding:0">
+        <li>Once: <a href="#" onclick="copyUGBookmarklet();return false" style="color:var(--accent)">copy the bookmarklet</a>, bookmark any page in Safari, edit that bookmark, name it "→ Repertoire" and paste over its address. (On a computer you can drag this link to the bookmarks bar: <a id="ug-bm-link" href="#" style="color:var(--accent)">→ Repertoire</a>.)</li>
+        <li>On a UG chords page, open the bookmark and tap <b>Copy</b>.</li>
+        <li>Back here, tap <b>📋 Paste from UG</b> (or paste into the Chord Sheet box): link, title, artist and chords are filled in.</li>
+      </ol>
+    </div>
     <div class="fg">
       <label>Paste UG Link</label>
       <input class="fi" id="ug-import-url" type="url" placeholder="https://tabs.ultimate-guitar.com/tab/…" oninput="onUGImportInput()">
@@ -1474,7 +1486,7 @@ select.fi { cursor: pointer; }
     </div>
     <div class="fg">
       <label>Chord Sheet (optional)</label>
-      <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet"></textarea>
+      <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet" oninput="onUGCrdInput()"></textarea>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
@@ -5192,6 +5204,8 @@ function openUGImport() {
   document.getElementById('ug-import-url').value = '';
   document.getElementById('ug-import-tags').value = '';
   document.getElementById('ug-import-crd').value = '';
+  document.getElementById('ug-import-help').style.display = 'none';
+  ugClipMeta = null;
   document.getElementById('ug-import-preview').style.display = 'none';
   document.getElementById('ug-import-btn').disabled = true;
   document.getElementById('ug-import-more-btn').disabled = true;
@@ -5203,7 +5217,7 @@ function onUGImportInput() {
   const url     = document.getElementById('ug-import-url').value.trim();
   const preview = document.getElementById('ug-import-preview');
   const btn     = document.getElementById('ug-import-btn');
-  const parsed  = parseUGUrl(url);
+  const parsed  = ugImportParsed(url);
   if (parsed) {
     preview.style.display = 'block';
     preview.innerHTML = `<strong style="color:var(--text)">${esc(parsed.title)}</strong> &nbsp;·&nbsp; ${esc(parsed.artist)}`;
@@ -5219,13 +5233,13 @@ function onUGImportInput() {
 // pasted chord sheet if any) — one step, no second form.
 function quickAddUGImport() {
   const url    = document.getElementById('ug-import-url').value.trim();
-  const parsed = parseUGUrl(url);
+  const parsed = ugImportParsed(url);
   if (!parsed) return;
   const tags = document.getElementById('ug-import-tags').value.trim() || parsed.artist || '';
   db.songs.push({
     id: uid(), title: parsed.title, tags, key: '', capo: '', harp: '',
     ugLink: normalizeUG(parsed.ugLink || url),
-    crd: document.getElementById('ug-import-crd').value || '',
+    crd: cleanUGText(document.getElementById('ug-import-crd').value || ''),
     tryOut: false,
     lyricsOnly: false,
   });
@@ -5238,8 +5252,8 @@ function quickAddUGImport() {
 function confirmUGImport() {
   const url    = document.getElementById('ug-import-url').value.trim();
   const tags   = document.getElementById('ug-import-tags').value.trim();
-  const crd    = document.getElementById('ug-import-crd').value;
-  const parsed = parseUGUrl(url);
+  const crd    = cleanUGText(document.getElementById('ug-import-crd').value);
+  const parsed = ugImportParsed(url);
   closeModal('ug-import-modal');
   resetSongForm();
   document.getElementById('f-title').value  = parsed?.title  || '';
@@ -5248,6 +5262,120 @@ function confirmUGImport() {
   document.getElementById('f-crd').value    = crd || '';
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
+}
+
+// ── Chords from UG ──
+// UG pages can't be fetched from here (no CORS), so a bookmarklet run on the UG page itself
+// reads its chord sheet and copies it in this format, which the import dialog understands:
+//   UG: <link>\nTitle: <song>\nArtist: <artist>\n\n<sheet>
+// (a bare UG link on the first line, followed by the sheet, works too).
+let ugClipMeta = null;   // {link, title, artist} from the last paste, used while the link field still matches
+
+// UG's own markup: [ch]G[/ch] chords and [tab]…[/tab] blocks. Section labels ([Verse]) are kept.
+function cleanUGText(t) {
+  return String(t || '').replace(/\r\n?/g, '\n').replace(/\[\/?(ch|tab)\]/g, '');
+}
+
+// Splits a pasted blob into {url, title, artist, crd}; null if it doesn't start with a UG link.
+function ugSplitClip(text) {
+  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+  const out = { url: '', title: '', artist: '', crd: '' };
+  let i = 0;
+  while (i < lines.length && !lines[i].trim()) i++;
+  for (; i < lines.length; i++) {
+    const l = lines[i].trim();
+    let m;
+    if (!out.url && (m = l.match(/^(?:UG:\s*)?(https?:\/\/\S*ultimate-guitar\.com\/\S+)$/i))) out.url = m[1];
+    else if (out.url && (m = l.match(/^Title:\s*(.*)$/i))) out.title = m[1].trim();
+    else if (out.url && (m = l.match(/^Artist:\s*(.*)$/i))) out.artist = m[1].trim();
+    else break;
+  }
+  if (!out.url) return null;
+  while (i < lines.length && !lines[i].trim()) i++;
+  out.crd = cleanUGText(lines.slice(i).join('\n')).replace(/\s+$/, '');
+  return out;
+}
+
+// parseUGUrl plus the real title/artist the bookmarklet sent, when the link is still that one.
+function ugImportParsed(url) {
+  const parsed = parseUGUrl(url);
+  if (parsed && ugClipMeta && normalizeUG(url) === ugClipMeta.link) {
+    if (ugClipMeta.title)  parsed.title  = ugClipMeta.title;
+    if (ugClipMeta.artist) parsed.artist = ugClipMeta.artist;
+  }
+  return parsed;
+}
+
+function applyUGClip(text) {
+  const c = ugSplitClip(text);
+  if (!c) return false;
+  const urlEl = document.getElementById('ug-import-url');
+  urlEl.value = c.url;
+  ugClipMeta = { link: normalizeUG(c.url), title: c.title, artist: c.artist };
+  if (c.crd) document.getElementById('ug-import-crd').value = c.crd;
+  const tagsEl = document.getElementById('ug-import-tags');
+  if (!tagsEl.value.trim() && c.artist) tagsEl.value = c.artist;
+  onUGImportInput();
+  return true;
+}
+
+function pasteUGClip() {
+  if (!navigator.clipboard?.readText) { toast('Paste into the Chord Sheet box instead'); return; }
+  navigator.clipboard.readText().then(t => {
+    if (applyUGClip(t)) toast('Chords pasted from UG');
+    else if (t.trim()) { document.getElementById('ug-import-crd').value = cleanUGText(t); toast('Pasted into Chord Sheet'); }
+    else toast('Clipboard is empty');
+  }, () => toast('Paste into the Chord Sheet box instead'));
+}
+
+// Pasting the bookmarklet's text straight into the Chord Sheet box splits off the link too.
+function onUGCrdInput() {
+  const el = document.getElementById('ug-import-crd');
+  if (/^\s*(UG:\s*)?https?:\/\/\S*ultimate-guitar\.com\//i.test(el.value)) applyUGClip(el.value);
+}
+
+function toggleUGHelp() {
+  const h = document.getElementById('ug-import-help');
+  h.style.display = h.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('ug-bm-link').href = UG_BOOKMARKLET;
+}
+
+// Runs on the UG page: reads the sheet from UG's page data (.js-store JSON, or window.UGAPP),
+// falling back to the rendered <pre>, and shows a small panel with a Copy button (a fresh tap,
+// so the clipboard write is allowed on iPad Safari). One line, no // comments (it's a URL).
+const UG_BOOKMARKLET = 'javascript:' + encodeURIComponent((function () {
+  var d, c = '', t = '', a = '';
+  try { d = JSON.parse(document.querySelector('.js-store').getAttribute('data-content')).store.page.data; } catch (e) {}
+  if (!d) { try { d = window.UGAPP.store.page.data; } catch (e) {} }
+  try { c = d.tab_view.wiki_tab.content || ''; } catch (e) {}
+  try { t = d.tab.song_name || ''; a = d.tab.artist_name || ''; } catch (e) {}
+  if (!c) { var pre = document.querySelector('pre'); if (pre) c = pre.innerText; }
+  if (!c) { alert('No chord sheet found on this page.'); return; }
+  c = c.replace(/\r\n?/g, '\n').replace(/\[\/?(ch|tab)\]/g, '');
+  var out = 'UG: ' + location.href.split(/[?#]/)[0] + '\nTitle: ' + t + '\nArtist: ' + a + '\n\n' + c;
+  var old = document.getElementById('rep-ug-box'); if (old) old.remove();
+  var box = document.createElement('div'); box.id = 'rep-ug-box';
+  box.style.cssText = 'position:fixed;left:12px;right:12px;top:12px;z-index:2147483647;background:#13202a;color:#e8eef2;border:2px solid #3d9e8c;border-radius:12px;padding:14px;font:16px -apple-system,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5)';
+  var h = document.createElement('div'); h.textContent = 'Repertoire: ' + (t || 'chord sheet') + (a ? ' · ' + a : '');
+  h.style.cssText = 'font-weight:bold;margin-bottom:8px';
+  var ta = document.createElement('textarea'); ta.value = out; ta.readOnly = true;
+  ta.style.cssText = 'width:100%;height:120px;box-sizing:border-box;font:12px monospace;background:#0b141a;color:#e8eef2;border:1px solid #3d9e8c;border-radius:6px';
+  var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:10px;margin-top:10px';
+  function btn(label, bg) { var b = document.createElement('button'); b.textContent = label; b.style.cssText = 'flex:1;padding:12px;font:bold 16px -apple-system,sans-serif;border:0;border-radius:8px;color:#fff;background:' + bg; row.appendChild(b); return b; }
+  var cp = btn('Copy', '#3d9e8c'), cl = btn('Close', '#44515a');
+  function done() { cp.textContent = 'Copied ✓ — now Paste from UG in Repertoire'; }
+  cp.onclick = function () {
+    function legacy() { ta.readOnly = false; ta.focus(); ta.select(); ta.setSelectionRange(0, out.length); try { if (document.execCommand('copy')) done(); } catch (e) {} ta.readOnly = true; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(done, legacy); else legacy();
+  };
+  cl.onclick = function () { box.remove(); };
+  box.appendChild(h); box.appendChild(ta); box.appendChild(row); document.body.appendChild(box);
+}).toString().replace(/^function \(\)/, '(function()') + ')()');
+
+function copyUGBookmarklet() {
+  (navigator.clipboard?.writeText(UG_BOOKMARKLET) || Promise.reject())
+    .then(() => toast('Bookmarklet copied — paste it as a bookmark’s address'),
+          () => prompt('Copy this and paste it as a bookmark’s address:', UG_BOOKMARKLET));
 }
 
 document.getElementById('ug-import-url').addEventListener('keydown', e => {
