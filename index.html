@@ -811,6 +811,18 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
   font-size: 0.65rem; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text-dim); padding: 4px 6px 2px; margin-top: 4px;
 }
+.sets-group-h { cursor: pointer; user-select: none; -webkit-user-select: none; padding: 8px 6px 4px; margin-top: 6px; }
+.sets-group-h:first-child { margin-top: 0; }
+.sets-group-h:hover { color: var(--text); }
+.sets-caret { display: inline-block; width: 1em; color: var(--accent); }
+.sets-count { opacity: .7; margin-left: 4px; }
+.set-item.set-sub { margin-left: 18px; min-height: 38px; padding-top: 7px; padding-bottom: 7px; }
+.set-sub-toggle {
+  flex-shrink: 0; margin-right: 6px; background: none; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 999px; font: inherit; font-size: 0.68rem;
+  padding: 2px 8px; cursor: pointer;
+}
+.set-sub-toggle:hover { color: var(--accent); border-color: var(--accent); }
 select.inline-fi { cursor: pointer; }
 select.fi { cursor: pointer; }
 
@@ -3270,14 +3282,32 @@ function formatSetDate(dateStr) {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function setItemRow(sl) {
+// Left-pane groups (Generic / Live / Rehearsal) and a gig's nested soundchecks are collapsible;
+// open/closed is remembered per device (not part of db). Keys: 'generic', 'live', 'rehearsal',
+// and 'gig:<setlist id>' for a gig's soundchecks. Everything starts open.
+const SETS_GROUPS_KEY = 'rep_sets_groups';
+function setsGroupState() { try { return JSON.parse(localStorage.getItem(SETS_GROUPS_KEY) || '{}') || {}; } catch { return {}; } }
+function setsGroupOpen(key) { return setsGroupState()[key] !== false; }
+function toggleSetsGroup(key) {
+  const st = setsGroupState();
+  st[key] = !setsGroupOpen(key);
+  try { localStorage.setItem(SETS_GROUPS_KEY, JSON.stringify(st)); } catch {}
+  renderSets();
+}
+
+// opts: { sub: true } for a soundcheck nested under its gig; { subCount, subOpen } on a gig that
+// has soundchecks nested under it (adds a ▸/▾ toggle for them).
+function setItemRow(sl, opts = {}) {
   const dateHtml = sl.type === 'live'
     ? `<span class="set-date"><span class="set-kind">${liveKindLabel(sl)}</span> · ${formatSetDate(sl.date)}</span>` : '';
-  return `<div class="set-item${sl.type==='live'?' live-set':''}${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
+  const subToggle = opts.subCount
+    ? `<button class="set-sub-toggle" onclick="event.stopPropagation();toggleSetsGroup('gig:${sl.id}')" title="${opts.subOpen ? 'Hide' : 'Show'} soundcheck${opts.subCount > 1 ? 's' : ''}">${opts.subOpen ? '▾' : '▸'} ${opts.subCount} SC</button>` : '';
+  return `<div class="set-item${sl.type==='live'?' live-set':''}${opts.sub?' set-sub':''}${activeSetId===sl.id?' active':''}" onclick="selectSet('${sl.id}')">
     <div class="set-name-col">
       <span class="set-name">${esc(sl.name)}</span>
       ${dateHtml}
     </div>
+    ${subToggle}
     <div class="set-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Edit">✎</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();duplicateSetlist('${sl.id}')" title="Duplicate">⧉</button>
@@ -3286,21 +3316,46 @@ function setItemRow(sl) {
   </div>`;
 }
 
+// Left pane, top to bottom: Generic (alphabetical — no dates), Live (gigs), Rehearsal — the dated
+// groups most recent first (no date last). A soundcheck has no link to its gig in the data, so it
+// nests under the gig on the same date (the first by name if there are several); one with no gig
+// that day is listed on its own in the Live group, by date.
 function renderSets() {
   const el = document.getElementById('sets-list');
-  const live = db.setlists.filter(sl => sl.type === 'live')
-    .sort((a, b) => (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99'));
+  const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '')
+    || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  const live = db.setlists.filter(sl => sl.type === 'live');
   const generic = db.setlists.filter(sl => sl.type !== 'live')
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  const gigs = live.filter(sl => liveKindOf(sl) === 'gig').sort(byDateDesc);
+  const rehearsals = live.filter(sl => liveKindOf(sl) === 'rehearsal').sort(byDateDesc);
+  const subs = {};            // gig id -> its soundchecks
+  const loose = [];           // soundchecks with no gig on their date
+  live.filter(sl => liveKindOf(sl) === 'soundcheck').sort(byDateDesc).forEach(sc => {
+    const gig = sc.date && gigs.find(g => g.date === sc.date);
+    if (gig) (subs[gig.id] = subs[gig.id] || []).push(sc); else loose.push(sc);
+  });
 
-  const liveHtml = `<div class="sets-divider">Live</div>` +
-    (live.length ? live.map(setItemRow).join('')
-      : '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None yet</div>');
-  const genericHtml = `<div class="sets-divider" style="margin-top:10px">Generic</div>` +
-    (generic.length ? generic.map(setItemRow).join('')
-      : '<div class="empty" style="padding:10px 6px;font-size:0.78rem">No setlists yet</div>');
+  const liveRows = [...gigs, ...loose].sort(byDateDesc).map(sl => {
+    const kids = subs[sl.id];
+    if (!kids) return setItemRow(sl);
+    const open = setsGroupOpen('gig:' + sl.id) || kids.some(k => k.id === activeSetId);
+    return setItemRow(sl, { subCount: kids.length, subOpen: open })
+      + (open ? kids.map(k => setItemRow(k, { sub: true })).join('') : '');
+  });
 
-  el.innerHTML = liveHtml + genericHtml;
+  const group = (key, title, list, rows, emptyHtml) => {
+    const open = setsGroupOpen(key);
+    return `<div class="sets-divider sets-group-h" onclick="toggleSetsGroup('${key}')">
+      <span class="sets-caret">${open ? '▾' : '▸'}</span> ${title} <span class="sets-count">${list.length}</span></div>`
+      + (open ? (rows.length ? rows.join('') : emptyHtml) : '');
+  };
+  const none = '<div style="padding:6px 8px;font-size:0.78rem;color:var(--text-dim)">None yet</div>';
+
+  el.innerHTML =
+      group('generic', 'Generic', generic, generic.map(sl => setItemRow(sl)), none)
+    + group('live', 'Live', live.filter(sl => liveKindOf(sl) !== 'rehearsal'), liveRows, none)
+    + group('rehearsal', 'Rehearsal', rehearsals, rehearsals.map(sl => setItemRow(sl)), none);
 }
 
 function selectSet(id) {
@@ -4916,7 +4971,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:47';
+const APP_BUILD = '2026-11-27 00:50';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
