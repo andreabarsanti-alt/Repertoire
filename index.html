@@ -4889,7 +4889,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:05';
+const APP_BUILD = '2026-11-27 00:06';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6084,6 +6084,9 @@ setInterval(() => {
 }, LIVE_VISITS_MS);
 // Requests tab (split out of the Live tab, Andrea): the request list with its own bar —
 // Requests open switch, Clear requests. Needs the Live tab's Firebase setup/sign-in first.
+const LIVE_REQ_SORT_KEY = 'rep_live_req_sort';
+function liveReqNewest() { try { return localStorage.getItem(LIVE_REQ_SORT_KEY) === 'newest'; } catch { return false; } }
+function liveSetReqSort(v) { try { localStorage.setItem(LIVE_REQ_SORT_KEY, v); } catch {} renderLiveLists(); }
 function renderRequestsTab() {
   const el = document.getElementById('requests-root');
   if (!el) return;
@@ -6097,6 +6100,10 @@ function renderRequestsTab() {
     <div class="live-bar">
       <h3 class="live-req-h">Requests <span class="live-box-sum" id="live-req-count"></span></h3>
       ${pub ? `<label class="tune-toggle"><input type="checkbox" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>` : ''}
+      <select class="profile-select" onchange="liveSetReqSort(this.value)" title="Sort requests by the time they were sent">
+        <option value="oldest" ${liveReqNewest() ? '' : 'selected'}>Oldest first</option>
+        <option value="newest" ${liveReqNewest() ? 'selected' : ''}>Newest first</option>
+      </select>
       <span class="live-bar-right">
         <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
       </span>
@@ -6110,8 +6117,11 @@ function renderLiveLists() {
   if (!reqEl && !songEl) return;
   const pub = livePublished();
   const list = liveReqList();
-  const pending = list.filter(r => !r.status).sort((a, b) => (a.at || 0) - (b.at || 0));
-  const done = list.filter(r => r.status).sort((a, b) => (b.at || 0) - (a.at || 0));
+  // Requests tab's date sort (Andrea): one choice for both lists, kept per device.
+  const dir = liveReqNewest() ? -1 : 1;
+  const byDate = (a, b) => dir * ((a.at || 0) - (b.at || 0));
+  const pending = list.filter(r => !r.status).sort(byDate);
+  const done = list.filter(r => r.status).sort(byDate);
   // Date and time a request was sent (Andrea), e.g. "25 Nov 23:41".
   const time = ms => ms ? new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
   const reqRow = r => {
