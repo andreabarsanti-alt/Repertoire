@@ -852,6 +852,8 @@ select.fi { cursor: pointer; }
   padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
 }
 .live-bar .profile-select { max-width: 260px; }
+.live-bar.collapsed > :not(.live-bar-toggle) { display: none; }
+.live-bar.collapsed { padding-bottom: 8px; margin-bottom: 10px; }
 .live-grp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .live-grp-l { font-size: 0.62rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin-right: 2px; }
 .live-bar-right { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
@@ -4974,7 +4976,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:58';
+const APP_BUILD = '2026-11-27 01:00';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6195,6 +6197,10 @@ function liveBox(id, title, body, defOpen = true) {
   return `<details class="live-box" data-box="${id}" ${open ? 'open' : ''} ontoggle="liveBoxToggle(this)">
     <summary>${title}</summary><div class="live-box-body">${body}</div></details>`;
 }
+// The Live tab's top bar can be collapsed (Andrea); remembered per device.
+const LIVE_BAR_KEY = 'rep_live_bar_collapsed';
+function liveBarCollapsed() { try { return localStorage.getItem(LIVE_BAR_KEY) === '1'; } catch { return false; } }
+function liveToggleBar() { try { localStorage.setItem(LIVE_BAR_KEY, liveBarCollapsed() ? '0' : '1'); } catch {} renderLive(); }
 function renderLive() {
   renderRequestsTab();
   const el = document.getElementById('live-root');
@@ -6233,7 +6239,8 @@ function renderLive() {
   const setId = liveSetId();
   const open = liveInfo ? liveInfo.open === true : true;
   el.innerHTML = `
-    <div class="live-bar">
+    <div class="live-bar${liveBarCollapsed() ? ' collapsed' : ''}">
+      <button class="btn btn-secondary btn-sm live-bar-toggle" onclick="liveToggleBar()" title="Show or hide these controls">${liveBarCollapsed() ? '▸ Controls' : '▾'}</button>
       <span class="live-grp"><span class="live-grp-l">Play</span>${livePlayBar()}</span>
       <span class="live-grp"><span class="live-grp-l">Audience page</span>
         <select class="profile-select" id="live-view-select" onchange="liveSetView(this.value)" title="What the audience page shows">
