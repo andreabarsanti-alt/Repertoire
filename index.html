@@ -4972,7 +4972,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:52';
+const APP_BUILD = '2026-11-27 00:56';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6424,9 +6424,12 @@ function renderLiveLists() {
   // Requested or liked songs that aren't in the setlist (the audience sees the whole ready
   // repertoire) get their own rows underneath, so their ✓ and hearts are still on screen.
   const setSongs = liveSetSongs(sl), inSet = new Set(setSongs.map(x => x.id));
-  const extra = [...new Set([...Object.keys(counts), ...Object.keys(likes)])].filter(id => !inSet.has(id))
+  // Played songs outside the setlist too (Andrea) — info.played is keyed by fbKey.
+  const playedIds = db.songs.filter(x => played[fbKey(x.id)]).map(x => x.id);
+  const extra = [...new Set([...Object.keys(counts), ...Object.keys(likes), ...playedIds])].filter(id => !inSet.has(id))
     .map(id => db.songs.find(x => x.id === id)).filter(Boolean)
-    .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0) || (likes[b.id] || 0) - (likes[a.id] || 0) || (a.title || '').localeCompare(b.title || ''));
+    .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0) || (likes[b.id] || 0) - (likes[a.id] || 0)
+      || (played[fbKey(a.id)] || 0) - (played[fbKey(b.id)] || 0) || (a.title || '').localeCompare(b.title || ''));
   const row = (s, num) => {
     const isPlayed = !!played[fbKey(s.id)];
     return `<div class="live-song${isPlayed ? ' played' : ''}">
@@ -6438,7 +6441,7 @@ function renderLiveLists() {
     </div>`;
   };
   songEl.innerHTML = (setSongs.map((s, i) => row(s, i + 1)).join('') || '<div class="empty" style="padding:24px 10px">This setlist has no songs</div>') +
-    (extra.length ? `<div class="live-extra-h">Requested or liked, not in this setlist</div>` + extra.map(s => row(s, '+')).join('') : '');
+    (extra.length ? `<div class="live-extra-h">Requested, liked or played, not in this setlist</div>` + extra.map(s => row(s, '+')).join('') : '');
 }
 
 function liveInit() {
