@@ -160,6 +160,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
   flex-shrink: 0; width: 48px; min-height: 46px; border-radius: 10px; cursor: pointer; font-size: 1.25rem; line-height: 1;
   background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
 }
+.heart.mini { width: 42px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; margin: -6px -4px -6px 0; }
 .heart.on { color: #ff4f8b; border-color: rgba(255,79,139,.5); background: rgba(255,79,139,.1); }
 .heart:active { transform: scale(.9); }
 .ig {
@@ -628,8 +629,11 @@ function songRow(s, mine) {
   if (isPlayed(s)) tags.push('<span class="tag played">✓ Suonata</span>');
   else if (reqCount(s)) tags.push(`<span class="tag req">Richiesta${reqCount(s) > 1 ? ' ×' + reqCount(s) : ''}</span>`);
   if (mine.includes(s.id)) tags.push('<span class="tag mine">L\'hai chiesta tu</span>');
+  // Played songs can be liked from the lists too (Andrea); toggleLike stops the row's own tap.
+  const heart = isPlayed(s) ? (() => { const on = isLiked(s.id);
+    return `<span class="heart mini${on ? ' on' : ''}" role="button" tabindex="0" onclick="toggleLike('${esc(s.id)}', event)" aria-pressed="${on}" aria-label="${on ? 'Non mi piace più' : 'Mi piace'}">${on ? '❤' : '♡'}</span>`; })() : '';
   return `<button class="song${isPlayed(s) ? ' played' : ''}" onclick="openForm('${esc(s.id)}')">
-    <span class="song-title">${esc(s.t)}</span>${tags.join('')}
+    <span class="song-title">${esc(s.t)}</span>${tags.join('')}${heart}
   </button>`;
 }
 // Song search: matches titles and tags; while it has text, the results replace the bubbles.
