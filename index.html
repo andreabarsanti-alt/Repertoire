@@ -1475,6 +1475,7 @@ select.fi { cursor: pointer; }
         <li>On a UG chords page, open the bookmark and tap <b>Copy</b>.</li>
         <li>Back here, tap <b>📋 Paste from UG</b> (or paste into the Chord Sheet box): link, title, artist and chords are filled in.</li>
       </ol>
+      <b>From the UG app</b> (bookmarklets only run in Safari): Share → Copy link, then <b>📋 Paste from UG</b> here fills the link; select the chords in the app, Copy, and <b>📋 Paste from UG</b> again fills the Chord Sheet.
     </div>
     <div class="fg">
       <label>Paste UG Link</label>
@@ -5188,7 +5189,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 22:50';
+const APP_BUILD = '2026-11-26 22:51';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5296,7 +5297,12 @@ function ugSplitClip(text) {
     else if (out.url && (m = l.match(/^Artist:\s*(.*)$/i))) out.artist = m[1].trim();
     else break;
   }
-  if (!out.url) return null;
+  if (!out.url) {
+    // A UG app share ("Wonderwall chords by Oasis https://…") — short text with a UG link in it.
+    const m = String(text || '').length < 400 && String(text).match(/https?:\/\/\S*ultimate-guitar\.com\/\S+/i);
+    if (m) { out.url = m[0]; return out; }
+    return null;
+  }
   while (i < lines.length && !lines[i].trim()) i++;
   out.crd = cleanUGText(lines.slice(i).join('\n')).replace(/\s+$/, '');
   return out;
@@ -5338,6 +5344,7 @@ function pasteUGClip() {
 function onUGCrdInput() {
   const el = document.getElementById('ug-import-crd');
   if (/^\s*(UG:\s*)?https?:\/\/\S*ultimate-guitar\.com\//i.test(el.value)) applyUGClip(el.value);
+  else if (/\[\/?(ch|tab)\]/.test(el.value)) el.value = cleanUGText(el.value);
 }
 
 function toggleUGHelp() {
