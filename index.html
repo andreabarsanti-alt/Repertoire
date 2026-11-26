@@ -851,6 +851,14 @@ select.fi { cursor: pointer; }
   color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
 }
 .live-col h3 .btn { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.live-past-list { max-height: 65vh; overflow-y: auto; }
+.live-past { border-bottom: 1px solid var(--border); }
+.live-past-row { width: 100%; display: flex; justify-content: space-between; gap: 10px; padding: 11px 4px; background: none; border: 0; color: var(--text); font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer; }
+.live-past-meta { color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; }
+.live-past-body { padding: 0 4px 12px; font-size: 0.9rem; }
+.live-past-head { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 8px; }
+.live-past-req { padding: 8px 10px; margin-bottom: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; }
+.live-past-req.done { opacity: .6; }
 .live-req-h { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 0; }
 .live-req {
   display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 8px;
@@ -1112,6 +1120,16 @@ select.fi { cursor: pointer; }
 </div>
 
 <!-- ══ EDIT PROFILES MODAL ══ -->
+<div class="overlay hidden" id="req-archive-modal">
+  <div class="modal">
+    <h2>Past requests</h2>
+    <div id="req-archive-list" class="live-past-list"></div>
+    <div class="modal-footer">
+      <span></span>
+      <button class="btn btn-secondary" onclick="closeModal('req-archive-modal')">Close</button>
+    </div>
+  </div>
+</div>
 <div class="overlay hidden" id="profiles-modal">
   <div class="modal">
     <h2>Edit Profiles</h2>
@@ -4890,7 +4908,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:12';
+const APP_BUILD = '2026-11-27 00:19';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5569,7 +5587,80 @@ async function liveSetOpen(open) {
   if (liveInfo) liveInfo.open = open;
   renderLive();
   toast(open ? 'Requests open' : 'Requests closed');
-  if (!open) liveArchiveRequests();
+  if (open) return;
+  // Closing always archives first (the snapshot is queued synchronously, before any clear), then
+  // asks whether to keep or clear the current requests (Andrea).
+  const had = liveReqList().length;
+  liveArchiveRequests();
+  if (had && confirm('Requests closed and archived (🗂 Show past lists them).\n\nClear the current requests too? This also empties the played list and the likes.\n\nOK = clear them · Cancel = keep them')) liveClearRequests(true);
+}
+
+// ── 🗂 Past: archived requests, read back from requests_archive/<profile>/ on the data branch
+// (anonymous read of the public repo without a token), plus any still waiting on this iPad. ──
+function liveRepoTarget() {
+  const cfg = getGithubConfig(), auto = autoDetectGithub();
+  const headers = { 'Accept': 'application/vnd.github.v3+json' };
+  if (cfg?.token) headers['Authorization'] = `token ${cfg.token}`;
+  return {
+    owner: cfg?.owner || auto.owner || DATA_REPO_FALLBACK.owner,
+    repo: cfg?.repo || (auto.owner ? auto.repo : '') || DATA_REPO_FALLBACK.repo,
+    branch: cfg?.branch || DATA_BRANCH, headers,
+  };
+}
+let livePastFiles = null, livePastErr = '', livePastData = {}, livePastOpenFile = null;
+async function livePastOpen() {
+  openModal('req-archive-modal');
+  livePastFiles = null; livePastErr = ''; livePastOpenFile = null; renderLivePast();
+  const t = liveRepoTarget();
+  try {
+    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/requests_archive/${PROFILE}?ref=${encodeURIComponent(t.branch)}&_=${Date.now()}`, { headers: t.headers, cache: 'no-store' });
+    if (r.status === 404) livePastFiles = [];
+    else if (!r.ok) throw new Error(`GET ${r.status}`);
+    else livePastFiles = (await r.json()).filter(f => f.type === 'file' && /\.json$/.test(f.name)).map(f => f.path);
+  } catch (e) { livePastErr = e.message; livePastFiles = []; }
+  renderLivePast();
+}
+async function livePastToggle(path) {
+  livePastOpenFile = livePastOpenFile === path ? null : path;
+  renderLivePast();
+  if (!livePastOpenFile || livePastData[path]) return;
+  const t = liveRepoTarget();
+  try {
+    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/${path}?ref=${encodeURIComponent(t.branch)}`, { headers: { ...t.headers, 'Accept': 'application/vnd.github.raw+json' }, cache: 'no-store' });
+    if (!r.ok) throw new Error(`GET ${r.status}`);
+    livePastData[path] = JSON.parse(await r.text());
+  } catch (e) { livePastData[path] = { error: e.message }; }
+  renderLivePast();
+}
+function renderLivePast() {
+  const el = document.getElementById('req-archive-list');
+  if (!el) return;
+  const fmt = iso => iso ? new Date(iso).toLocaleString([], { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  const nameDate = path => { const m = path.match(/(\d{4})-(\d\d)-(\d\d)_(\d\d)-(\d\d)\.json$/); return m ? fmt(new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).toISOString()) : path.split('/').pop(); };
+  const body = d => {
+    if (!d) return '<div class="live-past-body">Loading…</div>';
+    if (d.error) return `<div class="live-past-body">Couldn't load: ${esc(d.error)}</div>`;
+    const head = [d.gig?.place, d.gig?.when && fmt(d.gig.when), d.setlist && `Setlist: ${d.setlist}`].filter(Boolean).map(esc).join(' · ');
+    return `<div class="live-past-body">${head ? `<div class="live-past-head">${head}</div>` : ''}
+      ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
+        <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">✎ ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
+        <div class="live-req-who"><span class="live-req-name${r.name ? '' : ' anon'}">👤 ${esc(r.name || 'Anonymous')}</span><span class="live-loc unknown">${esc(r.location || '')}</span></div>
+        ${r.msg ? `<div class="live-req-from">“${esc(r.msg)}”</div>` : ''}
+        <div class="live-req-time">${esc(fmt(r.at))} · ${esc(r.status === 'played' ? '✓ Played' : r.status === 'dismissed' ? 'Dismissed' : 'Pending')}</div>
+      </div>`).join('') || '<div>No requests</div>'}</div>`;
+  };
+  const local = liveArchiveQueue().map(it => ({ path: it.file, data: it.data, local: true }));
+  const remote = (livePastFiles || []).filter(p => !local.some(l => l.path === p)).map(p => ({ path: p, data: livePastData[p] }));
+  const all = [...local, ...remote].sort((a, b) => b.path.localeCompare(a.path));
+  el.innerHTML = (livePastErr ? `<div class="live-err">Couldn't list the archive: ${esc(livePastErr)}</div>` : '') +
+    (livePastFiles === null ? '<div class="empty" style="padding:20px">Loading…</div>' : '') +
+    (all.map(a => `<div class="live-past">
+      <button class="live-past-row" onclick="livePastToggle('${esc(a.path)}')">
+        <span>${livePastOpenFile === a.path ? '▾' : '▸'} ${esc(nameDate(a.path))}</span>
+        <span class="live-past-meta">${a.data && !a.data.error ? `${(a.data.requests || []).length} request${(a.data.requests || []).length === 1 ? '' : 's'}` : ''}${a.local ? ' · not pushed yet' : ''}</span>
+      </button>
+      ${livePastOpenFile === a.path ? body(a.data) : ''}
+    </div>`).join('') || (livePastFiles === null ? '' : '<div class="empty" style="padding:20px">No archived requests yet — they are saved when you close requests</div>'));
 }
 
 // ── Requests archive (Andrea): closing requests saves a snapshot of every request to the repo's
@@ -5647,8 +5738,8 @@ async function liveArchiveFlush(verbose) {
   }
   if (sent) toast(`Requests archived to GitHub${sent > 1 ? ` (${sent} archives)` : ''}`);
 }
-async function liveClearRequests() {
-  if (!confirm('Clear all requests, the played list and the likes? Do this before each gig — the audience page\'s Played and Requested marks and its hearts are emptied too.')) return;
+async function liveClearRequests(noAsk) {
+  if (!noAsk && !confirm('Clear all requests, the played list and the likes? Do this before each gig — the audience page\'s Played and Requested marks and its hearts are emptied too.')) return;
   // A new request round makes audience phones forget their "L'hai chiesta tu" marks, and a new
   // like round their hearts (Andrea: clearing also clears the likes).
   const round = Date.now();
@@ -6182,6 +6273,7 @@ function renderRequestsTab() {
         <option value="newest" ${liveReqNewest() ? 'selected' : ''}>Newest first</option>
       </select>
       <span class="live-bar-right">
+        <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Requests archived when requests were closed">🗂 Show past</button>
         <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
       </span>
     </div>
