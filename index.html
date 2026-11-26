@@ -1218,7 +1218,7 @@ select.fi { cursor: pointer; }
       </label>
     </div>
     <div class="fg">
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <span style="display:inline-flex;gap:6px"><button type="button" class="crd-expand-btn" onclick="pasteCrdInto('f-crd')" title="Paste chords copied from the UG app (or anywhere)">📋 Paste</button><button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></span></label>
       <textarea class="fi" id="f-crd" rows="8" placeholder="Paste or type a chord/lyric sheet — if filled in, the song opens this in-app instead of Ultimate Guitar"></textarea>
     </div>
     <div class="modal-footer">
@@ -1474,7 +1474,7 @@ select.fi { cursor: pointer; }
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
     </div>
     <div class="fg">
-      <label>Chord Sheet (optional)</label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (optional) <button type="button" class="crd-expand-btn" onclick="pasteCrdInto('ug-import-crd')" title="Paste chords copied from the UG app (or a UG link)">📋 Paste</button></label>
       <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet"></textarea>
     </div>
     <div class="modal-footer">
@@ -2324,7 +2324,7 @@ function songEditRow(s) {
   </tr>
   <tr class="editing-row editing-row-crd">
     <td colspan="4">
-      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <span style="display:inline-flex;gap:6px"><button type="button" class="crd-expand-btn" onclick="pasteCrdInto('ie-crd')" title="Paste chords copied from the UG app (or anywhere)">📋 Paste</button><button type="button" class="crd-expand-btn" onclick="openCrdEditor('ie-crd')" title="Open full-page editor">⤢ Full editor</button></span></label>
       <textarea class="inline-fi fi" id="ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
     </td>
   </tr>`;
@@ -3814,7 +3814,7 @@ function slEditRow(s, i, nested) {
     <input class="inline-fi" id="sl-ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}>
     <input class="inline-fi" id="sl-ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}>
     <div>
-      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <button type="button" class="crd-expand-btn" onclick="openCrdEditor('sl-ie-crd')" title="Open full-page editor">⤢ Full editor</button></label>
+      <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <span style="display:inline-flex;gap:6px"><button type="button" class="crd-expand-btn" onclick="pasteCrdInto('sl-ie-crd')" title="Paste chords copied from the UG app (or anywhere)">📋 Paste</button><button type="button" class="crd-expand-btn" onclick="openCrdEditor('sl-ie-crd')" title="Open full-page editor">⤢ Full editor</button></span></label>
       <textarea class="inline-fi" id="sl-ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
     </div>
   </div>`;
@@ -5176,7 +5176,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 22:54';
+const APP_BUILD = '2026-11-26 23:01';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5254,6 +5254,43 @@ function confirmUGImport() {
   document.getElementById('f-crd').value    = crd || '';
   openModal('song-modal');
   setTimeout(() => document.getElementById('f-key').focus(), 0);
+}
+
+// ── 📋 Paste chords ──
+// The app can't fetch UG pages (no CORS, and the sign-in lives in the UG app/Safari), so chords
+// come over by copying them in the UG app and tapping 📋 Paste next to a Chord Sheet box.
+const UG_LINK_RE = /https?:\/\/\S*ultimate-guitar\.com\/\S+/i;
+const CRD_LINK_FIELD = { 'f-crd': 'f-uglink', 'ie-crd': 'ie-uglink', 'sl-ie-crd': 'sl-ie-uglink', 'ug-import-crd': 'ug-import-url' };
+
+// UG markup ([ch]G[/ch], [tab]…[/tab]), CRLF, non-breaking spaces, trailing spaces, runs of blank lines.
+function tidyPastedChords(t) {
+  return String(t || '').replace(/\r\n?/g, '\n').replace(/\[\/?(ch|tab)\]/g, '').replace(/ /g, ' ')
+    .replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '').replace(/\s+$/, '');
+}
+
+function pasteCrdInto(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const fail = () => toast('Can’t read the clipboard — long-press the box and Paste');
+  if (!navigator.clipboard?.readText) { fail(); return; }
+  navigator.clipboard.readText().then(t => {
+    if (!t || !t.trim()) { toast('Clipboard is empty'); return; }
+    // A UG link on its own (UG app: Share → Copy link) goes into the song's UG link field.
+    const link = t.length < 400 && t.match(UG_LINK_RE);
+    if (link && CRD_LINK_FIELD[id]) {
+      const lf = document.getElementById(CRD_LINK_FIELD[id]);
+      if (lf) {
+        lf.value = link[0];
+        lf.dispatchEvent(new Event('input', { bubbles: true }));
+        toast('UG link pasted — now copy the chords and Paste again');
+        return;
+      }
+    }
+    if (el.value.trim() && !confirm('Replace the current chord sheet with the pasted one?')) return;
+    el.value = tidyPastedChords(t);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    toast('Chords pasted');
+  }, fail);
 }
 
 document.getElementById('ug-import-url').addEventListener('keydown', e => {
