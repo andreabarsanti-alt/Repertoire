@@ -824,7 +824,8 @@ select.fi { cursor: pointer; }
   font-size: 0.68rem; font-weight: 700; line-height: 1.4; text-align: center;
 }
 .tab-badge.hidden { display: none; }
-#tab-live { padding: 18px; min-height: calc(100dvh - var(--hdr-h)); }
+#tab-live, #tab-requests { padding: 18px; min-height: calc(100dvh - var(--hdr-h)); }
+#requests-root { max-width: 760px; margin: 0 auto; }
 .live-card {
   max-width: 560px; margin: 10px auto; background: var(--surface);
   border: 1px solid var(--border); border-radius: 14px; padding: 22px;
@@ -850,6 +851,7 @@ select.fi { cursor: pointer; }
   color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
 }
 .live-col h3 .btn { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.live-req-h { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 0; }
 .live-req {
   display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 8px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
@@ -935,7 +937,8 @@ select.fi { cursor: pointer; }
   <nav>
     <button class="tab-btn active" data-tab="songs">Songs</button>
     <button class="tab-btn" data-tab="sets">Setlists</button>
-    <button class="tab-btn" data-tab="live" title="Audience song requests">Live<span class="tab-badge hidden" id="live-badge"></span></button>
+    <button class="tab-btn" data-tab="live" title="Gig, audience page, now playing, likes">Live</button>
+    <button class="tab-btn" data-tab="requests" title="Audience song requests">Requests<span class="tab-badge hidden" id="live-badge"></span></button>
   </nav>
   <div class="hdr-actions">
     <div class="hdr-more" id="hdr-more">
@@ -1017,6 +1020,10 @@ select.fi { cursor: pointer; }
 <!-- ══ LIVE (audience song requests) ══ -->
 <div id="tab-live" class="tab">
   <div id="live-root"></div>
+</div>
+<!-- ══ REQUESTS (audience song requests, split out of the Live tab) ══ -->
+<div id="tab-requests" class="tab">
+  <div id="requests-root"></div>
 </div>
 <div class="overlay hidden" id="live-qr-big" onclick="closeModal('live-qr-big')">
   <div class="live-qr-caption">Scan to request a song</div>
@@ -1836,7 +1843,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  if (btn.dataset.tab === 'live') renderLive();
+  if (btn.dataset.tab === 'live' || btn.dataset.tab === 'requests') renderLive();
 }));
 
 function renderAll() { renderSongs(); renderSets(); if (activeSetId) renderSetDetail(); syncTuneToggles(); renderLiveLists(); }
@@ -4882,7 +4889,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 23:53';
+const APP_BUILD = '2026-11-27 00:05';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5559,6 +5566,7 @@ async function liveSetOpen(open) {
   try { await fbReq('PATCH', 'info', { open, updatedAt: Date.now() }); }
   catch (e) { toast('Failed: ' + e.message); renderLive(); return; }
   if (liveInfo) liveInfo.open = open;
+  renderLive();                        // the switch is on both the Live and Requests tabs
   toast(open ? 'Requests open' : 'Requests closed');
 }
 async function liveClearRequests() {
@@ -5928,6 +5936,7 @@ function liveBox(id, title, body, defOpen = true) {
     <summary>${title}</summary><div class="live-box-body">${body}</div></details>`;
 }
 function renderLive() {
+  renderRequestsTab();
   const el = document.getElementById('live-root');
   if (!el) return;
   const cfg = getFbConfig();
@@ -5975,7 +5984,6 @@ function renderLive() {
                <button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
       <span class="live-status" id="live-status"></span>
       <span class="live-bar-right">
-        <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
         <button class="btn btn-secondary btn-sm" onclick="liveSignOut()">Sign out</button>
       </span>
     </div>
@@ -6008,7 +6016,6 @@ function renderLive() {
         <div class="live-venue live-visits" id="live-visits"></div>`)}
         ${liveBox('now', '🎶 Now playing <span class="live-box-sum" id="live-now-sum"></span>', '<div class="live-venue live-visits" id="live-now"></div>')}
         ${liveBox('likes', '❤ Likes <span class="live-box-sum" id="live-likes-sum"></span>', '<div id="live-likes"></div>', false)}
-        ${liveBox('reqs', 'Requests <span class="live-box-sum" id="live-req-count"></span>', '<div id="live-reqs"></div>')}
       </section>
       <section class="live-col">
         <h3>Setlist${pub ? ' — tap ✓ when played' : ''}</h3>
@@ -6075,10 +6082,32 @@ async function liveResetVisits() {
 setInterval(() => {
   if (!document.hidden && document.getElementById('tab-live')?.classList.contains('active') && document.getElementById('live-visits')) liveLoadVisits();
 }, LIVE_VISITS_MS);
+// Requests tab (split out of the Live tab, Andrea): the request list with its own bar —
+// Requests open switch, Clear requests. Needs the Live tab's Firebase setup/sign-in first.
+function renderRequestsTab() {
+  const el = document.getElementById('requests-root');
+  if (!el) return;
+  if (!liveSignedIn()) {
+    el.innerHTML = `<div class="empty" style="padding:40px 10px">Set up and sign in on the <a href="#" onclick="event.preventDefault();document.querySelector('.tab-btn[data-tab=live]').click()">Live</a> tab to take audience requests</div>`;
+    return;
+  }
+  const pub = livePublished();
+  const open = liveInfo ? liveInfo.open === true : true;
+  el.innerHTML = `
+    <div class="live-bar">
+      <h3 class="live-req-h">Requests <span class="live-box-sum" id="live-req-count"></span></h3>
+      ${pub ? `<label class="tune-toggle"><input type="checkbox" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>` : ''}
+      <span class="live-bar-right">
+        <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
+      </span>
+    </div>
+    <div id="live-reqs"></div>`;
+  renderLiveLists();
+}
 function renderLiveLists() {
   const reqEl = document.getElementById('live-reqs');
   const songEl = document.getElementById('live-songs');
-  if (!reqEl || !songEl) return;
+  if (!reqEl && !songEl) return;
   const pub = livePublished();
   const list = liveReqList();
   const pending = list.filter(r => !r.status).sort((a, b) => (a.at || 0) - (b.at || 0));
@@ -6093,7 +6122,8 @@ function renderLiveLists() {
     const actions = r.status
       ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
-      : `${r.songId ? '' : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>`}
+      : `${r.songId ? `<button class="btn btn-primary btn-sm" onclick="liveSetPlayed('${esc(r.songId)}', true).catch(e => toast('Failed: ' + e.message))" title="Mark the song played (settles all its requests)">✓ Played</button>`
+                    : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>`}
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`
     const del = `<button class="btn btn-danger btn-sm btn-icon" onclick="liveDeleteReq('${esc(r.id)}')" title="Delete this request">🗑</button>`;
     return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
@@ -6106,13 +6136,14 @@ function renderLiveLists() {
       <div class="live-req-actions">${actions}${del}</div>
     </div>`;
   };
-  reqEl.innerHTML =
+  if (reqEl) reqEl.innerHTML =
     (pending.length ? pending.map(reqRow).join('')
                     : `<div class="empty" style="padding:24px 10px">${pub ? 'No requests waiting' : 'Publish a setlist to start taking requests'}</div>`) +
     (done.length ? `<button class="btn btn-secondary btn-sm" style="margin:6px 0 10px" onclick="liveShowDone=!liveShowDone;renderLiveLists()">${liveShowDone ? 'Hide' : 'Show'} done (${done.length})</button>` +
                    (liveShowDone ? done.map(reqRow).join('') : '') : '');
   const cnt = document.getElementById('live-req-count');
   if (cnt) cnt.textContent = pending.length ? `· ${pending.length} waiting` : '';
+  if (!songEl) return;
 
   const sl = db.setlists.find(s => s.id === liveSetId());
   if (!sl) { songEl.innerHTML = '<div class="empty" style="padding:24px 10px">Choose the setlist to show your audience</div>'; return; }
