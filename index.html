@@ -4908,7 +4908,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:19';
+const APP_BUILD = '2026-11-27 00:25';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5592,7 +5592,7 @@ async function liveSetOpen(open) {
   // asks whether to keep or clear the current requests (Andrea).
   const had = liveReqList().length;
   liveArchiveRequests();
-  if (had && confirm('Requests closed and archived (🗂 Show past lists them).\n\nClear the current requests too? This also empties the played list and the likes.\n\nOK = clear them · Cancel = keep them')) liveClearRequests(true);
+  if (had && confirm('Requests closed and archived (🗂 Show past lists them).\n\nClear the current requests too? This also empties the played list (likes stay).\n\nOK = clear them · Cancel = keep them')) liveClearRequests(true);
 }
 
 // ── 🗂 Past: archived requests, read back from requests_archive/<profile>/ on the data branch
@@ -5739,19 +5739,16 @@ async function liveArchiveFlush(verbose) {
   if (sent) toast(`Requests archived to GitHub${sent > 1 ? ` (${sent} archives)` : ''}`);
 }
 async function liveClearRequests(noAsk) {
-  if (!noAsk && !confirm('Clear all requests, the played list and the likes? Do this before each gig — the audience page\'s Played and Requested marks and its hearts are emptied too.')) return;
-  // A new request round makes audience phones forget their "L'hai chiesta tu" marks, and a new
-  // like round their hearts (Andrea: clearing also clears the likes).
+  if (!noAsk && !confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested marks are emptied too. Likes stay (❤ Likes → Reset clears them).')) return;
+  // A new request round makes audience phones forget their "L'hai chiesta tu" marks. Likes are
+  // left alone (Andrea, 2026-11-26: they used to be cleared too) — ❤ Likes → Reset clears them.
   const round = Date.now();
   localStorage.setItem(LIVE_ROUND_KEY, String(round));
-  localStorage.setItem(LIVE_LIKE_ROUND_KEY, String(round));
   try {
     await fbReq('DELETE', 'requests');
-    await fbReq('DELETE', 'likes').catch(() => {});   // rules without `likes`: nothing to clear
-    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null, reqRound: round, likeRound: round });
+    if (livePublished()) await fbReq('PATCH', 'info', { played: null, requested: null, reqRound: round });
   } catch (e) { toast('Clear failed: ' + e.message, 4500); return; }
   liveReqs = {}; liveSeen = new Set(); liveFresh.clear(); liveBoardLast = '{}';
-  liveLikes = {}; renderLiveLikes();
   if (liveInfo) { delete liveInfo.played; delete liveInfo.requested; }
   renderLiveBadge(); renderLive(); toast('Requests cleared');
 }
