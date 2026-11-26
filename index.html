@@ -4818,6 +4818,7 @@ async function doPush(cfg) {
 
     toast('Pushed to GitHub!');
     document.getElementById('sync-banner').classList.add('hidden');
+    liveArchiveFlush();                // any requests archive still waiting on this iPad
   } catch (err) {
     toast('Push failed: ' + err.message, 4000);
   } finally {
@@ -4889,7 +4890,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:06';
+const APP_BUILD = '2026-11-27 00:12';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5566,8 +5567,85 @@ async function liveSetOpen(open) {
   try { await fbReq('PATCH', 'info', { open, updatedAt: Date.now() }); }
   catch (e) { toast('Failed: ' + e.message); renderLive(); return; }
   if (liveInfo) liveInfo.open = open;
-  renderLive();                        // the switch is on both the Live and Requests tabs
+  renderLive();
   toast(open ? 'Requests open' : 'Requests closed');
+  if (!open) liveArchiveRequests();
+}
+
+// ── Requests archive (Andrea): closing requests saves a snapshot of every request to the repo's
+// data branch, as requests_archive/<profile>/<YYYY-MM-DD_HH-MM>.json, through the ⬆ Push GitHub
+// config. The repo is public, so exact phone positions are left out — only the location verdict.
+// Without a saved token (or if the push fails) the snapshot waits in rep_req_archive_<profile>
+// and goes up with the next close or the next successful ⬆ Push.
+const LIVE_ARCHIVE_KEY = 'rep_req_archive_' + PROFILE;
+function liveArchiveQueue() { try { return JSON.parse(localStorage.getItem(LIVE_ARCHIVE_KEY) || '[]') || []; } catch { return []; } }
+function liveArchiveSave(q) { try { if (q.length) localStorage.setItem(LIVE_ARCHIVE_KEY, JSON.stringify(q)); else localStorage.removeItem(LIVE_ARCHIVE_KEY); } catch {} }
+function liveArchiveSnapshot() {
+  const reqs = liveReqList().slice().sort((a, b) => (a.at || 0) - (b.at || 0));
+  if (!reqs.length) return null;
+  const now = new Date(), pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  const sl = db.setlists.find(x => x.id === liveSetId());
+  const gig = getLiveGig();
+  const plain = h => h.replace(/<[^>]*>/g, '').trim();
+  return {
+    file: `requests_archive/${PROFILE}/${stamp}.json`,
+    data: {
+      profile: PROFILE,
+      closedAt: now.toISOString(),
+      gig: { place: gig.place || '', when: gig.when || '' },
+      setlist: sl ? sl.name : '',
+      requests: reqs.map(r => {
+        const song = r.songId ? db.songs.find(x => x.id === r.songId) : null;
+        return {
+          at: r.at ? new Date(r.at).toISOString() : '',
+          ...(r.songId ? { songId: r.songId, title: song ? song.title : '' } : { text: r.text || '' }),
+          name: r.name || '',
+          ...(r.msg ? { msg: r.msg } : {}),
+          status: r.status || 'pending',
+          location: plain(liveLocBadge(r)),
+        };
+      }),
+    },
+  };
+}
+async function liveArchiveRequests() {
+  const snap = liveArchiveSnapshot();
+  const q = liveArchiveQueue();
+  if (snap) { q.push(snap); liveArchiveSave(q); }
+  await liveArchiveFlush(!!snap);
+}
+async function liveArchiveFlush(verbose) {
+  const q = liveArchiveQueue();
+  if (!q.length) return;
+  const cfg = getGithubConfig();
+  if (!cfg?.token || !cfg?.owner || !cfg?.repo) {
+    if (verbose) toast('Requests archived on this iPad — they go to GitHub with the next ⬆ Push once it is set up', 4500);
+    return;
+  }
+  const headers = { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' };
+  let sent = 0;
+  while (q.length) {
+    const it = q[0];
+    try {
+      const bytes = new TextEncoder().encode(JSON.stringify(it.data, null, 2));
+      let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+      const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${it.file}`;
+      let sha;
+      const g = await fetch(`${url}?ref=${encodeURIComponent(cfg.branch)}`, { headers });
+      if (g.ok) sha = (await g.json()).sha;
+      const body = { message: `Archive requests ${it.file.split('/').pop()} via Repertoire app`, content: btoa(bin), branch: cfg.branch };
+      if (sha) body.sha = sha;
+      const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || `PUT ${r.status}`); }
+    } catch (e) {
+      liveArchiveSave(q);
+      toast('Requests archive not pushed (kept on this iPad, retried later): ' + e.message, 4500);
+      return;
+    }
+    q.shift(); sent++; liveArchiveSave(q);
+  }
+  if (sent) toast(`Requests archived to GitHub${sent > 1 ? ` (${sent} archives)` : ''}`);
 }
 async function liveClearRequests() {
   if (!confirm('Clear all requests, the played list and the likes? Do this before each gig — the audience page\'s Played and Requested marks and its hearts are emptied too.')) return;
@@ -5980,8 +6058,7 @@ function renderLive() {
         <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Audience: all titles</option>
       </select>
       <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
-      ${pub ? `<label class="tune-toggle"><input type="checkbox" id="live-open-toggle" ${open ? 'checked' : ''} onchange="liveSetOpen(this.checked)"> Requests open</label>
-               <button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
+      ${pub ? `<button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
       <span class="live-status" id="live-status"></span>
       <span class="live-bar-right">
         <button class="btn btn-secondary btn-sm" onclick="liveSignOut()">Sign out</button>
