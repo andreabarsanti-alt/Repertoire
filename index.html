@@ -871,6 +871,7 @@ select.fi { cursor: pointer; }
 .live-past-body { padding: 0 4px 12px; font-size: 0.9rem; }
 .live-past-head { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 8px; }
 .live-past-sub { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 10px 0 6px; }
+.live-past-set { columns: 2; column-gap: 18px; font-size: 0.85rem; }
 .live-past-like { display: flex; justify-content: space-between; gap: 10px; padding: 3px 2px; }
 .live-past-req { padding: 8px 10px; margin-bottom: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; }
 .live-past-req.done { opacity: .6; }
@@ -4971,7 +4972,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:50';
+const APP_BUILD = '2026-11-27 00:48';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5712,7 +5713,7 @@ function renderLivePast() {
     const vis = v ? `👀 ${v.phones} phone${v.phones === 1 ? '' : 's'} · ${v.visits} visit${v.visits === 1 ? '' : 's'}${v.last ? ` · last ${esc(fmt(v.last))}` : ''}` : '';
     const likes = (d.likes || []).length ? `<div class="live-past-sub">❤ Likes</div>` + d.likes.map(l => `<div class="live-past-like"><span>${esc(l.title || 'Unknown song')}</span><span>❤ ${+l.count || 0}</span></div>`).join('') : '';
     return `<div class="live-past-body">${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
-      ${likes}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
+      ${likes}${(au.setlistSongs || []).length ? `<div class="live-past-sub">Setlist</div><div class="live-past-set">${au.setlistSongs.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}</div>` : ''}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
       ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
         <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">✎ ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
         <div class="live-req-who"><span class="live-req-name${r.name ? '' : ' anon'}">👤 ${esc(r.name || 'Anonymous')}</span><span class="live-loc unknown">${esc(r.location || '')}</span></div>
@@ -5763,6 +5764,7 @@ function liveSnapshotData() {
         published: livePublished(),
         requestsOpen: liveInfo ? liveInfo.open === true : null,
         setlist: sl ? sl.name : '',
+        setlistSongs: sl ? liveSetSongs(sl).map(x => x.title || '') : [],
         songs: (livePubIds() || []).length,
         view: liveView(),
         gig: { place: gig.place || '', when: gig.when || '' },
