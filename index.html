@@ -3724,6 +3724,9 @@ function moveSlSong(idx, dir) {
 
 function removeSlItem(idx) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
+  const it = sl.items[idx]; if (!it) return;
+  const label = it.type === 'section' ? `the section "${it.name || ''}" (its songs stay)` : `"${resolveItemSong(it)?.title || 'this song'}" from this setlist`;
+  if (!confirm(`Remove ${label}?`)) return;
   sl.items.splice(idx, 1);
   if (selectedItemIdx !== null) {
     if (selectedItemIdx === idx) selectedItemIdx = null;
@@ -3742,6 +3745,7 @@ function toggleAltUse(idx) {
 function clearAlt(idx) {
   const sl = db.setlists.find(s => s.id === activeSetId); if (!sl) return;
   const item = sl.items[idx]; if (!item) return;
+  if (!confirm('Remove the alternate song from this slot?')) return;
   delete item.altSongId; delete item.useAlt;
   save(); renderSetDetail();
 }
@@ -4739,6 +4743,7 @@ async function fetchRepoData(cfg) {
 }
 
 function clearGithubConfig() {
+  if (!confirm('Clear the saved GitHub settings (token included) on this device?')) return;
   localStorage.removeItem(GH_CFG_KEY);
   const auto = autoDetectGithub();
   document.getElementById('gh-token').value  = '';
@@ -4908,7 +4913,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:25';
+const APP_BUILD = '2026-11-27 00:31';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5587,12 +5592,9 @@ async function liveSetOpen(open) {
   if (liveInfo) liveInfo.open = open;
   renderLive();
   toast(open ? 'Requests open' : 'Requests closed');
-  if (open) return;
-  // Closing always archives first (the snapshot is queued synchronously, before any clear), then
-  // asks whether to keep or clear the current requests (Andrea).
-  const had = liveReqList().length;
-  liveArchiveRequests();
-  if (had && confirm('Requests closed and archived (🗂 Show past lists them).\n\nClear the current requests too? This also empties the played list (likes stay).\n\nOK = clear them · Cancel = keep them')) liveClearRequests(true);
+  // Closing archives the requests silently; it never asks or clears anything (Andrea: Clear
+  // requests is the explicit button for that).
+  if (!open) liveArchiveRequests();
 }
 
 // ── 🗂 Past: archived requests, read back from requests_archive/<profile>/ on the data branch
@@ -5738,8 +5740,8 @@ async function liveArchiveFlush(verbose) {
   }
   if (sent) toast(`Requests archived to GitHub${sent > 1 ? ` (${sent} archives)` : ''}`);
 }
-async function liveClearRequests(noAsk) {
-  if (!noAsk && !confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested marks are emptied too. Likes stay (❤ Likes → Reset clears them).')) return;
+async function liveClearRequests() {
+  if (!confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested marks are emptied too. Likes stay (❤ Likes → Reset clears them).')) return;
   // A new request round makes audience phones forget their "L'hai chiesta tu" marks. Likes are
   // left alone (Andrea, 2026-11-26: they used to be cleared too) — ❤ Likes → Reset clears them.
   const round = Date.now();
@@ -5861,6 +5863,7 @@ function liveNowSetOn(on) {
   toast(on ? 'Now playing shown on the audience page' : 'Now playing hidden from the audience page');
 }
 function liveNowClear() {
+  if (!confirm('Clear the Now playing list? The audience page stops showing these songs.')) return;
   const v = getLiveNow(); v.hist = []; v.open = false; saveLiveNow(v);
   liveNowPush();
   toast('Now playing cleared');
