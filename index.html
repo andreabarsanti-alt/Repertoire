@@ -1468,10 +1468,13 @@ select.fi { cursor: pointer; }
       <label>Paste UG Link</label>
       <input class="fi" id="ug-import-url" type="url" placeholder="https://tabs.ultimate-guitar.com/tab/…" oninput="onUGImportInput()">
     </div>
-    <div id="ug-import-preview" style="display:none;padding:10px 13px;background:var(--surface2);border-radius:var(--radius);margin-bottom:4px;font-size:0.82rem;color:var(--text-dim)"></div>
+    <div class="fg">
+      <label>Title</label>
+      <input class="fi" id="ug-import-title" type="text" placeholder="Song title" oninput="this.dataset.auto=''">
+    </div>
     <div class="fg">
       <label>Tags (comma separated)</label>
-      <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young">
+      <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young" oninput="this.dataset.auto=''">
     </div>
     <div class="fg-row">
       <div class="fg"><label>Key (root)</label><input class="fi" id="ug-import-key" type="text" placeholder="G"></div>
@@ -5187,7 +5190,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-26 23:10';
+const APP_BUILD = '2026-11-26 23:14';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5195,7 +5198,8 @@ const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords',
 function parseUGUrl(url) {
   if (!url) return null;
   const m = url.match(/\/tab\/([^/?#]+)\/([^/?#]+)/);
-  if (!m) return null;
+  // The UG app's share link is just /tab/<id> — no title/artist in it.
+  if (!m) return /ultimate-guitar\.com\/tab\/\d+/i.test(url) ? { title: '', artist: '', ugLink: normalizeUG(url) } : null;
   const artistSlug = m[1];
   let titleSlug = m[2].replace(/-\d+$/, ''); // strip trailing numeric ID
   for (const t of UG_TYPES) {
@@ -5207,15 +5211,29 @@ function parseUGUrl(url) {
 
 function openUGImport(noFocus) {
   document.getElementById('ug-import-url').value = '';
-  document.getElementById('ug-import-tags').value = '';
+  for (const f of ['ug-import-title', 'ug-import-tags']) {
+    const el = document.getElementById(f); el.value = ''; el.dataset.auto = '';
+  }
   document.getElementById('ug-import-crd').value = '';
   document.getElementById('ug-import-key').value = '';
   document.getElementById('ug-import-capo').value = '';
   document.getElementById('ug-import-tryout').checked = false;
-  document.getElementById('ug-import-preview').style.display = 'none';
   document.getElementById('ug-import-btn').disabled = true;
   openModal('ug-import-modal');
   if (!noFocus) setTimeout(() => document.getElementById('ug-import-url').focus(), 0);
+}
+
+// Title/artist from the text around a shared UG link, e.g. "Wonderwall Chords by Oasis",
+// "Check out "Wonderwall" (Official) by Oasis on Ultimate Guitar". Empty when it isn't there.
+function ugShareMeta(text) {
+  let t = String(text || '').split('\n').map(l => l.trim()).filter(Boolean).join(' ')
+    .replace(/\s*(on|at|via|from)\s+ultimate[- ]?guitar(\.com)?\b.*$/i, '')
+    .replace(/^(check out|look at|i found|listen to)\s*:?\s*/i, '').replace(/[\s:\-–—|]+$/, '').trim();
+  const m = t.match(/^(.+?)\s+by\s+(.+)$/i);
+  if (!m) return { title: '', artist: '' };
+  const title = m[1].replace(/\s*\(?\b(official|chords|tabs?|ukulele chords|bass tabs|guitar pro|power tab|pro|ver(sion)?\s*\d+)\b\)?\s*$/ig, '')
+    .replace(/^["“'‘]+|["”'’]+$/g, '').trim();
+  return { title, artist: m[2].replace(/^["“'‘]+|["”'’]+$/g, '').trim() };
 }
 
 // Header "📋 Paste UG": reads a UG link from the clipboard (the UG app's Share → Copy link),
@@ -5231,24 +5249,28 @@ function pasteUGLink() {
     if (!link) { toast('No Ultimate Guitar link in the clipboard \u2014 in the UG app: Share \u2192 Copy link'); return; }
     openUGImport(true);
     document.getElementById('ug-import-url').value = link[0];
+    const meta = ugShareMeta(t.replace(link[0], ''));
+    if (meta.title) { const el = document.getElementById('ug-import-title'); el.value = meta.title; el.dataset.auto = '1'; }
+    if (meta.artist) { const el = document.getElementById('ug-import-tags'); el.value = meta.artist; el.dataset.auto = '1'; }
     onUGImportInput();
+    if (!document.getElementById('ug-import-title').value.trim()) {
+      toast('This link has no song name \u2014 type the title, then copy the chords and tap \ud83d\udccb Paste chords', 4500);
+      return;
+    }
     toast('Now copy the chords in the UG app and tap \ud83d\udccb Paste chords');
   }, fail);
 }
 
 function onUGImportInput() {
-  const url     = document.getElementById('ug-import-url').value.trim();
-  const preview = document.getElementById('ug-import-preview');
-  const btn     = document.getElementById('ug-import-btn');
-  const parsed  = parseUGUrl(url);
-  if (parsed) {
-    preview.style.display = 'block';
-    preview.innerHTML = `<strong style="color:var(--text)">${esc(parsed.title)}</strong> &nbsp;·&nbsp; ${esc(parsed.artist)}`;
-    btn.disabled = false;
-  } else {
-    preview.style.display = 'none';
-    btn.disabled = true;
-  }
+  const url    = document.getElementById('ug-import-url').value.trim();
+  const parsed = parseUGUrl(url);
+  // Fill Title/Tags from the link slug unless typed by hand (dataset.auto is cleared on typing).
+  const fill = (id, v) => {
+    const el = document.getElementById(id);
+    if (v && (!el.value.trim() || el.dataset.auto === '1')) { el.value = v; el.dataset.auto = '1'; }
+  };
+  if (parsed) { fill('ug-import-title', parsed.title); fill('ug-import-tags', parsed.artist); }
+  document.getElementById('ug-import-btn').disabled = !parsed;
 }
 
 // "Add Song" in the import dialog: saves straight away (title, artist tags, UG link, and the
@@ -5257,9 +5279,12 @@ function quickAddUGImport() {
   const url    = document.getElementById('ug-import-url').value.trim();
   const parsed = parseUGUrl(url);
   if (!parsed) return;
+  const titleEl = document.getElementById('ug-import-title');
+  const title = titleEl.value.trim();
+  if (!title) { toast('Type the song title'); titleEl.focus(); return; }
   const tags = document.getElementById('ug-import-tags').value.trim() || parsed.artist || '';
   db.songs.push({
-    id: uid(), title: parsed.title, tags,
+    id: uid(), title, tags,
     key: document.getElementById('ug-import-key').value.trim(),
     capo: document.getElementById('ug-import-capo').value.trim(),
     harp: '',
