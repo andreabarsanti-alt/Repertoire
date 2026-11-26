@@ -854,9 +854,12 @@ select.fi { cursor: pointer; }
 .live-past-list { max-height: 65vh; overflow-y: auto; }
 .live-past { border-bottom: 1px solid var(--border); }
 .live-past-row { width: 100%; display: flex; justify-content: space-between; gap: 10px; padding: 11px 4px; background: none; border: 0; color: var(--text); font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer; }
+.live-past-place { color: var(--accent); }
 .live-past-meta { color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; }
 .live-past-body { padding: 0 4px 12px; font-size: 0.9rem; }
 .live-past-head { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 8px; }
+.live-past-sub { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 10px 0 6px; }
+.live-past-like { display: flex; justify-content: space-between; gap: 10px; padding: 3px 2px; }
 .live-past-req { padding: 8px 10px; margin-bottom: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; }
 .live-past-req.done { opacity: .6; }
 .live-req-h { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 0; }
@@ -1122,7 +1125,7 @@ select.fi { cursor: pointer; }
 <!-- ══ EDIT PROFILES MODAL ══ -->
 <div class="overlay hidden" id="req-archive-modal">
   <div class="modal">
-    <h2>Past requests</h2>
+    <h2>Past live snapshots</h2>
     <div id="req-archive-list" class="live-past-list"></div>
     <div class="modal-footer">
       <span></span>
@@ -4841,7 +4844,7 @@ async function doPush(cfg) {
 
     toast('Pushed to GitHub!');
     document.getElementById('sync-banner').classList.add('hidden');
-    liveArchiveFlush();                // any requests archive still waiting on this iPad
+    liveArchiveFlush();                // any live snapshot still waiting on this iPad
   } catch (err) {
     toast('Push failed: ' + err.message, 4000);
   } finally {
@@ -4913,7 +4916,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:36';
+const APP_BUILD = '2026-11-27 00:47';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5595,7 +5598,7 @@ async function liveSetOpen(open) {
   // A pure toggle: no prompt, no archive, no clear (Andrea). Clear requests archives and clears.
 }
 
-// ── 🗂 Past: archived requests, read back from requests_archive/<profile>/ on the data branch
+// ── 🗂 Past: live snapshots, read back from live_snapshots/<profile>/ on the data branch
 // (anonymous read of the public repo without a token), plus any still waiting on this iPad. ──
 function liveRepoTarget() {
   const cfg = getGithubConfig(), auto = autoDetectGithub();
@@ -5613,23 +5616,30 @@ async function livePastOpen() {
   livePastFiles = null; livePastErr = ''; livePastOpenFile = null; renderLivePast();
   const t = liveRepoTarget();
   try {
-    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/requests_archive/${PROFILE}?ref=${encodeURIComponent(t.branch)}&_=${Date.now()}`, { headers: t.headers, cache: 'no-store' });
+    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/live_snapshots/${PROFILE}?ref=${encodeURIComponent(t.branch)}&_=${Date.now()}`, { headers: t.headers, cache: 'no-store' });
     if (r.status === 404) livePastFiles = [];
     else if (!r.ok) throw new Error(`GET ${r.status}`);
     else livePastFiles = (await r.json()).filter(f => f.type === 'file' && /\.json$/.test(f.name)).map(f => f.path);
   } catch (e) { livePastErr = e.message; livePastFiles = []; }
   renderLivePast();
-}
-async function livePastToggle(path) {
-  livePastOpenFile = livePastOpenFile === path ? null : path;
+  // Load the newest 30 straight away so each row can show its gig place and counts.
+  await Promise.all(livePastFiles.slice().sort().reverse().slice(0, 30).map(livePastLoad));
   renderLivePast();
-  if (!livePastOpenFile || livePastData[path]) return;
+}
+async function livePastLoad(path) {
+  if (livePastData[path] && !livePastData[path].error) return;
   const t = liveRepoTarget();
   try {
     const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/${path}?ref=${encodeURIComponent(t.branch)}`, { headers: { ...t.headers, 'Accept': 'application/vnd.github.raw+json' }, cache: 'no-store' });
     if (!r.ok) throw new Error(`GET ${r.status}`);
     livePastData[path] = JSON.parse(await r.text());
   } catch (e) { livePastData[path] = { error: e.message }; }
+}
+async function livePastToggle(path) {
+  livePastOpenFile = livePastOpenFile === path ? null : path;
+  renderLivePast();
+  if (!livePastOpenFile || (livePastData[path] && !livePastData[path].error)) return;
+  await livePastLoad(path);
   renderLivePast();
 }
 function renderLivePast() {
@@ -5640,8 +5650,14 @@ function renderLivePast() {
   const body = d => {
     if (!d) return '<div class="live-past-body">Loading…</div>';
     if (d.error) return `<div class="live-past-body">Couldn't load: ${esc(d.error)}</div>`;
-    const head = [d.gig?.place, d.gig?.when && fmt(d.gig.when), d.setlist && `Setlist: ${d.setlist}`].filter(Boolean).map(esc).join(' · ');
-    return `<div class="live-past-body">${head ? `<div class="live-past-head">${head}</div>` : ''}
+    const au = d.audience || {}, gig = au.gig || d.gig || {}, v = au.visits;
+    const head = [gig.place, gig.when && fmt(gig.when), (au.setlist || d.setlist) && `Setlist: ${au.setlist || d.setlist}`,
+      au.published === false && 'not published', au.requestsOpen === false && 'requests closed'].filter(Boolean).map(esc).join(' · ');
+    const now = au.nowPlaying || (au.earlier || []).length ? `🎶 ${[au.nowPlaying && `Now: ${au.nowPlaying}`, (au.earlier || []).length && `Earlier: ${au.earlier.join(', ')}`].filter(Boolean).map(esc).join(' · ')}` : '';
+    const vis = v ? `👀 ${v.phones} phone${v.phones === 1 ? '' : 's'} · ${v.visits} visit${v.visits === 1 ? '' : 's'}${v.last ? ` · last ${esc(fmt(v.last))}` : ''}` : '';
+    const likes = (d.likes || []).length ? `<div class="live-past-sub">❤ Likes</div>` + d.likes.map(l => `<div class="live-past-like"><span>${esc(l.title || 'Unknown song')}</span><span>❤ ${+l.count || 0}</span></div>`).join('') : '';
+    return `<div class="live-past-body">${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
+      ${likes}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
       ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
         <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">✎ ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
         <div class="live-req-who"><span class="live-req-name${r.name ? '' : ' anon'}">👤 ${esc(r.name || 'Anonymous')}</span><span class="live-loc unknown">${esc(r.location || '')}</span></div>
@@ -5656,62 +5672,78 @@ function renderLivePast() {
     (livePastFiles === null ? '<div class="empty" style="padding:20px">Loading…</div>' : '') +
     (all.map(a => `<div class="live-past">
       <button class="live-past-row" onclick="livePastToggle('${esc(a.path)}')">
-        <span>${livePastOpenFile === a.path ? '▾' : '▸'} ${esc(nameDate(a.path))}</span>
-        <span class="live-past-meta">${a.data && !a.data.error ? `${(a.data.requests || []).length} request${(a.data.requests || []).length === 1 ? '' : 's'}` : ''}${a.local ? ' · not pushed yet' : ''}</span>
+        <span>${livePastOpenFile === a.path ? '▾' : '▸'} ${esc(nameDate(a.path))}${(() => { const pl = a.data?.audience?.gig?.place || a.data?.gig?.place; return pl ? ` <span class="live-past-place">· ${esc(pl)}</span>` : ''; })()}</span>
+        <span class="live-past-meta">${a.data && !a.data.error ? (() => { const n = (a.data.requests || []).length, l = (a.data.likes || []).reduce((x, y) => x + (+y.count || 0), 0), v = a.data.audience?.visits;
+          return [`${n} request${n === 1 ? '' : 's'}`, a.data.likes && `❤ ${l}`, v && `👀 ${v.phones}`].filter(Boolean).join(' · '); })() : ''}${a.local ? ' · not pushed yet' : ''}</span>
       </button>
       ${livePastOpenFile === a.path ? body(a.data) : ''}
-    </div>`).join('') || (livePastFiles === null ? '' : '<div class="empty" style="padding:20px">No archived requests yet — they are saved when you tap Clear requests</div>'));
+    </div>`).join('') || (livePastFiles === null ? '' : '<div class="empty" style="padding:20px">No archived requests yet — tap 📸 Snapshot live in the Live tab to save one</div>'));
 }
 
-// ── Requests archive (Andrea): Clear requests first saves a snapshot of every request to the repo's
-// data branch, as requests_archive/<profile>/<YYYY-MM-DD_HH-MM>.json, through the ⬆ Push GitHub
-// config. The repo is public, so exact phone positions are left out — only the location verdict.
-// Without a saved token (or if the push fails) the snapshot waits in rep_req_archive_<profile>
-// and goes up with the next Clear requests or the next successful ⬆ Push.
+// ── 📸 Snapshot live (Andrea): one button in the Live bar saves the audience page state (setlist,
+// gig, view, open, Now playing, visit stats), every request and the like counts to the repo's data
+// branch as live_snapshots/<profile>/<YYYY-MM-DD_HH-MM>.json, through the ⬆ Push GitHub config.
+// Nothing else saves one. The repo is public, so exact phone positions and phone ids are left out
+// (only the location verdict and visit totals). Without a saved token (or if the push fails) the
+// snapshot waits in rep_req_archive_<profile> and goes up with the next snapshot or ⬆ Push.
 const LIVE_ARCHIVE_KEY = 'rep_req_archive_' + PROFILE;
 function liveArchiveQueue() { try { return JSON.parse(localStorage.getItem(LIVE_ARCHIVE_KEY) || '[]') || []; } catch { return []; } }
 function liveArchiveSave(q) { try { if (q.length) localStorage.setItem(LIVE_ARCHIVE_KEY, JSON.stringify(q)); else localStorage.removeItem(LIVE_ARCHIVE_KEY); } catch {} }
-function liveArchiveSnapshot() {
-  const reqs = liveReqList().slice().sort((a, b) => (a.at || 0) - (b.at || 0));
-  if (!reqs.length) return null;
+function liveSnapshotData() {
   const now = new Date(), pad = n => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
   const sl = db.setlists.find(x => x.id === liveSetId());
   const gig = getLiveGig();
   const plain = h => h.replace(/<[^>]*>/g, '').trim();
+  const title = id => db.songs.find(x => x.id === id)?.title || '';
+  const { cur, prevs } = liveNowSongs();
+  const st = liveVisits ? liveVisitStats() : null;
+  const likes = liveLikeCounts();
   return {
-    file: `requests_archive/${PROFILE}/${stamp}.json`,
+    file: `live_snapshots/${PROFILE}/${stamp}.json`,
     data: {
       profile: PROFILE,
-      closedAt: now.toISOString(),
-      gig: { place: gig.place || '', when: gig.when || '' },
-      setlist: sl ? sl.name : '',
-      requests: reqs.map(r => {
-        const song = r.songId ? db.songs.find(x => x.id === r.songId) : null;
-        return {
-          at: r.at ? new Date(r.at).toISOString() : '',
-          ...(r.songId ? { songId: r.songId, title: song ? song.title : '' } : { text: r.text || '' }),
-          name: r.name || '',
-          ...(r.msg ? { msg: r.msg } : {}),
-          status: r.status || 'pending',
-          location: plain(liveLocBadge(r)),
-        };
-      }),
+      savedAt: now.toISOString(),
+      audience: {
+        published: livePublished(),
+        requestsOpen: liveInfo ? liveInfo.open === true : null,
+        setlist: sl ? sl.name : '',
+        songs: (livePubIds() || []).length,
+        view: liveView(),
+        gig: { place: gig.place || '', when: gig.when || '' },
+        nowPlaying: cur ? cur.title || '' : '',
+        earlier: prevs.map(x => x.title || ''),
+        visits: st ? { phones: st.phones, visits: st.visits, today: st.today, lastHour: st.hour, last: st.last ? new Date(st.last).toISOString() : '' } : null,
+      },
+      requests: liveReqList().slice().sort((a, b) => (a.at || 0) - (b.at || 0)).map(r => ({
+        at: r.at ? new Date(r.at).toISOString() : '',
+        ...(r.songId ? { songId: r.songId, title: title(r.songId) } : { text: r.text || '' }),
+        name: r.name || '',
+        ...(r.msg ? { msg: r.msg } : {}),
+        status: r.status || 'pending',
+        location: plain(liveLocBadge(r)),
+      })),
+      likes: Object.entries(likes).sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ songId: id, title: title(id), count: n })),
     },
   };
 }
-async function liveArchiveRequests() {
-  const snap = liveArchiveSnapshot();
-  const q = liveArchiveQueue();
-  if (snap) { q.push(snap); liveArchiveSave(q); }
-  await liveArchiveFlush(!!snap);
+let liveSnapBusy = false;
+async function liveSnapshot() {
+  if (liveSnapBusy) return;
+  liveSnapBusy = true;
+  try {
+    // Fresh visit and like numbers first (liveLoadVisits also reloads the likes).
+    liveVisitsBusy = false; await liveLoadVisits(); await liveLoadLikes();
+    const q = liveArchiveQueue(); q.push(liveSnapshotData()); liveArchiveSave(q);
+    await liveArchiveFlush(true);
+  } finally { liveSnapBusy = false; }
 }
 async function liveArchiveFlush(verbose) {
   const q = liveArchiveQueue();
   if (!q.length) return;
   const cfg = getGithubConfig();
   if (!cfg?.token || !cfg?.owner || !cfg?.repo) {
-    if (verbose) toast('Requests archived on this iPad — they go to GitHub with the next ⬆ Push once it is set up', 4500);
+    if (verbose) toast('Snapshot saved on this iPad — it goes to GitHub with the next ⬆ Push once that is set up', 4500);
     return;
   }
   const headers = { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' };
@@ -5725,24 +5757,23 @@ async function liveArchiveFlush(verbose) {
       let sha;
       const g = await fetch(`${url}?ref=${encodeURIComponent(cfg.branch)}`, { headers });
       if (g.ok) sha = (await g.json()).sha;
-      const body = { message: `Archive requests ${it.file.split('/').pop()} via Repertoire app`, content: btoa(bin), branch: cfg.branch };
+      const body = { message: `Live snapshot ${it.file.split('/').pop()} via Repertoire app`, content: btoa(bin), branch: cfg.branch };
       if (sha) body.sha = sha;
       const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
       if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || `PUT ${r.status}`); }
     } catch (e) {
       liveArchiveSave(q);
-      toast('Requests archive not pushed (kept on this iPad, retried later): ' + e.message, 4500);
+      toast('Snapshot not pushed (kept on this iPad, retried later): ' + e.message, 4500);
       return;
     }
     q.shift(); sent++; liveArchiveSave(q);
   }
-  if (sent) toast(`Requests archived to GitHub${sent > 1 ? ` (${sent} archives)` : ''}`);
+  if (sent) toast(`Snapshot saved to GitHub${sent > 1 ? ` (${sent} snapshots)` : ''}`);
 }
 async function liveClearRequests() {
-  if (!confirm('Clear all requests and the played list? They are saved to the archive first (🗂 Show past). Do this before each gig — the audience page\'s Played and Requested marks are emptied too. Likes stay (❤ Likes → Reset clears them).')) return;
+  if (!confirm('Clear all requests and the played list? Do this before each gig — the audience page\'s Played and Requested marks are emptied too. Likes stay (❤ Likes → Reset clears them).')) return;
   // A new request round makes audience phones forget their "L'hai chiesta tu" marks. Likes are
   // left alone (Andrea, 2026-11-26: they used to be cleared too) — ❤ Likes → Reset clears them.
-  liveArchiveRequests();               // archive first (snapshot is queued synchronously)
   const round = Date.now();
   localStorage.setItem(LIVE_ROUND_KEY, String(round));
   try {
@@ -6148,7 +6179,9 @@ function renderLive() {
         <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Audience: all titles</option>
       </select>
       <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update audience page' : '📣 Publish to audience'}</button>
+      <button class="btn btn-secondary btn-sm" onclick="liveSnapshot()" title="Save the audience page, requests and likes to the GitHub archive">📸 Snapshot live</button>
       ${pub ? `<button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
+      <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Saved live snapshots">🗂 Show past</button>
       <span class="live-status" id="live-status"></span>
       <span class="live-bar-right">
         <button class="btn btn-secondary btn-sm" onclick="liveSignOut()">Sign out</button>
@@ -6272,7 +6305,7 @@ function renderRequestsTab() {
         <option value="newest" ${liveReqNewest() ? 'selected' : ''}>Newest first</option>
       </select>
       <span class="live-bar-right">
-        <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Requests archived by Clear requests">🗂 Show past</button>
+        <button class="btn btn-secondary btn-sm" onclick="livePastOpen()" title="Saved live snapshots">🗂 Show past</button>
         <button class="btn btn-secondary btn-sm" onclick="liveClearRequests()" title="Delete all requests and the played list — do this before each gig">Clear requests</button>
       </span>
     </div>
