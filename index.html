@@ -239,11 +239,6 @@ th:hover { color: var(--accent); }
 td { padding: 10px 12px; border-top: 1px solid rgba(52,44,32,.7); vertical-align: middle; }
 tr:nth-child(even) td { background: rgba(255,255,255,.018); }
 tr:hover td { background: rgba(61,158,140,.07) !important; }
-tr.songs-group-row td, tr.songs-group-row:hover td {
-  background: var(--surface2) !important; color: var(--accent);
-  font-family: var(--fd); font-weight: 600; font-size: 0.85rem; padding: 8px 12px;
-}
-.songs-group-count { color: var(--text-dim); font-weight: 400; font-size: 0.75rem; margin-left: 6px; }
 .tag-chip {
   display: inline-block; padding: 2px 8px; border-radius: 10px;
   background: rgba(61,158,140,.12); color: #4db5a2;
@@ -996,10 +991,6 @@ select.fi { cursor: pointer; }
         <option value="repertoire">In repertoire</option>
         <option value="tryout">❓ Not ready</option>
       </select>
-      <select class="profile-select" id="songs-group-select" onchange="setSongsGroup(this.value)" title="Group songs by artist (first tag)">
-        <option value="none">No grouping</option>
-        <option value="artist">Group by artist</option>
-      </select>
     </div>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
@@ -1514,7 +1505,6 @@ let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
-let songsGroup = (() => { try { return localStorage.getItem('rep_songs_group') === 'artist' ? 'artist' : 'none'; } catch { return 'none'; } })(); // device-local Songs tab grouping
 let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
 let slCrdFilter = 'all'; // 'all' | 'with' | 'without' — Setlist detail toolbar filter on whether the resolved song has crd; view-only, never touches sl.items
 let slDrag = null; // active setlist pointer-drag, see initDrag()
@@ -1921,12 +1911,6 @@ function songArtist(s) {
   return ((s.tags || '').split(',')[0] || '').trim();
 }
 
-function setSongsGroup(g) {
-  songsGroup = g === 'artist' ? 'artist' : 'none';
-  try { localStorage.setItem('rep_songs_group', songsGroup); } catch {}
-  renderSongs();
-}
-
 function setSongsScopeFilter(f) {
   songsScopeFilter = f;
   renderSongs();
@@ -1960,8 +1944,6 @@ function renderSongs() {
     || (sortCol !== 'title' ? val(a, 'title').localeCompare(val(b, 'title')) : 0));
 
   renderSongsHeader();
-  const gs = document.getElementById('songs-group-select');
-  if (gs) gs.value = songsGroup;
 
   const colCount = 4;
   const tbody = document.getElementById('songs-tbody');
@@ -1978,27 +1960,9 @@ function renderSongs() {
     return;
   }
 
-  const rowHtml = s => inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s);
-  if (songsGroup !== 'artist') { tbody.innerHTML = rows.map(rowHtml).join(''); return; }
-
-  // Group by artist: one heading row per artist, in A–Z order (Z–A when sorting the
-  // Artist column descending), "No artist" last; songs keep the current sort inside each group.
-  const groups = new Map();
-  rows.forEach(s => {
-    const a = songArtist(s), k = a.toLowerCase();
-    if (!groups.has(k)) groups.set(k, { name: a, songs: [] });
-    const g = groups.get(k);
-    if (g.name === g.name.toLowerCase() && a !== a.toLowerCase()) g.name = a; // prefer a capitalised spelling
-    g.songs.push(s);
-  });
-  const desc = sortCol === 'artist' && sortDir === 'desc';
-  const keys = [...groups.keys()].sort((a, b) =>
-    (!a !== !b) ? (a ? -1 : 1) : (desc ? b.localeCompare(a) : a.localeCompare(b)));
-  tbody.innerHTML = keys.map(k => {
-    const g = groups.get(k);
-    return `<tr class="songs-group-row"><td colspan="${colCount}">${g.name ? esc(g.name) : 'No artist'} <span class="songs-group-count">${g.songs.length}</span></td></tr>`
-      + g.songs.map(rowHtml).join('');
-  }).join('');
+  tbody.innerHTML = rows.map(s =>
+    inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s)
+  ).join('');
 }
 
 function songDisplayRow(s) {
@@ -4918,7 +4882,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:20';
+const APP_BUILD = '2026-11-26 23:53';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
