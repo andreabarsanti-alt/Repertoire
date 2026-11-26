@@ -4972,7 +4972,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 00:48';
+const APP_BUILD = '2026-11-27 00:52';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5713,7 +5713,7 @@ function renderLivePast() {
     const vis = v ? `👀 ${v.phones} phone${v.phones === 1 ? '' : 's'} · ${v.visits} visit${v.visits === 1 ? '' : 's'}${v.last ? ` · last ${esc(fmt(v.last))}` : ''}` : '';
     const likes = (d.likes || []).length ? `<div class="live-past-sub">❤ Likes</div>` + d.likes.map(l => `<div class="live-past-like"><span>${esc(l.title || 'Unknown song')}</span><span>❤ ${+l.count || 0}</span></div>`).join('') : '';
     return `<div class="live-past-body">${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
-      ${likes}${(au.setlistSongs || []).length ? `<div class="live-past-sub">Setlist</div><div class="live-past-set">${au.setlistSongs.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}</div>` : ''}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
+      ${likes}${(au.played || []).length ? `<div class="live-past-sub">🎶 Played (Now playing history)</div><div class="live-past-set">${au.played.map((e, i) => `<div>${i + 1}. ${esc(e.title || 'Unknown song')} <span class="live-past-meta">${esc(e.at ? new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '')}</span></div>`).join('')}</div>` : ''}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
       ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
         <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">✎ ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
         <div class="live-req-who"><span class="live-req-name${r.name ? '' : ' anon'}">👤 ${esc(r.name || 'Anonymous')}</span><span class="live-loc unknown">${esc(r.location || '')}</span></div>
@@ -5764,12 +5764,12 @@ function liveSnapshotData() {
         published: livePublished(),
         requestsOpen: liveInfo ? liveInfo.open === true : null,
         setlist: sl ? sl.name : '',
-        setlistSongs: sl ? liveSetSongs(sl).map(x => x.title || '') : [],
         songs: (livePubIds() || []).length,
         view: liveView(),
         gig: { place: gig.place || '', when: gig.when || '' },
         nowPlaying: cur ? cur.title || '' : '',
         earlier: prevs.map(x => x.title || ''),
+        played: getLiveNow().log.map(e => ({ songId: e.id, title: title(e.id), at: new Date(e.at).toISOString() })),
         visits: st ? { phones: st.phones, visits: st.visits, today: st.today, lastHour: st.hour, last: st.last ? new Date(st.last).toISOString() : '' } : null,
       },
       requests: liveReqList().slice().sort((a, b) => (a.at || 0) - (b.at || 0)).map(r => ({
@@ -5904,10 +5904,11 @@ function liveAutoPlayed(id) {
 function getLiveNow() {
   // Stored as { stopped, open, hist }: shown unless ■ Stop was tapped. (The first version stored
   // `on`, which started false, so a saved `on` is ignored.)
-  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return { on: !v.stopped, open: !!v.open, hist: v.hist }; } catch {}
-  return { on: true, open: false, hist: [] };
+  // `log` is the full history ({id, at} per opening, oldest first) that 📸 Snapshot live saves.
+  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return { on: !v.stopped, open: !!v.open, hist: v.hist, log: Array.isArray(v.log) ? v.log : [] }; } catch {}
+  return { on: true, open: false, hist: [], log: [] };
 }
-function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ stopped: !v.on, open: v.open, hist: v.hist })); }
+function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ stopped: !v.on, open: v.open, hist: v.hist, log: v.log || [] })); }
 function liveNowSongs() {
   const v = getLiveNow(), song = id => db.songs.find(s => s.id === id) || null;
   // At most three songs in all (Andrea): the open one plus the two before it, or the last three.
@@ -5935,6 +5936,7 @@ function liveNowOpen(id) {
   const v = getLiveNow();
   v.hist = [id, ...v.hist.filter(x => x !== id)].slice(0, 3);
   v.open = true;
+  if (v.log[v.log.length - 1]?.id !== id) v.log.push({ id, at: Date.now() });   // not a re-open of the same song
   saveLiveNow(v); liveNowPush();
 }
 function liveNowClose(id) {
@@ -5950,8 +5952,8 @@ function liveNowSetOn(on) {
   toast(on ? 'Now playing shown on the audience page' : 'Now playing hidden from the audience page');
 }
 function liveNowClear() {
-  if (!confirm('Clear the Now playing list? The audience page stops showing these songs.')) return;
-  const v = getLiveNow(); v.hist = []; v.open = false; saveLiveNow(v);
+  if (!confirm('Clear the Now playing list and its full history? The audience page stops showing these songs.')) return;
+  const v = getLiveNow(); v.hist = []; v.log = []; v.open = false; saveLiveNow(v);
   liveNowPush();
   toast('Now playing cleared');
 }
