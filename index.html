@@ -5029,7 +5029,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 22:30';
+const APP_BUILD = '2026-11-27 22:35';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6111,8 +6111,37 @@ async function livePgLoad() {
   finally { livePgBusy = false; }
   renderLivePg();
 }
+// The like counts of that night (Andrea): from the latest 📸 snapshot of the gig's date (or before
+// 6 AM the morning after), in the GitHub archive or still queued on the iPad. {song id: count} or null.
+async function livePgNightLikes(date) {
+  const next = livePgYmd(new Date(new Date(date + 'T12:00').getTime() + 86400000));
+  const ok = stamp => stamp.startsWith(date + '_') || (stamp.startsWith(next + '_') && stamp.slice(11, 13) < '06');
+  const stampOf = path => (path.split('/').pop() || '').replace(/\.json$/, '');
+  const cands = [];   // {stamp, data?|path?}
+  liveArchiveQueue().forEach(it => { const st = stampOf(it.file); if (ok(st)) cands.push({ stamp: st, data: it.data }); });
+  const t = liveRepoTarget();
+  try {
+    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/live_snapshots/${PROFILE}?ref=${encodeURIComponent(t.branch)}&_=${Date.now()}`, { headers: t.headers, cache: 'no-store' });
+    if (r.ok) (await r.json()).forEach(f => { const st = stampOf(f.path || ''); if (f.type === 'file' && ok(st)) cands.push({ stamp: st, path: f.path }); });
+  } catch {}
+  cands.sort((a, b) => b.stamp.localeCompare(a.stamp));
+  const c = cands[0];
+  if (!c) return null;
+  let data = c.data;
+  if (!data) { await livePastLoad(c.path); data = livePastData[c.path]; }
+  if (!data || data.error) return null;
+  const out = {};
+  (data.likes || []).forEach(l => { if (l.songId && l.count > 0) out[l.songId] = l.count; });
+  return out;
+}
+// Hearts per song key for a past gig: one per phone, plus the night's counts kept in _night.
+function livePgLikeCount(likes, k) {
+  const n = likes?._night?.[k];
+  return Object.keys(likes?.[k] || {}).length + (typeof n === 'number' ? n : 0);
+}
 // One gig to Firebase. songs: song objects in playing order. img: data URL (any size, shrunk here) or ''.
-async function livePgPut(id, { at, place, songs, img, src }) {
+// nightLikes ({song id: count}) are kept as pastLikes/<id>/_night = {song key: count}.
+async function livePgPut(id, { at, place, songs, img, src, nightLikes }) {
   const old = livePg?.[id] || null;
   let posterV = old?.posterV || null;
   if (img) {
@@ -6127,6 +6156,13 @@ async function livePgPut(id, { at, place, songs, img, src }) {
   };
   await fbReq('PUT', 'past/' + id, entry);
   livePg = { ...(livePg || {}), [id]: entry };
+  if (nightLikes) {
+    const night = {};
+    songs.forEach(s => { if (nightLikes[s.id] > 0) night[fbKey(s.id)] = nightLikes[s.id]; });
+    if (Object.keys(night).length) await fbReq('PUT', `pastLikes/${id}/_night`, night);
+    else await fbReq('DELETE', `pastLikes/${id}/_night`);
+    if (livePgLikes) livePgLikes[id] = { ...(livePgLikes[id] || {}), _night: Object.keys(night).length ? night : undefined };
+  }
 }
 // ⬆ Upload on a gig setlist (Setlists tab): its songs, date, place and image become a past gig.
 async function livePgUploadSet(id) {
@@ -6139,10 +6175,12 @@ async function livePgUploadSet(id) {
   try { if (!livePg) livePg = (await fbReq('GET', 'past')) || {}; }
   catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   const at = new Date(sl.date + 'T21:00').getTime(), old = livePg[sl.date];
-  const what = `"${sl.name}" (${formatSetDate(sl.date)}${sl.place ? ', ' + sl.place : ''}, ${songs.length} songs${sl.img ? ', with its image' : ''})`;
+  const nightLikes = await livePgNightLikes(sl.date);
+  const nl = nightLikes ? songs.reduce((a, s) => a + (nightLikes[s.id] || 0), 0) : 0;
+  const what = `"${sl.name}" (${formatSetDate(sl.date)}${sl.place ? ', ' + sl.place : ''}, ${songs.length} songs${sl.img ? ', with its image' : ''}${nl ? `, ❤ ${nl} likes from that night's snapshot` : ''})`;
   if (!confirm(old ? `Replace the past gig of ${livePgDateLabel(old.at)} on the audience page with ${what}? Its likes and comments stay.`
                    : `Put ${what} on the audience page's past gigs? People can see its songs, like them and leave a comment.`)) return;
-  try { await livePgPut(sl.date, { at, place: sl.place || '', songs, img: sl.img || '', src: 'setlist' }); }
+  try { await livePgPut(sl.date, { at, place: sl.place || '', songs, img: sl.img || '', src: 'setlist', nightLikes }); }
   catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   toast('Uploaded to past gigs');
   renderLivePg(); renderSetDetail();
@@ -6161,7 +6199,7 @@ async function livePgFromSnapshot() {
   const d = isNaN(when) ? new Date() : when, id = livePgYmd(d);
   try {
     if (!livePg) livePg = (await fbReq('GET', 'past')) || {};
-    await livePgPut(id, { at: d.getTime(), place: gig.place || livePg[id]?.place || '', songs, img: getLiveImg(), src: 'snapshot' });
+    await livePgPut(id, { at: d.getTime(), place: gig.place || livePg[id]?.place || '', songs, img: getLiveImg(), src: 'snapshot', nightLikes: liveLikeCounts() });
     toast(`Past gigs: ${livePgDateLabel(d.getTime())} saved for the audience page (${songs.length} songs)`, 3500);
   } catch (e) { toast('Past gig not saved: ' + e.message, 4500); return; }
   renderLivePg();
@@ -6199,7 +6237,7 @@ function renderLivePg() {
     rows = list.map(([id, g]) => {
       const songs = Array.isArray(g.songs) ? g.songs : Object.values(g.songs || {});
       const likes = livePgLikes?.[id] || {}, notes = livePgNotes?.[id] || {};
-      const lc = songs.map(s => ({ t: s.t, n: Object.keys(likes[s.k] || {}).length })).filter(x => x.n).sort((a, b) => b.n - a.n);
+      const lc = songs.map(s => ({ t: s.t, n: livePgLikeCount(likes, s.k) })).filter(x => x.n).sort((a, b) => b.n - a.n);
       const total = lc.reduce((a, x) => a + x.n, 0);
       const nl = Object.entries(notes).filter(([, n]) => n && n.text).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
       return `<details class="live-pg-row" data-id="${esc(id)}" ${livePgOpen.has(id) ? 'open' : ''} ontoggle="livePgToggle(this)">

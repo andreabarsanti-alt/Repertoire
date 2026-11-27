@@ -84,6 +84,9 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
           ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           "$id": {
+            "_night": {
+              "$k": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+            },
             "$song": {
               "$vid": {
                 ".write": "$song.length <= 64 && $vid.length >= 16 && $vid.length <= 40 && root.child('gigs').child($gig).child('past').child($id).exists()",
