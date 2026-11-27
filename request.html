@@ -191,6 +191,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .gig.past-gig { border-color: var(--border); }
 .gig-text .dim { color: var(--text-dim); font-size: 0.82rem; }
 #past-note-btn { margin: 0 0 4px; }
+#past-btn { margin-top: 8px; }
 .num { color: var(--text-dim); font-size: 0.85rem; min-width: 1.4em; text-align: right; flex-shrink: 0; }
 </style>
 </head>
@@ -227,6 +228,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <div id="all-titles" class="hidden"></div>
     <div class="search"><input class="fi" id="song-search" type="search" placeholder="Cerca una canzone…" autocomplete="off" oninput="renderSearch()"></div>
     <div id="search-results" class="hidden"></div>
+    <button class="btn btn-secondary btn-wide hidden" id="past-btn" onclick="location.hash='serate'">🗂 Le nostre serate passate</button>
   </div>
   <footer>Richieste di canzoni · niente promesse, ma faremo del nostro meglio</footer>
 </div>
@@ -371,6 +373,7 @@ async function poll() {
         songsV = i.songsV;
       }
       info = i;
+      loadPast();
       loadPoster();
       checkMine();
       render();
@@ -492,7 +495,9 @@ function groups() {
 
 function render() {
   document.getElementById('state-msg').classList.add('hidden');
+  if (pastMode()) { renderPast(); return; }   // the past gigs, opened from the button at the bottom
   renderPast();                          // hides the past gigs while a gig is published
+  document.getElementById('past-btn').classList.toggle('hidden', !pastList().length);
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
@@ -816,7 +821,7 @@ async function loadPast(force) {
   try { past = (await getJSON('past')) || {}; pastAt = Date.now(); }
   catch { if (!past) past = {}; }   // older rules refuse it: just no past gigs
   finally { pastBusy = false; }
-  if (!info) renderPast();
+  if (!info) renderPast(); else render();
 }
 function pastList() {
   return Object.entries(past || {}).filter(([, g]) => g && g.at)
@@ -844,6 +849,8 @@ function pastThumb(g) {
   const img = pastPosters[g.id]?.img;
   return `<span class="th${img ? ' img' : ''}" data-poster="${esc(g.id)}">${img ? `<img src="${img}" alt="">` : '🎤'}</span>`;
 }
+// While a gig is published, the past gigs open from the button at the bottom (#serate, #serata=<id>).
+function pastMode() { return !!info && /^#serat[ae]/.test(location.hash); }
 function pastSel() { const m = /^#serata=(.+)$/.exec(location.hash); return m ? decodeURIComponent(m[1]) : null; }
 function pLikes() { try { return JSON.parse(localStorage.getItem(PLIKES_KEY) || '{}') || {}; } catch { return {}; } }
 function pLiked(id, sid) { return (pLikes()[id] || []).includes(sid); }
@@ -867,20 +874,24 @@ async function togglePastLike(id, sid) {
 function renderPast() {
   const box = document.getElementById('past');
   const list = pastList();
-  if (info || !list.length) {
+  const mode = pastMode();
+  ['main', 'gig', 'now'].forEach(id => { if (mode) document.getElementById(id).classList.add('hidden'); });
+  if ((info && !mode) || !list.length) {
     box.classList.add('hidden'); box.innerHTML = '';
+    if (mode) { location.hash = ''; return; }
     if (!info) showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     return;
   }
   document.getElementById('state-msg').classList.add('hidden');
   box.classList.remove('hidden');
-  const band = list[0].band || '';
+  const band = (info && info.title) || list[0].band || '';
   document.getElementById('title').textContent = band || 'Richiedi una canzone';
   document.title = band || 'Richiedi una canzone';
   const sel = pastSel(), g = sel && list.find(x => x.id === sel);
   if (!g) {
     document.getElementById('subtitle').textContent = 'Le nostre ultime serate';
-    box.innerHTML = `<div class="off"><div class="big">🌙</div><h2>Nessuna serata in corso</h2><p>Le richieste si aprono quando suoniamo. Intanto guarda cosa abbiamo suonato!</p></div>
+    box.innerHTML = (mode ? `<button class="back" onclick="location.hash=''">‹ Torna alla serata di stasera</button>`
+      : `<div class="off"><div class="big">🌙</div><h2>Nessuna serata in corso</h2><p>Le richieste si aprono quando suoniamo. Intanto guarda cosa abbiamo suonato!</p></div>`) + `
       <div class="sec-h">Serate passate</div>
       ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
         <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${x.songs.length} canzoni</small></span><span class="chev">›</span></button>`).join('')}`;
@@ -888,7 +899,7 @@ function renderPast() {
     return;
   }
   document.getElementById('subtitle').textContent = 'Metti un ❤ alle canzoni che ti sono piaciute';
-  box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
+  box.innerHTML = `<button class="back" onclick="location.hash='${mode ? 'serate' : ''}'">‹ Serate passate</button>
     <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}<span class="dim">${g.songs.length} canzoni suonate</span></span></div>
     <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
     <p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>
@@ -896,7 +907,7 @@ function renderPast() {
       return `<button class="song" onclick="togglePastLike('${esc(g.id)}', '${esc(s.id)}')" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
   loadPastPoster(g);
 }
-addEventListener('hashchange', () => { if (!info) { renderPast(); scrollTo(0, 0); } });
+addEventListener('hashchange', () => { if (info) render(); else renderPast(); scrollTo(0, 0); });
 let pastFormId = null;
 function openPastForm(id) {
   const g = pastList().find(x => x.id === id);
