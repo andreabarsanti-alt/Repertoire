@@ -495,7 +495,7 @@ function render() {
   document.getElementById('state-msg').classList.add('hidden');
   if (pastMode()) { renderPast(); return; }   // the past gigs, opened from the button at the bottom
   renderPast();                          // hides the past gigs while a gig is published
-  document.getElementById('past-btn').classList.toggle('hidden', !pastList().length);
+  document.getElementById('past-btn').classList.toggle('hidden', !pastList().length || info.open === true);
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
@@ -847,8 +847,9 @@ function pastThumb(g) {
   const img = pastPosters[g.id]?.img;
   return `<span class="th${img ? ' img' : ''}" data-poster="${esc(g.id)}">${img ? `<img src="${img}" alt="">` : '🎤'}</span>`;
 }
-// While a gig is published, the past gigs open from the button at the bottom (#serate, #serata=<id>).
-function pastMode() { return !!info && /^#serat[ae]/.test(location.hash); }
+// While a gig is published with requests closed, the past gigs open from the button at the bottom
+// (#serate, #serata=<id>); while requests are open there's no way to them (Andrea).
+function pastMode() { return !!info && info.open !== true && /^#serat[ae]/.test(location.hash); }
 function pastSel() { const m = /^#serata=(.+)$/.exec(location.hash); return m ? decodeURIComponent(m[1]) : null; }
 function pLikes() { try { return JSON.parse(localStorage.getItem(PLIKES_KEY) || '{}') || {}; } catch { return {}; } }
 function pLiked(id, sid) { return (pLikes()[id] || []).includes(sid); }
@@ -876,7 +877,7 @@ function renderPast() {
   ['main', 'gig', 'now'].forEach(id => { if (mode) document.getElementById(id).classList.add('hidden'); });
   if ((info && !mode) || !list.length) {
     box.classList.add('hidden'); box.innerHTML = '';
-    if (mode) { location.hash = ''; return; }
+    if (mode) { if (past !== null) location.hash = ''; return; }   // not loaded yet: wait for loadPast
     if (!info) showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     return;
   }
