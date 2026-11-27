@@ -876,14 +876,16 @@ function renderPast() {
   const list = pastList();
   const mode = pastMode();
   ['main', 'gig', 'now'].forEach(id => { if (mode) document.getElementById(id).classList.add('hidden'); });
+  const foot = document.querySelector('footer');
   if ((info && !mode) || !list.length) {
-    box.classList.add('hidden'); box.innerHTML = '';
+    box.classList.add('hidden'); box.innerHTML = ''; foot.classList.remove('hidden');
     if (mode) { location.hash = ''; return; }
     if (!info) showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     return;
   }
   document.getElementById('state-msg').classList.add('hidden');
   box.classList.remove('hidden');
+  foot.classList.add('hidden');          // no "Richieste di canzoni…" line on the past gigs (Andrea)
   const band = (info && info.title) || list[0].band || '';
   document.getElementById('title').textContent = band || 'Richiedi una canzone';
   document.title = band || 'Richiedi una canzone';
