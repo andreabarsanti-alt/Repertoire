@@ -25,7 +25,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
 
 1. Still in Realtime Database, open the **Rules** tab.
 2. Delete everything in the box and paste the rules below.
-3. Replace every `YOUR_EMAIL` (there are eight) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
+3. Replace every `YOUR_EMAIL` (there are sixteen) with the email address you'll sign in with in step 4, **all lowercase**, keeping the single quotes, e.g. `'me@example.com'`.
 4. Click **Publish**.
 
 ```json
@@ -66,6 +66,43 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
             "$vid": {
               ".write": "$song.length <= 64 && $vid.length >= 16 && $vid.length <= 40 && root.child('gigs').child($gig).child('info').exists()",
               ".validate": "newData.val() === true"
+            }
+          }
+        },
+        "past": {
+          ".read": true,
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'"
+        },
+        "pastPoster": {
+          ".read": true,
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          "$id": {
+            ".validate": "newData.child('img').isString() && newData.child('img').val().beginsWith('data:image/jpeg;base64,') && newData.child('img').val().length <= 300000"
+          }
+        },
+        "pastLikes": {
+          ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          "$id": {
+            "$song": {
+              "$vid": {
+                ".write": "$song.length <= 64 && $vid.length >= 16 && $vid.length <= 40 && root.child('gigs').child($gig).child('past').child($id).exists()",
+                ".validate": "newData.val() === true"
+              }
+            }
+          }
+        },
+        "pastNotes": {
+          ".read": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
+          "$id": {
+            "$note": {
+              ".write": "!data.exists() && newData.exists() && root.child('gigs').child($gig).child('past').child($id).exists()",
+              ".validate": "newData.hasChildren(['text', 'at'])",
+              "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+              "name": { ".validate": "newData.isString() && newData.val().length <= 40" },
+              "at":   { ".validate": "newData.isNumber() && newData.val() === now" },
+              "$other": { ".validate": false }
             }
           }
         },
@@ -123,6 +160,8 @@ On the iPad, open Repertoire and tap the **Live** tab:
 
 The app remembers where the iPad was when you tap **● Start live** (or when you first publish) as the venue, and marks each request **📍 In the audience** or **⚠ Not in the audience** by comparing it with the phone's location, if the person allowed their phone to share it. Tap **Set here** in the Live tab to set the venue again. The venue location stays on the iPad and is never sent to Firebase.
 
+**Past gigs**: while nothing is published, the audience page lists your past gigs instead of just saying nothing is on. Open a gig setlist in the Setlists tab and tap **⬆ Upload** to add it (its songs, date, place and image), or take a **📸 Snapshot live** at the end of a gig. People can tap a gig to see its songs, heart the ones they liked and write you a comment; the Live tab's **🗂 Past gigs** box shows the hearts and comments, and **✕** takes a gig off the list.
+
 Before each gig, tap **Clear requests** to start with an empty list, an empty "played" board and no likes.
 
 The Live tab also shows how many phones opened the audience page (👀 phones · visits · today · last hour). A visit is counted when a phone opens the page, or comes back to it, at least 30 minutes after its last counted visit. Tap **Reset** there to start counting from zero, e.g. before a gig.
@@ -139,4 +178,5 @@ The audience can tap a ♡ next to the "Now playing" songs (the current one and 
 - **"L'hai chiesta tu" stays on a phone after you deleted the request**: your rules are from before phones could check their own requests. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **"Visits aren't counted yet"** in the Live tab: your rules are from before the visit counter. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **"Likes aren't counted yet"** in the Live tab, or hearts on the audience page jump back empty: your rules are from before likes. Paste the rules from step 3 again (with your email) and click **Publish**.
+- **⬆ Upload says "Permission denied"**, or the Live tab says past gigs need the new rules: your rules are from before past gigs. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

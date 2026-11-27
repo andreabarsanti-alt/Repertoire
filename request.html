@@ -173,6 +173,25 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .ig-text { display: flex; flex-direction: column; text-align: left; }
 .ig-text b { font-size: 1.05rem; }
 .ig-text span { font-size: 0.9rem; opacity: .95; }
+.off { text-align: center; padding: 18px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; }
+.off .big { font-size: 1.8rem; }
+.off h2 { font-size: 1.05rem; margin: 4px 0 2px; }
+.off p { color: var(--text-dim); font-size: 0.88rem; }
+.sec-h { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; margin: 18px 0 8px; }
+.pg { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font: inherit; cursor: pointer; }
+.th { width: 56px; height: 56px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
+.th img { width: 100%; height: 100%; object-fit: cover; }
+.past-gig .th { width: 84px; height: 84px; border-radius: 10px; }
+.pg .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pg .tx b { color: var(--accent); font-size: 1rem; }
+.pg .tx span { font-size: 0.9rem; overflow-wrap: anywhere; }
+.pg .tx small { color: var(--text-dim); font-size: 0.78rem; }
+.pg .chev { color: var(--text-dim); font-size: 1.3rem; }
+.back { background: none; border: none; color: var(--accent); font: inherit; font-weight: 600; padding: 4px 0; margin-bottom: 10px; cursor: pointer; }
+.gig.past-gig { border-color: var(--border); }
+.gig-text .dim { color: var(--text-dim); font-size: 0.82rem; }
+#past-note-btn { margin: 0 0 4px; }
+.num { color: var(--text-dim); font-size: 0.85rem; min-width: 1.4em; text-align: right; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -192,6 +211,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <span class="ig-text"><b>Filmaci e taggaci!</b><span id="ig-handle"></span></span>
   </a>
 
+  <div id="past" class="hidden"></div>
   <div id="state-msg" class="center-msg"><div class="big">🎵</div><h2>Caricamento…</h2></div>
 
   <div id="main" class="hidden">
@@ -341,7 +361,9 @@ async function poll() {
     if (!i) {
       info = null; songs = []; songsV = null;
       loadPoster(); renderNow();
-      showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
+      document.getElementById('gig').classList.add('hidden');
+      renderPast();         // past gigs if there are any, else "Nessuna serata in corso"
+      loadPast();
     } else {
       if (i.songsV !== songsV || !songs.length) {
         const list = await getJSON('songs');
@@ -470,6 +492,7 @@ function groups() {
 
 function render() {
   document.getElementById('state-msg').classList.add('hidden');
+  renderPast();                          // hides the past gigs while a gig is published
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
@@ -776,6 +799,143 @@ async function sendRequest() {
     : `<div class="thanks"><div class="big">🙌</div><h2>Inviato!</h2>
     <p>Grazie — la band lo vede già.</p>
     <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">Torna alle canzoni</button></div>`;
+}
+
+// ── Past gigs (Andrea, 2026-11-27): shown while nothing is published ──
+// gigs/<gig>/past/<id> = { at, place, band, songs: [{id, k, t}], posterV } (public), image in
+// pastPoster/<id>. Tapping a gig (#serata=<id>, so the phone's Back works) shows its songs with a
+// heart each (pastLikes/<id>/<song key>/<phone id> = true) and a box for a comment
+// (pastNotes/<id>/<push id> = { text, name?, at }). Only the band can read the counts and comments;
+// this phone remembers its own hearts in rq_plikes_<gig> = { <id>: [songId] }.
+const PAST_MS = 5 * 60000, PLIKES_KEY = 'rq_plikes_' + GIG;
+let past = null, pastAt = 0, pastBusy = false;
+const pastPosters = {};   // id -> { v, img }
+async function loadPast(force) {
+  if (pastBusy || (!force && past && Date.now() - pastAt < PAST_MS)) return;
+  pastBusy = true;
+  try { past = (await getJSON('past')) || {}; pastAt = Date.now(); }
+  catch { if (!past) past = {}; }   // older rules refuse it: just no past gigs
+  finally { pastBusy = false; }
+  if (!info) renderPast();
+}
+function pastList() {
+  return Object.entries(past || {}).filter(([, g]) => g && g.at)
+    .map(([id, g]) => ({ id, ...g, songs: (Array.isArray(g.songs) ? g.songs : Object.values(g.songs || {})).filter(Boolean) }))
+    .sort((a, b) => b.at - a.at);
+}
+function pastDate(at) {
+  const d = new Date(at);
+  const s = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+  return s[0].toUpperCase() + s.slice(1);
+}
+async function loadPastPoster(g) {
+  const p = pastPosters[g.id];
+  if (!g.posterV || (p && p.v === g.posterV)) return;
+  pastPosters[g.id] = { v: g.posterV, img: '' };
+  try {
+    const j = await getJSON('pastPoster/' + encodeURIComponent(g.id));
+    const img = j && typeof j.img === 'string' && j.img.startsWith('data:image/jpeg;base64,') ? j.img : '';
+    if (!img) throw 0;
+    pastPosters[g.id].img = img;
+    document.querySelectorAll(`[data-poster="${CSS.escape(g.id)}"]`).forEach(el => { el.innerHTML = `<img src="${img}" alt="">`; el.classList.add('img'); });
+  } catch { delete pastPosters[g.id]; }
+}
+function pastThumb(g) {
+  const img = pastPosters[g.id]?.img;
+  return `<span class="th${img ? ' img' : ''}" data-poster="${esc(g.id)}">${img ? `<img src="${img}" alt="">` : '🎤'}</span>`;
+}
+function pastSel() { const m = /^#serata=(.+)$/.exec(location.hash); return m ? decodeURIComponent(m[1]) : null; }
+function pLikes() { try { return JSON.parse(localStorage.getItem(PLIKES_KEY) || '{}') || {}; } catch { return {}; } }
+function pLiked(id, sid) { return (pLikes()[id] || []).includes(sid); }
+const pLikeBusy = new Set();
+async function togglePastLike(id, sid) {
+  const key = id + '|' + sid;
+  if (pLikeBusy.has(key)) return;
+  const set = list => { const all = pLikes(); all[id] = list; if (!list.length) delete all[id]; try { localStorage.setItem(PLIKES_KEY, JSON.stringify(all)); } catch {} };
+  const cur = pLikes()[id] || [], on = !cur.includes(sid);
+  set(on ? [...cur, sid] : cur.filter(x => x !== sid)); renderPast();
+  pLikeBusy.add(key);
+  try {
+    const url = `${DB_BASE}/gigs/${encodeURIComponent(GIG)}/pastLikes/${encodeURIComponent(id)}/${encodeURIComponent(fbKey(sid))}/${phoneId()}.json`;
+    const r = await fetch(url, on ? { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: 'true' } : { method: 'DELETE' });
+    if (!r.ok) throw 0;
+  } catch {
+    const back = pLikes()[id] || [];
+    set(on ? back.filter(x => x !== sid) : [...back, sid]); renderPast();
+  } finally { pLikeBusy.delete(key); }
+}
+function renderPast() {
+  const box = document.getElementById('past');
+  const list = pastList();
+  if (info || !list.length) {
+    box.classList.add('hidden'); box.innerHTML = '';
+    if (!info) showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
+    return;
+  }
+  document.getElementById('state-msg').classList.add('hidden');
+  box.classList.remove('hidden');
+  const band = list[0].band || '';
+  document.getElementById('title').textContent = band || 'Richiedi una canzone';
+  document.title = band || 'Richiedi una canzone';
+  const sel = pastSel(), g = sel && list.find(x => x.id === sel);
+  if (!g) {
+    document.getElementById('subtitle').textContent = 'Le nostre ultime serate';
+    box.innerHTML = `<div class="off"><div class="big">🌙</div><h2>Nessuna serata in corso</h2><p>Le richieste si aprono quando suoniamo. Intanto guarda cosa abbiamo suonato!</p></div>
+      <div class="sec-h">Serate passate</div>
+      ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
+        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${x.songs.length} canzoni</small></span><span class="chev">›</span></button>`).join('')}`;
+    list.forEach(loadPastPoster);
+    return;
+  }
+  document.getElementById('subtitle').textContent = 'Metti un ❤ alle canzoni che ti sono piaciute';
+  box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
+    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}<span class="dim">${g.songs.length} canzoni suonate</span></span></div>
+    <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
+    <p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>
+    ${g.songs.map((s, i) => { const on = pLiked(g.id, s.id);
+      return `<button class="song" onclick="togglePastLike('${esc(g.id)}', '${esc(s.id)}')" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
+  loadPastPoster(g);
+}
+addEventListener('hashchange', () => { if (!info) { renderPast(); scrollTo(0, 0); } });
+let pastFormId = null;
+function openPastForm(id) {
+  const g = pastList().find(x => x.id === id);
+  if (!g) return;
+  pastFormId = id;
+  document.getElementById('form-body').innerHTML = `
+    <div class="sheet-head"><h2>Scrivici qualcosa</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
+    <p class="hint" style="margin:-4px 0 12px">${esc(pastDate(g.at))}${g.place ? ' · ' + esc(g.place) : ''}</p>
+    <div class="fg"><label>Un commento, un saluto, una canzone per la prossima volta…</label><textarea class="fi" id="pn-text" maxlength="200" placeholder="es. Bellissima serata!"></textarea></div>
+    <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="pn-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
+    <div class="form-err" id="pn-err"></div>
+    <button class="btn btn-primary btn-wide" id="pn-send" onclick="sendPastNote()">Invia</button>`;
+  document.getElementById('form-sheet').classList.remove('hidden');
+  setTimeout(() => document.getElementById('pn-text')?.focus(), 50);
+}
+async function sendPastNote() {
+  const err = document.getElementById('pn-err'), btn = document.getElementById('pn-send');
+  const text = (document.getElementById('pn-text').value || '').trim().slice(0, 200);
+  const name = (document.getElementById('pn-name').value || '').trim().slice(0, 40);
+  if (!text) { err.textContent = 'Scrivi qualcosa'; return; }
+  const wait = COOLDOWN_MS - (Date.now() - lastSent());
+  if (wait > 0) { err.textContent = `Un attimo — puoi scrivere di nuovo tra ${Math.ceil(wait / 1000)} s`; return; }
+  const body = { text, at: { '.sv': 'timestamp' } };
+  if (name) body.name = name;
+  saveName(name);
+  btn.disabled = true; err.textContent = ''; btn.textContent = 'Invio…';
+  try {
+    const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/pastNotes/${encodeURIComponent(pastFormId)}.json`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (!r.ok) throw 0;
+  } catch {
+    err.textContent = 'Invio non riuscito — controlla la connessione e riprova';
+    btn.disabled = false; btn.textContent = 'Invia'; return;
+  }
+  setLastSent();
+  document.getElementById('form-body').innerHTML = `<div class="thanks"><div class="big">🙌</div><h2>Grazie!</h2>
+    <p>La band lo leggerà presto.</p>
+    <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">Torna alla serata</button></div>`;
 }
 
 document.addEventListener('keydown', e => {
