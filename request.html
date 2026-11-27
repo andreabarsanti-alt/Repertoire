@@ -196,7 +196,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
 
   <div id="main" class="hidden">
     <div id="closed" class="banner hidden">Le richieste sono chiuse in questo momento — puoi comunque dare un'occhiata</div>
-    <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Chiedi una canzone qualsiasi</button>
+    <button class="btn btn-secondary btn-wide" id="other-btn" onclick="openForm(null)">✎ Chiedi un’altra canzone o scrivici qualcosa</button>
     <p class="or-pick">o scegli tra</p>
     <div class="view-toggle">
       <span class="vt-ico" aria-hidden="true">🏷️</span>
@@ -678,7 +678,7 @@ function renderSearch() {
   const list = songs.filter(s => s.t.toLowerCase().includes(q) || tagsOf(s).some(t => String(t).toLowerCase().includes(q)))
                     .sort((a, b) => a.t.localeCompare(b.t));
   const mine = getMine();
-  res.innerHTML = list.map(s => songRow(s, mine)).join('') || '<p class="hint">Nessuna canzone trovata — prova con “Altro?” qui sotto</p>';
+  res.innerHTML = list.map(s => songRow(s, mine)).join('') || '<p class="hint">Nessuna canzone trovata — prova con “Chiedi un’altra canzone o scrivici qualcosa” in alto</p>';
 }
 function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -694,14 +694,14 @@ function openForm(songId) {
       <button class="btn btn-secondary btn-wide" onclick="closeSheet('form-sheet')">OK</button></div>`;
   } else {
     body.innerHTML = `
-      <div class="sheet-head"><h2>${s ? esc(s.t) : 'Chiedi una canzone qualsiasi'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
+      <div class="sheet-head"><h2>${s ? esc(s.t) : 'Un’altra canzone o due parole per noi'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
       ${s && isPlayed(s) ? '<p class="hint" style="text-align:left;margin-bottom:10px">Già suonata stasera — puoi comunque richiederla di nuovo.</p>' : ''}
-      ${s ? '' : `<div class="fg"><label>Canzone (e artista)</label><input class="fi" id="rq-text" maxlength="100" placeholder="es. Harvest Moon – Neil Young"></div>`}
+      ${s ? '' : `<div class="fg"><label>Una canzone che non è in lista, un commento, un saluto…</label><textarea class="fi" id="rq-text" maxlength="200" placeholder="es. Harvest Moon – Neil Young, oppure: bellissima serata!"></textarea></div>`}
       <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="rq-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
-      <div class="fg"><label>Messaggio per la band (facoltativo)</label><textarea class="fi" id="rq-msg" maxlength="200" placeholder="Una dedica, un compleanno…"></textarea></div>
+      ${s ? `<div class="fg"><label>Messaggio per la band (facoltativo)</label><textarea class="fi" id="rq-msg" maxlength="200" placeholder="Una dedica, un compleanno…"></textarea></div>` : ''}
       <p class="hint loc-hint">📍 Al momento dell’invio il telefono può chiederti la posizione: serve solo a far sapere alla band che sei in sala. Puoi anche rifiutare.</p>
       <div class="form-err" id="rq-err"></div>
-      <button class="btn btn-primary btn-wide" id="rq-send" onclick="sendRequest()">Invia richiesta</button>`;
+      <button class="btn btn-primary btn-wide" id="rq-send" onclick="sendRequest()">${s ? 'Invia richiesta' : 'Invia'}</button>`;
   }
   document.getElementById('form-sheet').classList.remove('hidden');
   setTimeout(() => document.getElementById(s ? 'rq-name' : 'rq-text')?.focus(), 50);
@@ -728,10 +728,11 @@ function getLoc() {
 async function sendRequest() {
   const err = document.getElementById('rq-err');
   const btn = document.getElementById('rq-send');
-  const text = formSongId ? '' : (document.getElementById('rq-text').value || '').trim().slice(0, 100);
+  // The free-text box (no song picked) takes a song that isn't listed or just a comment, up to 200 chars.
+  const text = formSongId ? '' : (document.getElementById('rq-text').value || '').trim().slice(0, 200);
   const name = (document.getElementById('rq-name').value || '').trim().slice(0, 40);
-  const msg  = (document.getElementById('rq-msg').value || '').trim().slice(0, 200);
-  if (!formSongId && !text) { err.textContent = 'Scrivi la canzone che vorresti sentire'; return; }
+  const msg  = formSongId ? (document.getElementById('rq-msg').value || '').trim().slice(0, 200) : '';
+  if (!formSongId && !text) { err.textContent = 'Scrivi una canzone o un messaggio'; return; }
   const wait = COOLDOWN_MS - (Date.now() - lastSent());
   if (wait > 0) { err.textContent = `Un attimo — puoi inviarne un\'altra tra ${Math.ceil(wait / 1000)} s`; return; }
   const body = { at: { '.sv': 'timestamp' } };
@@ -751,6 +752,9 @@ async function sendRequest() {
     let r = await post(body);
     // Database rules from before locations were added refuse the extra field: send it without.
     if (!r.ok && body.loc) { delete body.loc; r = await post(body); }
+    // Rules from before free text could be 200 chars cap `text` at 100: send the first 100 as
+    // `text` and the whole thing as `msg` (the app shows just the message when it starts with the text).
+    if (!r.ok && body.text && body.text.length > 100) { body.msg = body.text; body.text = body.text.slice(0, 100); r = await post(body); }
     if (r.status === 401 || r.status === 403) { err.textContent = 'Le richieste sono chiuse in questo momento'; btn.disabled = false; btn.textContent = label; poll(); return; }
     if (!r.ok) throw new Error();
     reqId = (await r.json().catch(() => null))?.name || null;
@@ -765,8 +769,12 @@ async function sendRequest() {
     const s = songById(formSongId);
     if (s && info) { info.requested = info.requested || {}; const k = s.k || fbKey(s.id); info.requested[k] = (+info.requested[k] || 0) + 1; render(); }
   }
-  document.getElementById('form-body').innerHTML = `<div class="thanks"><div class="big">🙌</div><h2>Richiesta inviata!</h2>
+  document.getElementById('form-body').innerHTML = formSongId
+    ? `<div class="thanks"><div class="big">🙌</div><h2>Richiesta inviata!</h2>
     <p>Grazie — la band la vede già. Niente promesse, ma faremo del nostro meglio.</p>
+    <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">Torna alle canzoni</button></div>`
+    : `<div class="thanks"><div class="big">🙌</div><h2>Inviato!</h2>
+    <p>Grazie — la band lo vede già.</p>
     <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">Torna alle canzoni</button></div>`;
 }
 

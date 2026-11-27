@@ -78,7 +78,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
             ".validate": "newData.hasChild('at') && (newData.hasChild('songId') || newData.hasChild('text'))",
             "at":     { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() === now)" },
             "songId": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
-            "text":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+            "text":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
             "name":   { ".validate": "newData.isString() && newData.val().length <= 40" },
             "msg":    { ".validate": "newData.isString() && newData.val().length <= 200" },
             "loc": {

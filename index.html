@@ -4976,7 +4976,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 01:00';
+const APP_BUILD = '2026-11-27 14:50';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5482,7 +5482,10 @@ function liveApply(kind, path, data) {
 function liveReqList() {
   return Object.entries(liveReqs)
     .filter(([, r]) => r && typeof r === 'object' && (r.songId || r.text))
-    .map(([id, r]) => ({ id, ...r }));
+    .map(([id, r]) => ({ id, ...r }))
+    // A long free text sent under rules that cap `text` at 100 arrives as text = first 100 chars,
+    // msg = all of it (request.html's fallback): show it once.
+    .map(r => (!r.songId && r.msg && r.text && r.msg.startsWith(r.text)) ? { ...r, text: r.msg, msg: undefined } : r);
 }
 function liveOnReqsChanged() {
   const list = liveReqList();
@@ -5506,8 +5509,8 @@ function liveAlert(reqs) {
   reqs.forEach(r => liveFresh.add(r.id));
   liveBeep();
   const r = reqs[reqs.length - 1];
-  toast(reqs.length > 1 ? `🙋 ${reqs.length} new song requests`
-                        : `🙋 Request: ${liveReqLabel(r)}${r.name ? ' — ' + r.name : ''}`, 5000);
+  toast(reqs.length > 1 ? `🙋 ${reqs.length} new requests`
+                        : `${r.songId ? '🙋 Request' : '💬 Message'}: ${liveReqLabel(r)}${r.name ? ' — ' + r.name : ''}`, 5000);
 }
 // A short two-note chime. iPad Safari only lets audio start after a user gesture, so the context
 // is created/resumed on the first tap anywhere (liveUnlockAudio) and reused for every alert.
@@ -5719,7 +5722,7 @@ function renderLivePast() {
     return `<div class="live-past-body">${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
       ${likes}${(au.played || []).length ? `<div class="live-past-sub">🎶 Played (Now playing history)</div><div class="live-past-set">${au.played.map((e, i) => `<div>${i + 1}. ${esc(e.title || 'Unknown song')} <span class="live-past-meta">${esc(e.at ? new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '')}</span></div>`).join('')}</div>` : ''}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
       ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
-        <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">✎ ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
+        <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">💬 ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
         <div class="live-req-who"><span class="live-req-name${r.name ? '' : ' anon'}">👤 ${esc(r.name || 'Anonymous')}</span><span class="live-loc unknown">${esc(r.location || '')}</span></div>
         ${r.msg ? `<div class="live-req-from">“${esc(r.msg)}”</div>` : ''}
         <div class="live-req-time">${esc(fmt(r.at))} · ${esc(r.status === 'played' ? '✓ Played' : r.status === 'dismissed' ? 'Dismissed' : 'Pending')}</div>
@@ -5884,7 +5887,7 @@ async function liveDeleteReq(id) {
   const r = liveReqs[id];
   if (!r) return;
   const what = r.text ? `"${r.text}"` : (db.songs.find(x => x.id === r.songId)?.title || 'this song');
-  if (!confirm(`Delete the request for ${what}${r.name ? ' from ' + r.name : ''}? This can't be undone.`)) return;
+  if (!confirm(`Delete ${r.songId ? 'the request for ' : ''}${what}${r.name ? ' from ' + r.name : ''}? This can't be undone.`)) return;
   try { await fbReq('DELETE', `requests/${encodeURIComponent(id)}`); }
   catch (e) { toast('Delete failed: ' + e.message); return; }
   liveFresh.delete(id);
@@ -6397,14 +6400,14 @@ function renderLiveLists() {
   const time = ms => ms ? new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
   const reqRow = r => {
     const s = r.songId ? db.songs.find(x => x.id === r.songId) : null;
-    const title = r.text ? `<span class="live-free">✎ ${esc(r.text)}</span>`
+    const title = r.text ? `<span class="live-free">💬 ${esc(r.text)}</span>`
                 : s ? songTitleLink(s) : 'Unknown song';
     const who = r.name ? `<span class="live-req-name">👤 ${esc(r.name)}</span>` : '<span class="live-req-name anon">👤 Anonymous</span>';
     const actions = r.status
       ? `<span class="live-req-state">${r.status === 'played' ? '✓ Played' : 'Dismissed'}</span>
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', null)" title="Back to pending">↺</button>`
       : `${r.songId ? `<button class="btn btn-primary btn-sm" onclick="liveSetPlayed('${esc(r.songId)}', true).catch(e => toast('Failed: ' + e.message))" title="Mark the song played (settles all its requests)">✓ Played</button>`
-                    : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played">✓ Played</button>`}
+                    : `<button class="btn btn-primary btn-sm" onclick="liveMarkReq('${esc(r.id)}', 'played')" title="Mark played (a song you played) or done">✓ Played</button>`}
          <button class="btn btn-secondary btn-sm btn-icon" onclick="liveMarkReq('${esc(r.id)}', 'dismissed')" title="Dismiss">✕</button>`
     const del = `<button class="btn btn-danger btn-sm btn-icon" onclick="liveDeleteReq('${esc(r.id)}')" title="Delete this request">🗑</button>`;
     return `<div class="live-req${r.status ? ' done' : ''}${liveFresh.has(r.id) ? ' fresh' : ''}">
