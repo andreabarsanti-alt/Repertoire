@@ -2850,6 +2850,230 @@
           "songId": "fde76324-becf-4df7-8c8b-17e03d8c8c1e"
         }
       ]
+    },
+    {
+      "id": "bcacec1c-a595-4ff1-9ce2-3e0a02b4769b",
+      "name": "Tinto",
+      "type": "live",
+      "items": [
+        {
+          "type": "song",
+          "songId": "s37"
+        },
+        {
+          "type": "song",
+          "songId": "s04"
+        },
+        {
+          "type": "song",
+          "songId": "s05"
+        },
+        {
+          "type": "song",
+          "songId": "s01"
+        },
+        {
+          "type": "song",
+          "songId": "e9e7e2b8-920f-4092-815f-45f8f03f42d0"
+        },
+        {
+          "type": "song",
+          "songId": "12836013-3483-4122-a342-218470148f7d"
+        },
+        {
+          "type": "song",
+          "songId": "s24"
+        },
+        {
+          "type": "song",
+          "songId": "s16"
+        },
+        {
+          "type": "song",
+          "songId": "s25"
+        },
+        {
+          "type": "song",
+          "songId": "a5cec934-e00c-4de9-b8d2-cebd2f239df6"
+        },
+        {
+          "type": "song",
+          "songId": "61c15a11-1643-472f-8394-a1e50e28d7e6"
+        },
+        {
+          "type": "song",
+          "songId": "s32"
+        },
+        {
+          "type": "song",
+          "songId": "s33"
+        },
+        {
+          "type": "song",
+          "songId": "s35"
+        },
+        {
+          "type": "song",
+          "songId": "s34"
+        },
+        {
+          "type": "song",
+          "songId": "115ff934-ff2d-4102-b150-0ca7d303f124"
+        },
+        {
+          "type": "song",
+          "songId": "48059d27-3a58-415f-8814-1199e07162e4"
+        },
+        {
+          "type": "song",
+          "songId": "4f4fa897-b1ba-428a-aa84-cc6756cf8682"
+        },
+        {
+          "type": "song",
+          "songId": "s11"
+        },
+        {
+          "type": "song",
+          "songId": "e48da248-3058-469a-89c2-52b5de9ae6ee"
+        },
+        {
+          "type": "song",
+          "songId": "7fc851ed-4fb0-4f32-968c-1a202b1fa6be"
+        },
+        {
+          "type": "song",
+          "songId": "s12"
+        },
+        {
+          "type": "song",
+          "songId": "cf36f1df-b640-45c5-a228-dcbfb1239ee4"
+        },
+        {
+          "type": "song",
+          "songId": "9c48510e-81f5-4da4-b1d7-e7f4c1272caa"
+        },
+        {
+          "type": "song",
+          "songId": "e6f6183c-09d2-4fac-9590-e2e76a878e84"
+        },
+        {
+          "type": "song",
+          "songId": "s14"
+        },
+        {
+          "type": "song",
+          "songId": "s15"
+        },
+        {
+          "type": "song",
+          "songId": "mobx34z6fdygx"
+        },
+        {
+          "type": "song",
+          "songId": "s30"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "song",
+          "songId": "bb8f7695-7028-4240-af53-f03bab19a1da"
+        },
+        {
+          "type": "song",
+          "songId": "mobx10bto98vo"
+        },
+        {
+          "type": "song",
+          "songId": "s36"
+        },
+        {
+          "type": "song",
+          "songId": "8b195afc-2191-4028-976a-b77044a54478"
+        },
+        {
+          "type": "song",
+          "songId": "51af4aea-828e-45ad-b215-50dd9f750afe"
+        },
+        {
+          "type": "song",
+          "songId": "8e08f959-d0a8-44d7-8d28-b8f2a580b4ff"
+        },
+        {
+          "type": "section",
+          "name": "Encore",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "s38"
+        },
+        {
+          "type": "song",
+          "songId": "mobwy45ykmxg3"
+        },
+        {
+          "type": "song",
+          "songId": "fde7f81b-696b-4eb6-975f-18463905e07a"
+        },
+        {
+          "type": "song",
+          "songId": "s39"
+        },
+        {
+          "type": "song",
+          "songId": "mobvrnnwqd8gq"
+        },
+        {
+          "type": "song",
+          "songId": "mobwz3ketsbt7"
+        },
+        {
+          "type": "song",
+          "songId": "7093eab3-255f-4300-ba1e-df0efc6d1059"
+        },
+        {
+          "type": "song",
+          "songId": "92f0d249-ff28-44c5-8b70-43ee6f7d9e52"
+        },
+        {
+          "type": "song",
+          "songId": "20e8b656-fd0b-4b06-8364-c2dc41bae4bf"
+        },
+        {
+          "type": "section-end"
+        },
+        {
+          "type": "section",
+          "name": "Italiana (Vediamo dove e quali)",
+          "collapsed": true
+        },
+        {
+          "type": "song",
+          "songId": "c27a4fbc-1e3c-4b78-9501-a007fbb91398"
+        },
+        {
+          "type": "song",
+          "songId": "s19"
+        },
+        {
+          "type": "song",
+          "songId": "s20"
+        },
+        {
+          "type": "song",
+          "songId": "s21"
+        },
+        {
+          "type": "song",
+          "songId": "55d7c441-336e-4f1e-98ff-d58eeda0811b"
+        },
+        {
+          "type": "section-end"
+        }
+      ],
+      "date": "2026-11-28",
+      "liveType": "gig"
     }
   ],
   "tuneUp": true,
