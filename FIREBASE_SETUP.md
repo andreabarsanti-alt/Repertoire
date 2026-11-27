@@ -114,7 +114,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
           ".write": "auth != null && auth.token.email === 'YOUR_EMAIL'",
           "$req": {
             ".read": true,
-            ".write": "!data.exists() && newData.exists() && root.child('gigs').child($gig).child('info').child('open').val() === true",
+            ".write": "!data.exists() && newData.exists() && (root.child('gigs').child($gig).child('info').child('open').val() === true || (root.child('gigs').child($gig).child('info').exists() && !newData.hasChild('songId')))",
             ".validate": "newData.hasChild('at') && (newData.hasChild('songId') || newData.hasChild('text'))",
             "at":     { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : newData.val() === now)" },
             "songId": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64" },
@@ -181,5 +181,6 @@ The audience can tap a ♡ next to the "Now playing" songs (the current one and 
 - **"L'hai chiesta tu" stays on a phone after you deleted the request**: your rules are from before phones could check their own requests. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **"Visits aren't counted yet"** in the Live tab: your rules are from before the visit counter. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **"Likes aren't counted yet"** in the Live tab, or hearts on the audience page jump back empty: your rules are from before likes. Paste the rules from step 3 again (with your email) and click **Publish**.
+- **"Scrivici qualcosa" says requests are closed** while they're closed: your rules are from before comments were allowed then. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **⬆ Upload says "Permission denied"**, or the Live tab says past gigs need the new rules: your rules are from before past gigs. Paste the rules from step 3 again (with your email) and click **Publish**.
 - **The audience page says "Nothing on right now"**: nothing is published for that profile. Tap Publish in the Live tab.

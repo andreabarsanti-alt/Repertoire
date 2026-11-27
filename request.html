@@ -190,6 +190,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .gig.past-gig { border-color: var(--border); }
 .gig-text .dim { color: var(--text-dim); font-size: 0.82rem; }
 #past-note-btn { margin: 0 0 4px; }
+#note-btn { margin: 0 0 4px; }
 .num { color: var(--text-dim); font-size: 0.85rem; min-width: 1.4em; text-align: right; flex-shrink: 0; }
 </style>
 </head>
@@ -369,6 +370,7 @@ async function poll() {
         songsV = i.songsV;
       }
       info = i;
+      if (i.open !== true) loadPast();
       loadPoster();
       checkMine();
       render();
@@ -490,13 +492,22 @@ function groups() {
 
 function render() {
   document.getElementById('state-msg').classList.add('hidden');
-  renderPast();                          // hides the past gigs while a gig is published
-  document.getElementById('main').classList.remove('hidden');
   document.getElementById('title').textContent = info.title || 'Richiedi una canzone';
   document.title = (info.title ? info.title + ' · ' : '') + 'Richiedi una canzone';
+  const open = info.open === true;
+  // Requests closed (Andrea): no setlist — gig card, Instagram, "Scrivici qualcosa", then the past gigs.
+  if (!open) {
+    document.getElementById('main').classList.add('hidden');
+    closeSheet('list-sheet');
+    if (pastSel()) { document.getElementById('gig').classList.add('hidden'); document.getElementById('now').classList.add('hidden'); }
+    else { renderGig(); renderNow(); }
+    renderPast();
+    return;
+  }
+  renderPast();                          // hides the past gigs while requests are open
+  document.getElementById('main').classList.remove('hidden');
   renderGig();
   renderNow();
-  const open = info.open === true;
   document.getElementById('closed').classList.toggle('hidden', open);
   document.getElementById('other-btn').disabled = !open;
   const titles = currentView() === 'titles';
@@ -710,14 +721,14 @@ function openForm(songId) {
   closeSheet('list-sheet');   // one sheet at a time
   const s = songId ? songById(songId) : null;
   const body = document.getElementById('form-body');
-  if (info.open !== true) {
+  if (info.open !== true && songId) {
     body.innerHTML = `<div class="thanks"><div class="big">🔒</div><h2>Richieste chiuse</h2><p>La band non accetta richieste in questo momento.</p>
       <button class="btn btn-secondary btn-wide" onclick="closeSheet('form-sheet')">OK</button></div>`;
   } else {
     body.innerHTML = `
-      <div class="sheet-head"><h2>${s ? esc(s.t) : 'Un’altra canzone o due parole per noi'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
+      <div class="sheet-head"><h2>${s ? esc(s.t) : info.open !== true ? 'Scrivici qualcosa' : 'Un’altra canzone o due parole per noi'}</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
       ${s && isPlayed(s) ? '<p class="hint" style="text-align:left;margin-bottom:10px">Già suonata stasera — puoi comunque richiederla di nuovo.</p>' : ''}
-      ${s ? '' : `<div class="fg"><label>Una canzone che non è in lista, un commento, un saluto…</label><textarea class="fi" id="rq-text" maxlength="200" placeholder="es. Harvest Moon – Neil Young, oppure: bellissima serata!"></textarea></div>`}
+      ${s ? '' : `<div class="fg"><label>${info.open !== true ? 'Un commento, un saluto, una dedica…' : 'Una canzone che non è in lista, un commento, un saluto…'}</label><textarea class="fi" id="rq-text" maxlength="200" placeholder="${info.open !== true ? 'es. Non vediamo l’ora!' : 'es. Harvest Moon – Neil Young, oppure: bellissima serata!'}"></textarea></div>`}
       <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="rq-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
       ${s ? `<div class="fg"><label>Messaggio per la band (facoltativo)</label><textarea class="fi" id="rq-msg" maxlength="200" placeholder="Una dedica, un compleanno…"></textarea></div>` : ''}
       <p class="hint loc-hint">📍 Al momento dell’invio il telefono può chiederti la posizione: serve solo a far sapere alla band che sei in sala. Puoi anche rifiutare.</p>
@@ -814,7 +825,7 @@ async function loadPast(force) {
   try { past = (await getJSON('past')) || {}; pastAt = Date.now(); }
   catch { if (!past) past = {}; }   // older rules refuse it: just no past gigs
   finally { pastBusy = false; }
-  if (!info) renderPast(); else render();
+  if (!info) renderPast(); else if (info.open !== true) render();
 }
 function pastList() {
   return Object.entries(past || {}).filter(([, g]) => g && g.at)
@@ -865,23 +876,29 @@ async function togglePastLike(id, sid) {
 function renderPast() {
   const box = document.getElementById('past');
   const list = pastList();
-  if (info || !list.length) {
+  const closed = !!info && info.open !== true;   // published, requests closed
+  if ((info && !closed) || (!info && !list.length)) {
     box.classList.add('hidden'); box.innerHTML = '';
     if (!info) showState('🌙', 'Nessuna serata in corso', 'Le richieste si aprono quando la band suona — riprova più tardi.');
     return;
   }
   document.getElementById('state-msg').classList.add('hidden');
   box.classList.remove('hidden');
-  const band = list[0].band || '';
-  document.getElementById('title').textContent = band || 'Richiedi una canzone';
-  document.title = band || 'Richiedi una canzone';
+  if (!closed) {
+    const band = list[0].band || '';
+    document.getElementById('title').textContent = band || 'Richiedi una canzone';
+    document.title = band || 'Richiedi una canzone';
+  }
   const sel = pastSel(), g = sel && list.find(x => x.id === sel);
   if (!g) {
-    document.getElementById('subtitle').textContent = 'Le nostre ultime serate';
-    box.innerHTML = `<div class="off"><div class="big">🌙</div><h2>Nessuna serata in corso</h2><p>Le richieste si aprono quando suoniamo. Intanto guarda cosa abbiamo suonato!</p></div>
+    document.getElementById('subtitle').textContent = closed ? 'Le richieste si aprono quando iniziamo a suonare' : 'Le nostre ultime serate';
+    box.innerHTML = (closed
+      ? `<button class="btn btn-secondary btn-wide" id="note-btn" onclick="openForm(null)">✎ Scrivici qualcosa</button>`
+      : `<div class="off"><div class="big">🌙</div><h2>Nessuna serata in corso</h2><p>Le richieste si aprono quando suoniamo. Intanto guarda cosa abbiamo suonato!</p></div>`)
+      + (list.length ? `
       <div class="sec-h">Serate passate</div>
       ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
-        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${x.songs.length} canzoni</small></span><span class="chev">›</span></button>`).join('')}`;
+        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${x.songs.length} canzoni</small></span><span class="chev">›</span></button>`).join('')}` : '');
     list.forEach(loadPastPoster);
     return;
   }
@@ -894,7 +911,10 @@ function renderPast() {
       return `<button class="song" onclick="togglePastLike('${esc(g.id)}', '${esc(s.id)}')" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
   loadPastPoster(g);
 }
-addEventListener('hashchange', () => { if (!info) { renderPast(); scrollTo(0, 0); } });
+addEventListener('hashchange', () => {
+  if (!info) renderPast(); else if (info.open !== true) render(); else return;
+  scrollTo(0, 0);
+});
 let pastFormId = null;
 function openPastForm(id) {
   const g = pastList().find(x => x.id === id);
