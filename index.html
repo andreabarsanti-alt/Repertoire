@@ -1135,6 +1135,7 @@ select.fi { cursor: pointer; }
       <div class="set-img-field" id="f-set-img-field"></div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-secondary" id="f-set-dup" onclick="closeModal('setlist-modal');duplicateSetlist(editSetId)" title="Make a copy of this setlist (unsaved changes here aren't copied)" style="margin-right:auto">⧉ Duplicate</button>
       <button class="btn btn-secondary" onclick="closeModal('setlist-modal')">Cancel</button>
       <button class="btn btn-primary"   onclick="saveSetlist()">Save</button>
     </div>
@@ -3386,7 +3387,6 @@ function setItemRow(sl, opts = {}) {
     ${subToggle}
     <div class="set-actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openSetlistModal('${sl.id}')" title="Edit">✎</button>
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();duplicateSetlist('${sl.id}')" title="Duplicate">⧉</button>
       <button class="btn btn-danger btn-sm btn-icon"    onclick="event.stopPropagation();deleteSetlist('${sl.id}')"   title="Delete">✕</button>
     </div>
   </div>`;
@@ -4134,6 +4134,7 @@ function openSetlistModal(id) {
   editSetId = id || null;
   const sl  = id ? db.setlists.find(s => s.id === id) : null;
   document.getElementById('setlist-modal-title').textContent = id ? 'Edit Setlist' : 'New Setlist';
+  document.getElementById('f-set-dup').style.display = id ? '' : 'none';   // ⧉ Duplicate lives here, not on the row (Andrea)
   document.getElementById('f-set-name').value = sl?.name || '';
   document.getElementById('f-set-live').checked = sl?.type === 'live';
   document.getElementById('f-set-date').value = sl?.date || '';
@@ -5082,7 +5083,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 10:15';
+const APP_BUILD = '2026-11-28 10:20';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
