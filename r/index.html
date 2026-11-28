@@ -3,18 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Richiedi una canzone</title>
+<!-- Static title/OG tags: link previews (WhatsApp, iMessage…) read these and don't run the redirect below. -->
+<title>Two of Us</title>
+<meta property="og:title" content="Two of Us">
+<meta property="og:description" content="Richiedi una canzone">
+<meta property="og:type" content="website">
+<meta name="description" content="Richiedi una canzone">
 <style>body{background:#0d1117;color:#c9d1d9;font-family:system-ui,sans-serif;text-align:center;padding:40px 16px}a{color:#3d9e8c}</style>
 <script>
-// Short audience link: r/?<project>[/<profile>] → ../request.html?db=<host>&g=<profile>.
+// Short audience link: r/?<project>[/<profile>] → ../request.html?db=<host>&g=<profile>. Profile defaults to
+// two_of_us, so the static title is Two of Us; other profiles have their own r/<profile>/ page.
 // <project> is the Firebase database name without "-default-rtdb" (Belgium, europe-west1);
-// "<project>.us" means a US database (<project>-default-rtdb.firebaseio.com). Profile defaults to two_of_us.
+// "<project>.us" means a US database (<project>-default-rtdb.firebaseio.com).
 (function () {
   const q = decodeURIComponent(location.search.slice(1)).trim();
   const m = q.match(/^([a-z0-9-]+)(\.us)?(?:\/([A-Za-z0-9_-]+))?$/);
   if (!m) return;
   const host = m[2] ? `${m[1]}-default-rtdb.firebaseio.com` : `${m[1]}-default-rtdb.europe-west1.firebasedatabase.app`;
-  location.replace(`../request.html?db=${encodeURIComponent(host)}&g=${encodeURIComponent(m[3] || 'two_of_us')}`);
+  location.replace(`../request.html?db=${encodeURIComponent(host)}&g=${encodeURIComponent((m[3] || 'two_of_us'))}` + location.hash);
 })();
 </script>
 </head>

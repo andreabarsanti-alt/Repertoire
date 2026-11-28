@@ -5221,7 +5221,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 11:20';
+const APP_BUILD = '2026-11-28 11:58';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6697,8 +6697,13 @@ function liveShortUrl() {
   else if ((m = host.match(/^([a-z0-9-]+)-default-rtdb\.firebaseio\.com$/))) proj = m[1] + '.us';
   else return null;
   const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  // Profiles with their own r/<profile>/ page (static title/og:title = band name, for link previews) use it;
+  // two_of_us keeps r/?<project> (r/index.html defaults to it and is titled Two of Us too, and printed QRs use it).
+  if (LIVE_GIG !== 'two_of_us' && LIVE_SHORT_DIRS.includes(LIVE_GIG)) return `${base}r/${LIVE_GIG}/?${proj}`;
   return `${base}r/?${proj}${LIVE_GIG === 'two_of_us' ? '' : '/' + LIVE_GIG}`;
 }
+// Profiles with a static r/<profile>/index.html (add a folder there for a new profile).
+const LIVE_SHORT_DIRS = ['two_of_us', 'loose_ends'];
 // Andrea's own TinyURL links, per profile (they redirect to the link above). Public anyway.
 const LIVE_TINY_LINKS = { two_of_us: 'https://tinyurl.com/4cys25ft' };
 // What the QR code, link and Copy link use: the TinyURL if this profile has one, else the r/ short link, else the full one.
