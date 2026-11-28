@@ -796,7 +796,7 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 .set-name-col .set-name { flex: none; white-space: nowrap; }
 .set-date { font-size: 0.68rem; color: var(--text-dim); }
 .set-kind { color: var(--accent); font-weight: 600; }
-/* "Start a live" recording indicator — sits *below* the full-screen overlays (CRD reader and Play
+/* Live (Now playing ● Start) recording indicator — sits *below* the full-screen overlays (CRD reader and Play
    mode at 1500, full editor 1600), so it's hidden while reading/playing chords and only shows in
    the normal app views. */
 #live-rec-pill {
@@ -807,6 +807,7 @@ textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
   box-shadow: 0 4px 14px rgba(0,0,0,.4);
 }
 #live-rec-pill.hidden { display: none; }
+.live-now-rec { color: #ff6b6b; font-family: var(--fm); font-size: 0.8rem; }
 #live-rec-pill .live-dot { color: #ff6b6b; animation: liveBlink 1.4s ease-in-out infinite; }
 @keyframes liveBlink { 50% { opacity: .25; } }
 #live-rec-pill button {
@@ -998,7 +999,6 @@ select.fi { cursor: pointer; }
         <input type="checkbox" id="pedal-auto-toggle" onchange="togglePedalAutoMode()"> Pedal Auto-scroll
       </label>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="liveRecButton()" id="btn-live-rec" title="Start a live: every song you open in the chord reader is noted down, in order; Stop saves them as a live setlist and pushes it">● Start live</button>
       <button class="btn btn-secondary btn-sm" onclick="pasteUGLink()" id="btn-paste-ug" title="New song from Ultimate Guitar: copy the song's link in the UG app (Share → Copy link), then tap this">📋 Paste UG</button>
       <div class="hdr-more-file">
         <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export</button>
@@ -1150,7 +1150,7 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="live-start-modal">
   <div class="modal">
     <h2>Start a live</h2>
-    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:14px">Every song you open in the chord reader is noted down, in order, until you tap Stop — then it's saved as a live setlist and pushed. It keeps recording even if you close the app.</p>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:14px">Every song you open in the chord reader is noted down, in order, shown in Now playing and marked played when you close it, until you tap Stop — then it's saved as a live setlist and pushed. It keeps recording even if you close the app. While no live is running, opening a song changes nothing.</p>
     <div class="live-kind-btns">
       <button class="btn btn-primary" onclick="startLiveRec('gig')">Gig</button>
       <button class="btn btn-primary" onclick="startLiveRec('showcase')">Showcase</button>
@@ -2740,8 +2740,10 @@ function openCrdReader(id) {
   if (crdSongId === id && !document.getElementById('crd-reader').classList.contains('hidden')) return;
   document.activeElement?.blur?.();                // so pedal/keyboard keys can't re-trigger that link
   crdSongId = id;
-  liveRecNote(id);                                 // "Start a live" recording, if one is running
-  liveNowOpen(id);                                 // "Now playing" on the audience page
+  if (liveRec) {                                   // only while a live is running (Now playing ● Start)
+    liveRecNote(id);                               // noted down for the live setlist
+    liveNowOpen(id);                               // "Now playing" on the audience page
+  }
   crdEditKey  = s.key || '';
   crdEditTKey = deriveDefaultTKey(s);
   document.getElementById('crd-chrome').classList.remove('crd-hidden');
@@ -2824,8 +2826,10 @@ function closeCrdReader() {
   crdAutoStop();
   crdPedalCancel();
   closeModal('crd-reader');
-  if (crdSongId) liveAutoPlayed(crdSongId);         // closing a published song marks it played
-  if (crdSongId) liveNowClose(crdSongId);           // and moves it to "previous" in Now playing
+  if (crdSongId && liveRec) {
+    liveAutoPlayed(crdSongId);                     // closing a published song marks it played
+    liveNowClose(crdSongId);                       // and moves it to "previous" in Now playing
+  }
   crdSongId = null;
 }
 
@@ -4238,8 +4242,10 @@ function saveSetlist() {
 }
 
 // ─────────────────────────────────────────
-// START A LIVE — records every song opened in the CRD reader, in order, then saves them as a
-// live setlist of the chosen kind and pushes. The in-progress recording lives in its own
+// START A LIVE — started and stopped from the Live tab's Now playing box (● Start / ■ Stop), the
+// one switch for a live: while it runs, every song opened in the CRD reader is noted down in
+// order, shown in Now playing and marked played on close; Stop saves them as a live setlist of the
+// chosen kind and pushes. While none runs, opening a song changes nothing. The in-progress recording lives in its own
 // per-profile localStorage key (not in db, so it isn't pushed half-done), so it survives the
 // app being closed/reloaded until Stop.
 // ─────────────────────────────────────────
@@ -4260,13 +4266,12 @@ function localDateStr(d = new Date()) {
 
 function renderLiveRec() {
   const pill = document.getElementById('live-rec-pill');
-  const btn  = document.getElementById('btn-live-rec');
-  if (!liveRec) { pill.classList.add('hidden'); btn.textContent = '● Start live'; return; }
+  renderLiveNow();
+  if (!liveRec) { pill.classList.add('hidden'); return; }
   const n = liveRec.songIds.length;
   document.getElementById('live-rec-text').textContent =
     `LIVE · ${LIVE_KINDS[liveRec.kind] || 'Gig'} · ${n} song${n === 1 ? '' : 's'}`;
   pill.classList.remove('hidden');
-  btn.textContent = '■ Stop live';
 }
 
 function liveRecButton() {
@@ -4277,7 +4282,11 @@ function liveRecButton() {
 function startLiveRec(kind) {
   closeModal('live-start-modal');
   liveRec = { kind: LIVE_KINDS[kind] ? kind : 'gig', date: localDateStr(), startedAt: Date.now(), songIds: [] };
-  saveLiveRec(); renderLiveRec();
+  saveLiveRec();
+  // A new live starts a fresh Now playing list and history (the last one was saved on its Stop).
+  const v = getLiveNow(); v.hist = []; v.log = []; v.open = false; saveLiveNow(v);
+  liveNowLast = undefined; liveNowPush();
+  renderLiveRec();
   liveCaptureVenue(false);   // where the live started = the venue, for the audience location check
   toast(`Live started (${LIVE_KINDS[liveRec.kind]}) — open songs in the chord reader to note them down`, 3500);
 }
@@ -4298,7 +4307,7 @@ async function stopLiveRec() {
   const kindLabel = LIVE_KINDS[liveRec.kind] || 'Gig';
   if (!ids.length) {
     if (!confirm('Stop the live? No songs were opened, so nothing will be saved.')) return;
-    liveRec = null; saveLiveRec(); renderLiveRec();
+    liveRec = null; saveLiveRec(); liveNowStopped();
     toast('Live stopped — nothing recorded');
     return;
   }
@@ -4318,7 +4327,7 @@ async function stopLiveRec() {
   db.setlists.push(sl);
   activeSetId = sl.id;
   save();
-  liveRec = null; saveLiveRec(); renderLiveRec();
+  liveRec = null; saveLiveRec(); liveNowStopped();
   renderSets(); renderSetDetail();
   toast(`Saved "${name}"`);
   // An automatic 📸 snapshot, so the night's likes, requests and comments are kept before any
@@ -5212,7 +5221,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 11:10';
+const APP_BUILD = '2026-11-28 11:20';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6244,7 +6253,7 @@ async function liveDeleteReq(id) {
   toast('Request deleted');
 }
 // closeCrdReader: closing the chord reader on a published song marks it played (Live tab and
-// audience page), whether or not a "Start live" recording is running. Undo with its ✓.
+// audience page), only while a live is running (Now playing ● Start). Undo with its ✓.
 function liveAutoPlayed(id) {
   if (!liveSignedIn()) return;
   const ids = livePubIds();   // published songs; one missing (new since Publish) is added by liveSetPlayed
@@ -6253,18 +6262,18 @@ function liveAutoPlayed(id) {
 }
 
 // ── Now playing (info.now on the audience page) ──
-// The song open in the chord reader and the one before it. Tracked on this iPad whatever the
-// switch says (hist = the last two distinct songs opened, newest first; open = the reader is
-// open on hist[0]); "on" decides whether it's shown. Closing the reader moves the song to
-// "previous" (closing is also what marks it played). Start/Stop flip "on", Clear empties hist.
+// The song open in the chord reader and the two before it, tracked only while a live is running
+// (hist = the last three distinct songs opened, newest first; open = the reader is open on
+// hist[0]). "on" is the live itself (liveRec): ● Start begins one (and a fresh list), ■ Stop ends
+// it and hides the card. Closing the reader moves the song to "previous" (closing is also what
+// marks it played). Clear empties hist and log.
 function getLiveNow() {
-  // Stored as { stopped, open, hist }: shown unless ■ Stop was tapped. (The first version stored
-  // `on`, which started false, so a saved `on` is ignored.)
+  // Stored as { open, hist, log } (older versions also saved `stopped`/`on`, now ignored).
   // `log` is the full history ({id, at} per opening, oldest first) that 📸 Snapshot live saves.
-  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return { on: !v.stopped, open: !!v.open, hist: v.hist, log: Array.isArray(v.log) ? v.log : [] }; } catch {}
-  return { on: true, open: false, hist: [], log: [] };
+  try { const v = JSON.parse(localStorage.getItem(LIVE_NOW_KEY) || 'null'); if (v && Array.isArray(v.hist)) return { on: !!liveRec, open: !!v.open, hist: v.hist, log: Array.isArray(v.log) ? v.log : [] }; } catch {}
+  return { on: !!liveRec, open: false, hist: [], log: [] };
 }
-function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ stopped: !v.on, open: v.open, hist: v.hist, log: v.log || [] })); }
+function saveLiveNow(v) { localStorage.setItem(LIVE_NOW_KEY, JSON.stringify({ open: v.open, hist: v.hist, log: v.log || [] })); }
 function liveNowSongs() {
   const v = getLiveNow(), song = id => db.songs.find(s => s.id === id) || null;
   // At most three songs in all (Andrea): the open one plus the two before it, or the last three.
@@ -6301,11 +6310,11 @@ function liveNowClose(id) {
   v.open = false;
   saveLiveNow(v); liveNowPush();
 }
-function liveNowSetOn(on) {
-  const v = getLiveNow(); v.on = on; saveLiveNow(v);
-  liveNowLast = undefined;             // always (re)send on Start/Stop
-  liveNowPush();
-  toast(on ? 'Now playing shown on the audience page' : 'Now playing hidden from the audience page');
+// After a live stops: the reader no longer counts as open, and the audience card goes (null).
+function liveNowStopped() {
+  const v = getLiveNow(); v.open = false; saveLiveNow(v);
+  liveNowLast = undefined; liveNowPush();
+  renderLiveRec();
 }
 function liveNowClear() {
   if (!confirm('Clear the Now playing list and its full history? The audience page stops showing these songs.')) return;
@@ -6318,12 +6327,14 @@ function renderLiveNow() {
   if (!el) return;
   const v = getLiveNow(), { cur, prevs } = liveNowSongs();
   const t = s => s ? `<b>${esc(s.title)}</b>` : '—';
-  const what = cur || prevs.length ? `${t(cur)} · before: ${prevs.length ? prevs.map(t).join(', ') : '—'}` : 'open a song in the chord reader';
-  const where = !v.on ? ' <i>(stopped)</i>' : !livePublished() ? ' <i>(shown once published)</i>' : '';
+  const what = cur || prevs.length ? `${t(cur)} · before: ${prevs.length ? prevs.map(t).join(', ') : '—'}` : v.on ? 'open a song in the chord reader' : '';
+  const kind = liveRec ? (LIVE_KINDS[liveRec.kind] || 'Gig') : '';
+  const where = !v.on ? ' <i>(not started — opening a song changes nothing)</i>'
+    : `<b class="live-now-rec">● LIVE · ${esc(kind)}</b>` + (!livePublished() ? ' <i>(shown once published)</i>' : '');
   const sum = document.getElementById('live-now-sum');
-  if (sum) sum.textContent = !v.on ? '· stopped' : cur ? '· ' + cur.title : '';
+  if (sum) sum.textContent = !v.on ? '· not started' : '· LIVE' + (cur ? ' · ' + cur.title : '');
   el.innerHTML = `<span>${where ? where.trim() + ' ' : ''}${what}</span><span class="live-visits-btns">
-    <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveNowSetOn(${!v.on})" title="${v.on ? 'Hide it from the audience page' : 'Show the song open in the chord reader and the two before it on the audience page'}">${v.on ? '■ Stop' : '▶ Start'}</button>
+    <button class="btn btn-${v.on ? 'secondary' : 'primary'} btn-sm" onclick="liveRecButton()" title="${v.on ? 'End the live: save the songs as a live setlist and push; Now playing disappears from the audience page' : 'Start a live: songs you open in the chord reader are shown in Now playing, marked played on close, and saved as a setlist on Stop'}">${v.on ? '■ Stop' : '● Start'}</button>
     <button class="btn btn-secondary btn-sm" onclick="liveNowClear()" title="Forget the current and earlier songs">Clear</button></span>`;
 }
 
