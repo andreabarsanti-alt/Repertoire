@@ -5084,11 +5084,65 @@ async function doPush(cfg) {
 
     toast('Pushed to GitHub!');
     document.getElementById('sync-banner').classList.add('hidden');
-    liveArchiveFlush();                // any live snapshot still waiting on this iPad
+    await liveArchiveFlush();          // any live snapshot still waiting on this iPad
+    fbBackupPush(cfg);                 // Firebase backup (signed in only; silent otherwise)
   } catch (err) {
     toast('Push failed: ' + err.message, 4000);
   } finally {
     btn.disabled = false; btn.textContent = '⬆ Push';
+  }
+}
+
+// ── Firebase backup on ⬆ Push (Andrea, 2026-11-28): the free plan has no backups, so every
+// successful Push, when signed in to Firebase, also copies this profile's whole gigs/<profile>
+// node — the live state (info, songs, poster, requests, likes, visits) and the past gigs
+// (past, pastPoster, pastLikes, pastNotes, notes) — to firebase_backup/<profile>.json on the
+// data branch. One file, overwritten; git history keeps every version. Not committed when
+// nothing changed (git blob SHA compared). The repo is public: names and messages are included,
+// exact request coordinates (loc) are dropped, as in snapshots.
+const FB_BACKUP_NODES = ['info', 'songs', 'poster', 'requests', 'likes', 'visits', 'past', 'pastPoster', 'pastLikes', 'pastNotes', 'notes'];
+async function fbBackupData() {
+  const data = { profile: PROFILE, nodes: {} }, missing = [];
+  for (const n of FB_BACKUP_NODES) {
+    try { const v = await fbReq('GET', n); if (v != null) data.nodes[n] = v; }
+    catch (e) { missing.push(n); }
+  }
+  const reqs = data.nodes.requests;
+  if (reqs && typeof reqs === 'object') {
+    for (const r of Object.values(reqs)) if (r && typeof r === 'object') delete r.loc;
+  }
+  if (missing.length) data.unreadable = missing;   // older rules refuse some nodes
+  return data;
+}
+async function gitBlobSha(bytes) {
+  const head = new TextEncoder().encode(`blob ${bytes.length}\0`);
+  const all = new Uint8Array(head.length + bytes.length); all.set(head); all.set(bytes, head.length);
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-1', all));
+  return [...h].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function fbBackupPush(cfg) {
+  if (!liveSignedIn() || !cfg?.token) return;
+  try {
+    const data = await fbBackupData();
+    if (data.unreadable?.length === FB_BACKUP_NODES.length) return;   // nothing readable
+    const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2));
+    const file = `firebase_backup/${PROFILE}.json`;
+    const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${file}`;
+    const headers = { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' };
+    let sha;
+    const g = await fetch(`${url}?ref=${encodeURIComponent(cfg.branch)}`, { headers, cache: 'no-store' });
+    if (g.ok) {
+      sha = (await g.json()).sha;
+      if (sha && sha === await gitBlobSha(bytes)) return;            // unchanged
+    } else if (g.status !== 404) throw new Error(`GET ${g.status}`);
+    let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    const body = { message: `Firebase backup ${file} via Repertoire app`, content: btoa(bin), branch: cfg.branch };
+    if (sha) body.sha = sha;
+    const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || `PUT ${r.status}`); }
+    toast('Live and past gigs backed up to GitHub');
+  } catch (e) {
+    toast('Firebase backup failed: ' + e.message, 4500);
   }
 }
 
@@ -5156,7 +5210,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 11:00';
+const APP_BUILD = '2026-11-28 11:05';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
