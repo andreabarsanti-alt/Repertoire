@@ -5138,7 +5138,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 10:45';
+const APP_BUILD = '2026-11-28 10:50';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6116,8 +6116,18 @@ async function liveClearRequests() {
 
 // Marks a song played (or not) on the audience board; marking it played also settles every
 // pending request for it.
+// A song played while published but not on the audience page (added to the songs after Publish,
+// or a ❓ Not ready one): append it to the published songs so the audience sees it played.
+async function liveEnsurePublished(songId) {
+  const ids = livePubIds(), s = db.songs.find(x => x.id === songId);
+  if (!ids || ids.includes(songId) || !s) return;
+  await fbReq('PUT', 'songs/' + ids.length, { id: s.id, k: fbKey(s.id), t: s.title || '', g: (s.tags || '').split(',').map(t => t.trim()).filter(Boolean) });
+  await fbReq('PATCH', 'info', { songsV: Date.now() });
+  setLivePub([...ids, songId]);
+}
 async function liveSetPlayed(songId, on) {
   const k = fbKey(songId);
+  if (on) await liveEnsurePublished(songId).catch(() => {});
   await fbReq('PATCH', 'info/played', { [k]: on ? Date.now() : null });
   if (liveInfo) {
     liveInfo.played = liveInfo.played || {};
@@ -6163,8 +6173,8 @@ async function liveDeleteReq(id) {
 // audience page), whether or not a "Start live" recording is running. Undo with its ✓.
 function liveAutoPlayed(id) {
   if (!liveSignedIn()) return;
-  const ids = livePubIds();
-  if (!ids || !ids.includes(id) || liveInfo?.played?.[fbKey(id)]) return;
+  const ids = livePubIds();   // published songs; one missing (new since Publish) is added by liveSetPlayed
+  if (!ids || liveInfo?.played?.[fbKey(id)] || !db.songs.some(s => s.id === id)) return;
   liveSetPlayed(id, true).catch(() => {});
 }
 
