@@ -580,6 +580,14 @@ function renderGig() {
   box.classList.toggle('has-poster', poster);
   box.classList.toggle('hidden', !place && !at && !poster);
   let when = '';
+  if (info.end) {
+    // 🌙 Fine serata (Andrea): "we have played at <place>", no start time.
+    const day = !at || new Date(at).toDateString() === new Date().toDateString() ? 'stasera'
+      : new Date(at).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('gig-when').textContent = place ? `Abbiamo suonato a ${place}` : `Abbiamo suonato ${day}`;
+    document.getElementById('gig-place').textContent = '';
+    return;
+  }
   if (at) {
     const d = new Date(at), now = new Date();
     const day = d.toDateString() === now.toDateString() ? 'stasera'
