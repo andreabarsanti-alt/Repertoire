@@ -87,6 +87,9 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
             "_night": {
               "$k": { ".validate": "newData.isNumber() && newData.val() >= 0" }
             },
+            "_req": {
+              "$k": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+            },
             "$song": {
               "$vid": {
                 ".write": "$song.length <= 64 && $vid.length >= 16 && $vid.length <= 40 && root.child('gigs').child($gig).child('past').child($id).exists()",
@@ -116,7 +119,7 @@ These rules say: anyone may *read* the published setlist and *send* a request wh
               ".validate": "newData.hasChildren(['text', 'at'])",
               "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
               "name": { ".validate": "newData.isString() && newData.val().length <= 40" },
-              "at":   { ".validate": "newData.isNumber() && newData.val() === now" },
+              "at":   { ".validate": "newData.isNumber() && (newData.val() === now || (auth != null && auth.token.email === 'YOUR_EMAIL'))" },
               "$other": { ".validate": false }
             }
           }
@@ -175,7 +178,7 @@ On the iPad, open Repertoire and tap the **Live** tab:
 
 The app remembers where the iPad was when you tap **● Start live** (or when you first publish) as the venue, and marks each request **📍 In the audience** or **⚠ Not in the audience** by comparing it with the phone's location, if the person allowed their phone to share it. Tap **Set here** in the Live tab to set the venue again. The venue location stays on the iPad and is never sent to Firebase.
 
-**Past gigs**: while nothing is published, the audience page lists your past gigs instead of just saying nothing is on. Open a gig or showcase setlist in the Setlists tab and tap **⬆ Upload** to add it (its songs, date, place and image — or tick Hide songs to leave the songs out). While nothing is published people can also write you a general comment; it shows under 💬 General comments in the same box (this needs the `notes` rule — paste the rules again). People can tap a gig to see its songs, heart the ones they liked and write you a comment; the Live tab's **🗂 Past gigs** box shows the hearts and comments, and **✕** takes a gig off the list.
+**Past gigs**: while nothing is published, the audience page lists your past gigs instead of just saying nothing is on. Open a gig or showcase setlist in the Setlists tab and tap **⬆ Upload** to add it (its songs, date, place and image — or tick Hide songs to leave the songs out). While nothing is published people can also write you a general comment; it shows under 💬 General comments in the Past gigs tab (this needs the `notes` rule — paste the rules again; importing a snapshot's requests and comments needs the newer `_req` and `pastNotes` rules too). People can tap a gig to see its songs, heart the ones they liked and write you a comment; the app's **Past gigs** tab shows the hearts and comments (and lets you upload a setlist or import a 📸 snapshot), and **✕** takes a gig off the list.
 
 Before each gig, tap **Clear requests** to start with an empty list, an empty "played" board and no likes.
 
