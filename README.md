@@ -10,6 +10,7 @@ A single-page web app for managing a musical repertoire — built to run on an i
 - Two filter dropdowns, alongside the text search: chord sheet (Any chords / **Has chords** / **No chords**) and repertoire scope (Any song / **In repertoire** / **❓ Not ready**)
 - Check a song **❓ Not ready** right from its row — no need to type a tag — and it's excluded from "In repertoire" above until you uncheck it again
 - Check **🎤 Lyrics only** (row, Add Song or edit) and the chord reader shows just the lyrics and section labels — the chords stay in the sheet, untouched
+- **❤ Likes** (toolbar button, hidden by default, remembered on the device) — adds a ❤ column with each song's audience likes added up over every past gig plus tonight's; tap the ❤ header to sort most liked first. Needs the Firebase sign-in from the Live tab. Hiding it changes nothing
 - Add, inline-edit, and delete songs
 - Each song stores: Title, Tags, Key, Capo, Harp, Ultimate Guitar link
 - Key / Capo / Harp shown as badge chips in all views

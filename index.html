@@ -1036,6 +1036,7 @@ select.fi { cursor: pointer; }
         <option value="tryout">❓ Not ready</option>
       </select>
     </div>
+    <button class="btn btn-secondary btn-sm" id="songs-likes-btn" onclick="toggleSongsLikes()" title="Show or hide every song's audience likes, added up over all past gigs and tonight">❤ Likes</button>
     <input class="search-box" id="songs-search" type="search" placeholder="Search…" oninput="renderSongs()">
   </div>
   <div class="tbl-wrap">
@@ -1572,6 +1573,10 @@ let editSetId    = null;
 let activeSetId  = null;
 let sortCol = 'title', sortDir = 'asc';
 let songsCrdFilter   = 'all'; // 'all' | 'with' | 'without' — Songs tab toolbar filter on whether s.crd is set
+// ❤ Likes column on the Songs tab (Andrea, 2026-11-28): device-local, hidden by default. A pure
+// show/hide — it never changes or clears any like.
+const SONGS_LIKES_KEY = 'rep_songs_likes';
+let songsShowLikes = (() => { try { return localStorage.getItem(SONGS_LIKES_KEY) === '1'; } catch { return false; } })();
 let songsScopeFilter = 'all'; // 'all' | 'repertoire' | 'tryout' — 'repertoire' means NOT tryOut; combines with songsCrdFilter (AND)
 let slCrdFilter = 'all'; // 'all' | 'with' | 'without' — Setlist detail toolbar filter on whether the resolved song has crd; view-only, never touches sl.items
 let slDrag = null; // active setlist pointer-drag, see initDrag()
@@ -1964,6 +1969,7 @@ function renderSongsHeader() {
     <th class="${cls('title')}"  data-col="title"  onclick="sortBy('title')">Title</th>
     <th class="${cls('artist')}" data-col="artist" onclick="sortBy('artist')" title="Sort by artist (a song's first tag)">Artist · Tags</th>
     <th class="${cls('ugLink')}" data-col="ugLink" onclick="sortBy('ugLink')">UG</th>
+    ${songsShowLikes ? `<th class="${cls('likes')}" data-col="likes" onclick="sortBy('likes')" title="Audience likes: all past gigs plus tonight">❤</th>` : ''}
     <th></th>
   </tr>`;
 }
@@ -1976,6 +1982,38 @@ function setSongsCrdFilter(f) {
 // A song's artist = its first tag (same rule as the Add Songs picker's "Artists" list).
 function songArtist(s) {
   return ((s.tags || '').split(',')[0] || '').trim();
+}
+
+function toggleSongsLikes() {
+  songsShowLikes = !songsShowLikes;
+  try { localStorage.setItem(SONGS_LIKES_KEY, songsShowLikes ? '1' : '0'); } catch {}
+  if (songsShowLikes) songsLikesEnsure(true);
+  renderSongs();
+}
+// Load what the totals need (past gigs + tonight's likes) if it isn't loaded yet.
+function songsLikesEnsure(ask) {
+  if (!liveSignedIn()) { if (ask) toast('Sign in to Firebase in the Live tab to see the likes', 3500); return; }
+  if (livePg === null && !livePgBusy && Date.now() - livePgAt > LIVE_PAST_MS) setTimeout(livePgLoad, 0);
+  if (liveLikes === null && !songsLikesBusy) { songsLikesBusy = true; setTimeout(() => liveLoadLikes().finally(() => { songsLikesBusy = false; }), 0); }
+}
+let songsLikesBusy = false;
+// song id -> total likes: every past gig (phones + the night's own counts, livePgLikeCount) plus the
+// current likes — unless the past gig for tonight's date (Gig & venue date, else today) already
+// exists, since 📸 Snapshot / ⬆ Upload copied tonight's likes into it as `_night`.
+function songLikeTotals() {
+  const byKey = {};
+  const add = (k, n) => { if (n > 0) byKey[k] = (byKey[k] || 0) + n; };
+  Object.keys(livePg || {}).forEach(id => {
+    const likes = livePgLikes?.[id] || {};
+    const keys = new Set([...Object.keys(likes).filter(k => k !== '_night'), ...Object.keys(likes._night || {})]);
+    keys.forEach(k => add(k, livePgLikeCount(likes, k)));
+  });
+  const gig = getLiveGig(), d = gig.when ? new Date(gig.when) : new Date();
+  const tonight = livePgYmd(isNaN(d) ? new Date() : d);
+  if (!livePg?.[tonight]) Object.entries(liveLikes || {}).forEach(([k, v]) => add(k, v && typeof v === 'object' ? Object.keys(v).length : 0));
+  const out = {};
+  db.songs.forEach(s => { const n = byKey[fbKey(s.id)]; if (n) out[s.id] = n; });
+  return out;
 }
 
 function setSongsScopeFilter(f) {
@@ -1999,10 +2037,17 @@ function renderSongs() {
     (songsScopeFilter === 'all' || (songsScopeFilter === 'tryout' ? !!s.tryOut : !s.tryOut))
   );
 
+  const likeTot = songsShowLikes ? songLikeTotals() : {};
+  if (songsShowLikes) songsLikesEnsure(false);
+  document.getElementById('songs-likes-btn')?.classList.toggle('btn-primary', songsShowLikes);
+  document.getElementById('songs-likes-btn')?.classList.toggle('btn-secondary', !songsShowLikes);
+  if (sortCol === 'likes' && !songsShowLikes) sortCol = 'title';
+
   // Sort by the clicked column; 'artist' sorts by first tag, then title. Songs with no
-  // artist always go last. Ties fall back to title so the order is stable.
+  // artist always go last. Ties fall back to title so the order is stable. 'likes' is numeric.
   const val = (s, col) => String(col === 'artist' ? songArtist(s) : (s[col] || '')).toLowerCase();
   const cmpCol = (a, b, col, dir) => {
+    if (col === 'likes') { const d = (likeTot[a.id] || 0) - (likeTot[b.id] || 0); return dir === 'asc' ? -d : d; }
     const av = val(a, col), bv = val(b, col);
     if (col === 'artist' && !av !== !bv) return av ? -1 : 1;
     return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
@@ -2012,7 +2057,7 @@ function renderSongs() {
 
   renderSongsHeader();
 
-  const colCount = 4;
+  const colCount = songsShowLikes ? 5 : 4;
   const tbody = document.getElementById('songs-tbody');
   if (!rows.length) {
     const emptyMsg = q ? 'No songs match your search'
@@ -2028,11 +2073,11 @@ function renderSongs() {
   }
 
   tbody.innerHTML = rows.map(s =>
-    inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s)
+    inlineEditId === s.id ? songEditRow(s) : songDisplayRow(s, likeTot[s.id] || 0)
   ).join('');
 }
 
-function songDisplayRow(s) {
+function songDisplayRow(s, likes) {
   const tagChips = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean)
                  .map(t => `<span class="tag-chip">${esc(t)}</span>`).join('');
   const ug = s.ugLink
@@ -2047,6 +2092,7 @@ function songDisplayRow(s) {
     </td>
     <td>${tagChips}</td>
     <td>${ug}</td>
+    ${songsShowLikes ? `<td>${likes ? `<span class="live-likes">❤ ${likes}</span>` : '<span style="color:var(--text-dim)">—</span>'}</td>` : ''}
     <td><div class="row-actions">
       <label class="row-tryout" title="❓ Not ready" onclick="event.stopPropagation()">
         <input type="checkbox" ${s.tryOut ? 'checked' : ''} onchange="toggleSongTryOut('${s.id}')"> <span class="tryout-icon">?</span>
@@ -2079,13 +2125,14 @@ function songEditRow(s) {
     </td>
     <td><input class="inline-fi" id="ie-tags" value="${esc(s.tags||'')}" placeholder="Tags" ${k}></td>
     <td><input class="inline-fi" id="ie-uglink" value="${esc(s.ugLink||'')}" placeholder="https://…" type="url" ${k}></td>
+    ${songsShowLikes ? '<td></td>' : ''}
     <td><div class="row-actions">
       <button class="btn btn-primary   btn-sm btn-icon" onclick="saveInlineEdit('${s.id}')" title="Save">✓</button>
       <button class="btn btn-secondary btn-sm btn-icon" onclick="cancelInlineEdit()"        title="Cancel">✕</button>
     </div></td>
   </tr>
   <tr class="editing-row editing-row-crd">
-    <td colspan="4">
+    <td colspan="${songsShowLikes ? 5 : 4}">
       <label class="crd-edit-label">Chord Sheet (CRD) — if filled in, this song opens in-app instead of Ultimate Guitar <span style="display:inline-flex;gap:6px"><button type="button" class="crd-expand-btn" onclick="pasteCrdInto('ie-crd')" title="Paste chords copied from the UG app (or anywhere)">📋 Paste</button><button type="button" class="crd-expand-btn" onclick="openCrdEditor('ie-crd')" title="Open full-page editor">⤢ Full editor</button></span></label>
       <textarea class="inline-fi fi" id="ie-crd" rows="8" placeholder="Paste or type a chord/lyric sheet…">${esc(s.crd||'')}</textarea>
     </td>
@@ -5033,7 +5080,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 09:40';
+const APP_BUILD = '2026-11-28 09:50';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6045,6 +6092,7 @@ async function liveLoadLikes() {
   try { liveLikes = (await fbReq('GET', 'likes')) || {}; liveLikesErr = ''; }
   catch (e) { liveLikesErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   renderLiveLikes(); renderLiveLists();
+  if (songsShowLikes) renderSongs();
 }
 // song id -> number of hearts
 function liveLikeCounts() {
@@ -6084,7 +6132,7 @@ async function liveResetLikes() {
     await fbReq('DELETE', 'likes');
     if (livePublished()) await fbReq('PATCH', 'info', { likeRound: round });
   } catch (e) { toast('Reset failed: ' + e.message, 4500); return; }
-  liveLikes = {}; liveLikesErr = ''; renderLiveLikes(); renderLiveLists(); toast('Likes reset');
+  liveLikes = {}; liveLikesErr = ''; renderLiveLikes(); renderLiveLists(); if (songsShowLikes) renderSongs(); toast('Likes reset');
 }
 
 // ── Past gigs on the audience page (Andrea, 2026-11-27) ──
@@ -6114,6 +6162,7 @@ async function livePgLoad() {
   } catch (e) { livePgErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   finally { livePgBusy = false; }
   renderLivePg();
+  if (songsShowLikes) renderSongs();
   if (activeSetId) renderSetDetail();   // a gig's ⬆ Upload / ↻ Re-upload / ✕ Remove depend on it
 }
 // The like counts of that night (Andrea): from the latest 📸 snapshot of the gig's date (or before
@@ -6225,7 +6274,7 @@ async function livePgDelete(id) {
     await fbReq('DELETE', 'pastNotes/' + id).catch(() => {});
   } catch (e) { toast('Remove failed: ' + e.message, 4500); return; }
   delete livePg[id]; if (livePgLikes) delete livePgLikes[id]; if (livePgNotes) delete livePgNotes[id];
-  toast('Past gig removed'); renderLivePg(); renderSetDetail();
+  toast('Past gig removed'); renderLivePg(); renderSetDetail(); if (songsShowLikes) renderSongs();
 }
 async function livePgDeleteNote(id, nid) {
   if (!confirm('Delete this comment for good?')) return;
