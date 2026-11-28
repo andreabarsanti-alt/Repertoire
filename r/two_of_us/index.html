@@ -14,7 +14,8 @@
 // <project> is the Firebase database name without "-default-rtdb" (Belgium, europe-west1);
 // "<project>.us" means a US database (<project>-default-rtdb.firebaseio.com).
 (function () {
-  const q = decodeURIComponent(location.search.slice(1)).trim();
+  // No ?<project> → the band's own database (two-of-us-live), so the link can be just r/<profile>/.
+  const q = decodeURIComponent(location.search.slice(1)).trim() || 'two-of-us-live';
   const m = q.match(/^([a-z0-9-]+)(\.us)?$/);
   if (!m) return;
   const host = m[2] ? `${m[1]}-default-rtdb.firebaseio.com` : `${m[1]}-default-rtdb.europe-west1.firebasedatabase.app`;
