@@ -879,6 +879,7 @@ select.fi { cursor: pointer; }
 .live-past-place { color: var(--accent); }
 .live-past-meta { color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; }
 .live-past-body { padding: 0 4px 12px; font-size: 0.9rem; }
+.live-past-acts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .live-past-head { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 8px; }
 .live-past-sub { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--text-dim); margin: 10px 0 6px; }
 .live-past-set { columns: 2; column-gap: 18px; font-size: 0.85rem; }
@@ -1997,9 +1998,9 @@ function songsLikesEnsure(ask) {
   if (liveLikes === null && !songsLikesBusy) { songsLikesBusy = true; setTimeout(() => liveLoadLikes().finally(() => { songsLikesBusy = false; }), 0); }
 }
 let songsLikesBusy = false;
-// song id -> total likes: every past gig (phones + the night's own counts, livePgLikeCount) plus the
-// current likes — unless the past gig for tonight's date (Gig & venue date, else today) already
-// exists, since 📸 Snapshot / ⬆ Upload copied tonight's likes into it as `_night`.
+// song id -> total likes: every past gig (phones + any `_night` counts from earlier versions,
+// livePgLikeCount) plus the current likes — unless tonight's past gig (Gig & venue date, else
+// today) already holds a `_night` copy of them.
 function songLikeTotals() {
   const byKey = {};
   const add = (k, n) => { if (n > 0) byKey[k] = (byKey[k] || 0) + n; };
@@ -2010,7 +2011,7 @@ function songLikeTotals() {
   });
   const gig = getLiveGig(), d = gig.when ? new Date(gig.when) : new Date();
   const tonight = livePgYmd(isNaN(d) ? new Date() : d);
-  if (!livePg?.[tonight]) Object.entries(liveLikes || {}).forEach(([k, v]) => add(k, v && typeof v === 'object' ? Object.keys(v).length : 0));
+  if (!livePgLikes?.[tonight]?._night) Object.entries(liveLikes || {}).forEach(([k, v]) => add(k, v && typeof v === 'object' ? Object.keys(v).length : 0));
   const out = {};
   db.songs.forEach(s => { const n = byKey[fbKey(s.id)]; if (n) out[s.id] = n; });
   return out;
@@ -5080,7 +5081,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 09:50';
+const APP_BUILD = '2026-11-28 10:05';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5782,6 +5783,7 @@ function liveRepoTarget() {
 let livePastFiles = null, livePastErr = '', livePastData = {}, livePastOpenFile = null;
 async function livePastOpen() {
   openModal('req-archive-modal');
+  loadPdfLib().catch(() => {});   // ready by the time ⎙ PDF is tapped
   livePastFiles = null; livePastErr = ''; livePastOpenFile = null; renderLivePast();
   const t = liveRepoTarget();
   try {
@@ -5816,7 +5818,7 @@ function renderLivePast() {
   if (!el) return;
   const fmt = iso => iso ? new Date(iso).toLocaleString([], { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const nameDate = path => { const m = path.match(/(\d{4})-(\d\d)-(\d\d)_(\d\d)-(\d\d)\.json$/); return m ? fmt(new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).toISOString()) : path.split('/').pop(); };
-  const body = d => {
+  const body = (d, path) => {
     if (!d) return '<div class="live-past-body">Loading…</div>';
     if (d.error) return `<div class="live-past-body">Couldn't load: ${esc(d.error)}</div>`;
     const au = d.audience || {}, gig = au.gig || d.gig || {}, v = au.visits;
@@ -5825,7 +5827,10 @@ function renderLivePast() {
     const now = au.nowPlaying || (au.earlier || []).length ? `🎶 ${[au.nowPlaying && `Now: ${au.nowPlaying}`, (au.earlier || []).length && `Earlier: ${au.earlier.join(', ')}`].filter(Boolean).map(esc).join(' · ')}` : '';
     const vis = v ? `👀 ${v.phones} phone${v.phones === 1 ? '' : 's'} · ${v.visits} visit${v.visits === 1 ? '' : 's'}${v.last ? ` · last ${esc(fmt(v.last))}` : ''}` : '';
     const likes = (d.likes || []).length ? `<div class="live-past-sub">❤ Likes</div>` + d.likes.map(l => `<div class="live-past-like"><span>${esc(l.title || 'Unknown song')}</span><span>❤ ${+l.count || 0}</span></div>`).join('') : '';
-    return `<div class="live-past-body">${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
+    const acts = `<div class="live-past-acts">
+      <button class="btn btn-secondary btn-sm" onclick="livePastToSetlist('${esc(path)}')" title="Make a setlist of the songs played, in order">⧉ Save as setlist</button>
+      <button class="btn btn-secondary btn-sm" onclick="livePastPdf('${esc(path)}')" title="A PDF of this snapshot to share with the band">⎙ PDF</button></div>`;
+    return `<div class="live-past-body">${acts}${[head, now, vis].filter(Boolean).map(x => `<div class="live-past-head">${x}</div>`).join('')}
       ${likes}${(au.played || []).length ? `<div class="live-past-sub">🎶 Played (Now playing history)</div><div class="live-past-set">${au.played.map((e, i) => `<div>${i + 1}. ${esc(e.title || 'Unknown song')} <span class="live-past-meta">${esc(e.at ? new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '')}</span></div>`).join('')}</div>` : ''}${d.likes ? `<div class="live-past-sub">Requests</div>` : ''}
       ${(d.requests || []).map(r => `<div class="live-past-req${r.status && r.status !== 'pending' ? ' done' : ''}">
         <div class="live-req-title">${r.text != null && !r.songId ? `<span class="live-free">💬 ${esc(r.text)}</span>` : esc(r.title || 'Unknown song')}</div>
@@ -5845,8 +5850,92 @@ function renderLivePast() {
         <span class="live-past-meta">${a.data && !a.data.error ? (() => { const n = (a.data.requests || []).length, l = (a.data.likes || []).reduce((x, y) => x + (+y.count || 0), 0), v = a.data.audience?.visits;
           return [`${n} request${n === 1 ? '' : 's'}`, a.data.likes && `❤ ${l}`, v && `👀 ${v.phones}`].filter(Boolean).join(' · '); })() : ''}${a.local ? ' · not pushed yet' : ''}</span>
       </button>
-      ${livePastOpenFile === a.path ? body(a.data) : ''}
+      ${livePastOpenFile === a.path ? body(a.data, a.path) : ''}
     </div>`).join('') || (livePastFiles === null ? '' : '<div class="empty" style="padding:20px">No archived requests yet — tap 📸 Snapshot live in the Live tab to save one</div>'));
+}
+
+// A snapshot's data (local queue or loaded from GitHub) by its path.
+function livePastGet(path) {
+  const it = liveArchiveQueue().find(x => x.file === path);
+  const d = it ? it.data : livePastData[path];
+  return d && !d.error ? d : null;
+}
+function livePastLabel(path, d) {
+  const m = path.match(/(\d{4})-(\d\d)-(\d\d)_(\d\d)-(\d\d)\.json$/);
+  const dt = m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : new Date(d?.savedAt || Date.now());
+  const place = d?.audience?.gig?.place || d?.gig?.place || '';
+  return { dt, place, date: dt.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }) };
+}
+// The songs played, in order, one entry per song (first time it was opened).
+function livePastSongIds(d) {
+  const seen = new Set(), out = [];
+  const add = id => { if (id && !seen.has(id) && db.songs.some(s => s.id === id)) { seen.add(id); out.push(id); } };
+  (d.audience?.played || []).forEach(e => add(e.songId));
+  return out;
+}
+// ⧉ Save as setlist: a generic setlist of the songs played (the "playlist" of the night).
+function livePastToSetlist(path) {
+  const d = livePastGet(path);
+  if (!d) return;
+  const ids = livePastSongIds(d);
+  if (!ids.length) { toast('No played songs in this snapshot'); return; }
+  const { date, place } = livePastLabel(path, d);
+  let name = `Played ${date}${place ? ' · ' + place : ''}`, base = name, n = 2;
+  while (db.setlists.some(x => x.name === name)) name = `${base} (${n++})`;
+  db.setlists.push({ id: uid(), name, type: 'generic', items: ids.map(id => ({ type: 'song', songId: id })) });
+  activeSetId = db.setlists[db.setlists.length - 1].id; selectedItemIdx = null;
+  save(); renderSets(); renderSetDetail();
+  toast(`Setlist "${name}" made (${ids.length} songs) — it's in the Setlists tab`, 4000);
+}
+// ⎙ PDF: the snapshot as a readable sheet for the band (played list, likes, requests and comments).
+function livePastPdf(path) {
+  const d = livePastGet(path);
+  if (!d) return;
+  const { dt, place } = livePastLabel(path, d);
+  const prof = getProfiles().find(p => p.id === (d.profile || PROFILE));
+  const title = `${prof?.name || d.profile || PROFILE} · ${dt.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`;
+  pdfShareFlow(() => buildSnapshotPdf(d, title, place), pdfFileName(`${title}${place ? ' ' + place : ''}`));
+}
+function buildSnapshotPdf(d, title, place) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 46, bottom = H - 46;
+  const clean = t => String(t ?? '').replace(/[^\x20-\x7E\xA0-\xFF]/g, '').replace(/\s+/g, ' ').trim();
+  const tm = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  let y = M;
+  const ensure = h => { if (y + h > bottom) { doc.addPage(); y = M; } };
+  const line = (txt, { size = 11, font = 'times', style = 'normal', color = 0, indent = 0, right = '' } = {}) => {
+    doc.setFont(font, style); doc.setFontSize(size); doc.setTextColor(color);
+    const lines = doc.splitTextToSize(clean(txt), W - 2 * M - indent - (right ? 60 : 0));
+    ensure(lines.length * size * 1.25 + 2);
+    doc.text(lines, M + indent, y + size, { lineHeightFactor: 1.2 });
+    if (right) doc.text(clean(right), W - M, y + size, { align: 'right' });
+    y += lines.length * size * 1.25 + 2;
+  };
+  const head = t => { y += 12; ensure(30); line(t.toUpperCase(), { size: 9, font: 'helvetica', style: 'bold' }); doc.setLineWidth(0.6); doc.line(M, y, W - M, y); y += 6; };
+  line(title, { size: 18, style: 'bold' });
+  const au = d.audience || {}, gig = au.gig || {};
+  const sub = [place, gig.when && new Date(gig.when).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), au.setlist && 'Setlist: ' + au.setlist].filter(Boolean).join(' · ');
+  if (sub) line(sub, { size: 11, color: 90 });
+  y += 4; doc.setLineWidth(1.5); doc.line(M, y, W - M, y); y += 6;
+  const played = au.played || [];
+  if (played.length) { head(`Played (${played.length})`); played.forEach((e, i) => line(`${i + 1}.  ${e.title || 'Unknown song'}`, { right: tm(e.at) })); }
+  const likes = d.likes || [];
+  if (likes.length) { head(`Audience likes (${likes.reduce((a, l) => a + (+l.count || 0), 0)})`); likes.forEach(l => line(l.title || 'Unknown song', { right: 'likes ' + (+l.count || 0) })); }
+  const reqs = d.requests || [];
+  if (reqs.length) {
+    head(`Requests and comments (${reqs.length})`);
+    reqs.forEach(r => {
+      const what = r.songId ? r.title || 'Unknown song' : '"' + (r.text || '') + '"';
+      const st = r.status === 'played' ? 'played' : r.status === 'dismissed' ? 'dismissed' : 'pending';
+      line(what, { style: r.songId ? 'bold' : 'italic', right: tm(r.at) });
+      line(`${r.name || 'Anonymous'} · ${st}${r.msg ? ' · "' + r.msg + '"' : ''}`, { size: 9, color: 110, indent: 12 });
+    });
+  }
+  const v = au.visits;
+  if (v) { head('Audience page'); line(`${v.phones} phones · ${v.visits} visits`); }
+  if (!played.length && !likes.length && !reqs.length) { y += 10; line('Nothing recorded in this snapshot.', { color: 110 }); }
+  return doc;
 }
 
 // ── 📸 Snapshot live (Andrea): one button in the Live bar saves the audience page state (setlist,
@@ -5905,8 +5994,7 @@ async function liveSnapshot() {
     // Fresh visit and like numbers first (liveLoadVisits also reloads the likes).
     liveVisitsBusy = false; await liveLoadVisits(); await liveLoadLikes();
     const q = liveArchiveQueue(); q.push(liveSnapshotData()); liveArchiveSave(q);
-    await liveArchiveFlush(true);
-    await livePgFromSnapshot();
+    await liveArchiveFlush(true);   // a private record only: no link with the audience page (Andrea)
   } finally { liveSnapBusy = false; }
 }
 async function liveArchiveFlush(verbose) {
@@ -6141,10 +6229,11 @@ async function liveResetLikes() {
 // songs: [{id, k, t}], posterV, src} (public read), with its image in pastPoster/<id> = {img, at}
 // (public read, small JPEG), hearts in pastLikes/<id>/<song key>/<phone id> = true and comments in
 // pastNotes/<id>/<push id> = {text, name?, at} (both owner-read only). <id> is the gig's date
-// (YYYY-MM-DD), so a second upload or snapshot for the same day replaces that gig (likes/comments kept).
-// Two ways in: ⬆ Upload on a gig setlist (its date, place and image) and 📸 Snapshot live
-// (the songs opened in the chord reader in the last 12 hours, with the Gig & venue place and image).
-const LIVE_PAST_IMG_MAX = 600, LIVE_PAST_IMG_BYTES = 120000, LIVE_PAST_MS = 120000, LIVE_PAST_SNAP_H = 12;
+// (YYYY-MM-DD), so a second upload for the same day replaces that gig (likes/comments kept).
+// The only way in is ⬆ Upload on a gig setlist (its songs, date, place and image) — 📸 snapshots are
+// a private record with no link to the audience page (Andrea, 2026-11-28). pastLikes/<id>/_night
+// (the night's own like counts, written by earlier versions) is still counted but no longer written.
+const LIVE_PAST_IMG_MAX = 600, LIVE_PAST_IMG_BYTES = 120000, LIVE_PAST_MS = 120000;
 let livePg = null, livePgLikes = null, livePgNotes = null, livePgErr = '', livePgAt = 0, livePgBusy = false;
 const livePgOpen = new Set();            // expanded gig rows (kept across re-renders)
 function livePgYmd(d) { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
@@ -6165,37 +6254,13 @@ async function livePgLoad() {
   if (songsShowLikes) renderSongs();
   if (activeSetId) renderSetDetail();   // a gig's ⬆ Upload / ↻ Re-upload / ✕ Remove depend on it
 }
-// The like counts of that night (Andrea): from the latest 📸 snapshot of the gig's date (or before
-// 6 AM the morning after), in the GitHub archive or still queued on the iPad. {song id: count} or null.
-async function livePgNightLikes(date) {
-  const next = livePgYmd(new Date(new Date(date + 'T12:00').getTime() + 86400000));
-  const ok = stamp => stamp.startsWith(date + '_') || (stamp.startsWith(next + '_') && stamp.slice(11, 13) < '06');
-  const stampOf = path => (path.split('/').pop() || '').replace(/\.json$/, '');
-  const cands = [];   // {stamp, data?|path?}
-  liveArchiveQueue().forEach(it => { const st = stampOf(it.file); if (ok(st)) cands.push({ stamp: st, data: it.data }); });
-  const t = liveRepoTarget();
-  try {
-    const r = await fetch(`https://api.github.com/repos/${t.owner}/${t.repo}/contents/live_snapshots/${PROFILE}?ref=${encodeURIComponent(t.branch)}&_=${Date.now()}`, { headers: t.headers, cache: 'no-store' });
-    if (r.ok) (await r.json()).forEach(f => { const st = stampOf(f.path || ''); if (f.type === 'file' && ok(st)) cands.push({ stamp: st, path: f.path }); });
-  } catch {}
-  cands.sort((a, b) => b.stamp.localeCompare(a.stamp));
-  const c = cands[0];
-  if (!c) return null;
-  let data = c.data;
-  if (!data) { await livePastLoad(c.path); data = livePastData[c.path]; }
-  if (!data || data.error) return null;
-  const out = {};
-  (data.likes || []).forEach(l => { if (l.songId && l.count > 0) out[l.songId] = l.count; });
-  return out;
-}
 // Hearts per song key for a past gig: one per phone, plus the night's counts kept in _night.
 function livePgLikeCount(likes, k) {
   const n = likes?._night?.[k];
   return Object.keys(likes?.[k] || {}).length + (typeof n === 'number' ? n : 0);
 }
 // One gig to Firebase. songs: song objects in playing order. img: data URL (any size, shrunk here) or ''.
-// nightLikes ({song id: count}) are kept as pastLikes/<id>/_night = {song key: count}.
-async function livePgPut(id, { at, place, songs, img, src, nightLikes }) {
+async function livePgPut(id, { at, place, songs, img, src }) {
   const old = livePg?.[id] || null;
   let posterV = old?.posterV || null;
   if (img) {
@@ -6210,13 +6275,6 @@ async function livePgPut(id, { at, place, songs, img, src, nightLikes }) {
   };
   await fbReq('PUT', 'past/' + id, entry);
   livePg = { ...(livePg || {}), [id]: entry };
-  if (nightLikes) {
-    const night = {};
-    songs.forEach(s => { if (nightLikes[s.id] > 0) night[fbKey(s.id)] = nightLikes[s.id]; });
-    if (Object.keys(night).length) await fbReq('PUT', `pastLikes/${id}/_night`, night);
-    else await fbReq('DELETE', `pastLikes/${id}/_night`);
-    if (livePgLikes) livePgLikes[id] = { ...(livePgLikes[id] || {}), _night: Object.keys(night).length ? night : undefined };
-  }
 }
 // The Setlists tab needs the past-gig list to label Upload/Re-upload and show ✕ Remove: load it in
 // the background (at most every LIVE_PAST_MS) when a gig is shown before the Live tab has loaded it.
@@ -6235,34 +6293,13 @@ async function livePgUploadSet(id) {
   try { if (!livePg) livePg = (await fbReq('GET', 'past')) || {}; }
   catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   const at = new Date(sl.date + 'T21:00').getTime(), old = livePg[sl.date];
-  const nightLikes = await livePgNightLikes(sl.date);
-  const nl = nightLikes ? songs.reduce((a, s) => a + (nightLikes[s.id] || 0), 0) : 0;
-  const what = `"${sl.name}" (${formatSetDate(sl.date)}${sl.place ? ', ' + sl.place : ''}, ${songs.length} songs${sl.img ? ', with its image' : ''}${nl ? `, ❤ ${nl} likes from that night's snapshot` : ''})`;
+  const what = `"${sl.name}" (${formatSetDate(sl.date)}${sl.place ? ', ' + sl.place : ''}, ${songs.length} songs${sl.img ? ', with its image' : ''})`;
   if (!confirm(old ? `Replace the past gig of ${livePgDateLabel(old.at)} on the audience page with ${what}? Its likes and comments stay.`
                    : `Put ${what} on the audience page's past gigs? People can see its songs, like them and leave a comment.`)) return;
-  try { await livePgPut(sl.date, { at, place: sl.place || '', songs, img: sl.img || '', src: 'setlist', nightLikes }); }
+  try { await livePgPut(sl.date, { at, place: sl.place || '', songs, img: sl.img || '', src: 'setlist' }); }
   catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   toast('Uploaded to past gigs');
   renderLivePg(); renderSetDetail();
-}
-// 📸 Snapshot live also puts the gig on the list: the songs opened in the chord reader in the last
-// LIVE_PAST_SNAP_H hours (Now playing history), dated by the Gig & venue time (else today).
-async function livePgFromSnapshot() {
-  if (!liveSignedIn()) return;
-  const since = Date.now() - LIVE_PAST_SNAP_H * 3600000, seen = new Set(), songs = [];
-  getLiveNow().log.forEach(e => {
-    const s = e.at >= since && !seen.has(e.id) && db.songs.find(x => x.id === e.id);
-    if (s) { seen.add(s.id); songs.push(s); }
-  });
-  if (!songs.length) return;
-  const gig = getLiveGig(), when = gig.when ? new Date(gig.when) : new Date();
-  const d = isNaN(when) ? new Date() : when, id = livePgYmd(d);
-  try {
-    if (!livePg) livePg = (await fbReq('GET', 'past')) || {};
-    await livePgPut(id, { at: d.getTime(), place: gig.place || livePg[id]?.place || '', songs, img: getLiveImg(), src: 'snapshot', nightLikes: liveLikeCounts() });
-    toast(`Past gigs: ${livePgDateLabel(d.getTime())} saved for the audience page (${songs.length} songs)`, 3500);
-  } catch (e) { toast('Past gig not saved: ' + e.message, 4500); return; }
-  renderLivePg();
 }
 async function livePgDelete(id) {
   const g = livePg?.[id];
@@ -6293,7 +6330,7 @@ function renderLivePg() {
   else {
     const list = Object.entries(livePg).filter(([, g]) => g && g.at).sort((a, b) => b[1].at - a[1].at);
     sum = list.length ? `· ${list.length}` : '';
-    head = list.length ? `<b>${list.length}</b> on the audience page (shown while nothing is published)` : 'None yet — open a gig setlist and tap ⬆ Upload, or 📸 Snapshot live adds tonight\'s';
+    head = list.length ? `<b>${list.length}</b> on the audience page (shown while nothing is published)` : 'None yet — open a gig setlist and tap ⬆ Upload';
     rows = list.map(([id, g]) => {
       const songs = Array.isArray(g.songs) ? g.songs : Object.values(g.songs || {});
       const likes = livePgLikes?.[id] || {}, notes = livePgNotes?.[id] || {};
