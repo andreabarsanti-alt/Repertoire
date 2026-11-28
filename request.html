@@ -901,14 +901,14 @@ function renderPast() {
       + (list.length ? `
       <div class="sec-h">Serate passate</div>
       ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
-        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${pastSub(x)}</small></span><span class="chev">›</span></button>`).join('')}` : '');
+        <span class="tx">${x.name ? `<b>${esc(x.name)}</b><span>${esc(pastDate(x.at))}</span>` : `<b>${esc(pastDate(x.at))}</b>`}${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${pastSub(x)}</small></span><span class="chev">›</span></button>`).join('')}` : '');
     list.forEach(loadPastPoster);
     return;
   }
   const showSongs = !g.hideSongs && g.songs.length;
   document.getElementById('subtitle').textContent = showSongs ? 'Metti un ❤ alle canzoni che ti sono piaciute' : 'Com’è andata? Scrivici qualcosa';
   box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
-    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs ? `<span class="dim">${g.songs.length} canzoni suonate</span>` : ''}</span></div>
+    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text">${g.name ? `<b>${esc(g.name)}</b><span>${esc(pastDate(g.at))}</span>` : `<b>${esc(pastDate(g.at))}</b>`}${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs ? `<span class="dim">${g.songs.length} canzoni suonate</span>` : ''}</span></div>
     <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
     ${showSongs ? '<p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>' : ''}
     ${(showSongs ? g.songs : []).map((s, i) => { const on = pLiked(g.id, s.id);
