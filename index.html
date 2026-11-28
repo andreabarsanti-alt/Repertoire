@@ -70,13 +70,15 @@ body {
   #print-area .section-row td { border-bottom: 1px solid #000; padding-top: 16px; font-weight: 700;
                                 text-transform: uppercase; letter-spacing: .04em; font-size: 0.8rem; }
   #print-area .section-row:first-child td { padding-top: 7px; }
-  #print-area .qr-poster { text-align: center; font-family: Helvetica, Arial, sans-serif; padding-top: 30px; }
-  #print-area .qp-band { font-size: 20px; color: #555; margin-bottom: 28px; }
-  #print-area .qp-h { font-size: 44px; font-weight: 700; }
-  #print-area .qp-sub { font-size: 18px; margin: 10px 0 24px; }
-  #print-area .qp-qr svg { width: 110mm; height: 110mm; }
-  #print-area .qp-url { font-size: 14px; color: #555; margin-top: 10px; }
-  #print-area .qp-ig { font-size: 26px; font-weight: 700; margin-top: 50px; line-height: 1.5; }
+  #print-area .qr-sheet { position: fixed; inset: 0; display: grid; font-family: Helvetica, Arial, sans-serif; color: #000; }
+  #print-area .qr-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+                         overflow: hidden; border: 0.3mm dashed #aaa; margin: -0.15mm; box-sizing: border-box; padding: 3mm; }
+  #print-area .qr-sheet.n1 .qr-card { border: none; }
+  #print-area .qp-band { color: #555; }
+  #print-area .qp-h { font-weight: 700; line-height: 1.25; }
+  #print-area .qp-qr svg { display: block; }
+  #print-area .qp-url { color: #555; }
+  #print-area .qp-ig { font-weight: 700; line-height: 1.4; }
   #print-area .qp-ig a { color: #000; font-weight: 400; text-decoration: none; }
   @page { margin: 12mm 14mm; }
 }
@@ -962,9 +964,19 @@ select.fi { cursor: pointer; }
 .live-qr-svg svg { width: 100%; height: 100%; display: block; }
 .live-qr-url { display: block; font-family: var(--fm); font-size: 0.68rem; color: var(--accent); overflow-wrap: anywhere; margin-bottom: 10px; }
 .live-qr-card .btn { margin: 2px; }
-#live-qr-big { z-index: 1450; flex-direction: column; gap: 16px; cursor: pointer; }
-#live-qr-big .live-qr-svg { width: min(80vw, 70dvh); height: min(80vw, 70dvh); padding: 14px; }
-#live-qr-big .live-qr-caption { color: #fff; font-size: 1.2rem; font-weight: 600; text-align: center; }
+.qrm-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 8px; }
+.qrm-left { flex: 0 0 auto; width: min(280px, 100%); margin: 0 auto; text-align: center; }
+.qrm-qr { width: 100%; height: auto; aspect-ratio: 1; padding: 10px; box-sizing: border-box; }
+.qrm-url { margin: 8px 0 0; text-align: center; }
+.qrm-side { flex: 1 1 260px; min-width: 0; }
+.qrm-hint { font-size: 0.75rem; color: var(--text-dim); margin: 6px 0 8px; line-height: 1.4; }
+.qrm-seg { display: flex; gap: 6px; }
+.qrm-seg button { flex: 1; min-height: 44px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 1rem; font-weight: 600; cursor: pointer; }
+.qrm-seg button.on { background: var(--accent); border-color: var(--accent); color: #04120f; }
+.qrm-thumbrow { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+.qrm-thumb { flex: 0 0 auto; width: 56px; height: 79px; background: #fff; border-radius: 3px; padding: 3px; box-sizing: border-box; display: grid; gap: 2px; }
+#qrm-default.hidden { display: none; }
+.qrm-thumb i { background: #c9d3df; border-radius: 1px; }
 @media (max-width: 760px) {
   .live-cols { grid-template-columns: 1fr; }
   .live-bar-right { margin-left: 0; }
@@ -1075,10 +1087,34 @@ select.fi { cursor: pointer; }
 <div id="tab-requests" class="tab">
   <div id="requests-root"></div>
 </div>
-<div class="overlay hidden" id="live-qr-big" onclick="closeModal('live-qr-big')">
-  <div class="live-qr-caption">Scan to request a song</div>
-  <div class="live-qr-svg" id="live-qr-big-svg"></div>
-  <div class="live-qr-caption" style="font-size:0.8rem;opacity:.6">Tap to close</div>
+<div class="overlay hidden" id="live-qr-modal">
+  <div class="modal" style="max-width:720px">
+    <h2>Audience QR</h2>
+    <div class="qrm-row">
+      <div class="qrm-left">
+        <div class="live-qr-svg qrm-qr" id="qrm-qr">Loading QR code…</div>
+        <div class="live-qr-url qrm-url" id="qrm-url"></div>
+      </div>
+      <div class="qrm-side">
+        <div class="fg">
+          <label for="qrm-link">Link (QR, print and Copy link)</label>
+          <input class="fi" id="qrm-link" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" onchange="liveQrLinkSave()" onkeydown="if(event.key==='Enter')this.blur()">
+          <div class="qrm-hint" id="qrm-hint"></div>
+          <button class="btn btn-secondary btn-sm" id="qrm-default" onclick="liveQrLinkDefault()">↺ Default</button>
+        </div>
+        <div class="fg">
+          <label>Cards per A4 sheet</label>
+          <div class="qrm-seg" id="qrm-seg"></div>
+          <div class="qrm-thumbrow"><div class="qrm-thumb" id="qrm-thumb"></div><div class="qrm-hint" id="qrm-per-hint"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('live-qr-modal')">Close</button>
+      <button class="btn btn-secondary" onclick="liveCopyLink()">Copy link</button>
+      <button class="btn btn-primary" onclick="liveQrPrint()">🖨 Print</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ SONG MODAL ══ -->
@@ -5221,7 +5257,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 12:02';
+const APP_BUILD = '2026-11-28 15:08';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6707,9 +6743,20 @@ const LIVE_SHORT_DIRS = ['two_of_us', 'loose_ends'];
 // The database those pages use when the link has no ?<project> (so the link is just r/<profile>/).
 const LIVE_SHORT_DEFAULT_DB = 'two-of-us-live';
 // Andrea's own TinyURL links, per profile (they redirect to the link above). Public anyway.
-const LIVE_TINY_LINKS = { two_of_us: 'https://tinyurl.com/4cys25ft' };
-// What the QR code, link and Copy link use: the TinyURL if this profile has one, else the r/ short link, else the full one.
-function liveShareUrl() { return LIVE_TINY_LINKS[LIVE_GIG] || liveShortUrl() || liveAudienceUrl(); }
+// Only defaults: the Show big popup can change the link per profile (LIVE_LINK_KEY).
+const LIVE_TINY_LINKS = { two_of_us: 'https://tinyurl.com/4cys25ft', loose_ends: 'https://tinyurl.com/2sxrpnx9' };
+// Device-local, per profile: the link typed in the Show big popup. Unset = the default above;
+// saved empty = the real link (no TinyURL).
+const LIVE_LINK_KEY = 'rep_live_link_' + PROFILE;
+function liveLinkSaved() { try { return localStorage.getItem(LIVE_LINK_KEY); } catch { return null; } }
+function liveRealUrl() { return liveShortUrl() || liveAudienceUrl(); }
+// What the QR code, link, Copy link and print use: the saved link, else this profile's TinyURL,
+// else the r/ short link, else the full one.
+function liveShareUrl() {
+  const saved = liveLinkSaved();
+  if (saved !== null) return saved.trim() || liveRealUrl();
+  return LIVE_TINY_LINKS[LIVE_GIG] || liveRealUrl();
+}
 let _qrLib = null;
 function loadQrLib() {
   if (window.qrcode) return Promise.resolve();
@@ -6738,17 +6785,85 @@ function liveFillQr(elId) {
   const el = document.getElementById(elId);
   if (!el) return;
   const url = liveShareUrl();
-  if (PRINT_STANDALONE) loadPdfLib().catch(() => {});  // for the ⤢ Show big poster
+  if (PRINT_STANDALONE) loadPdfLib().catch(() => {});  // for the ⤢ Show big print
   loadQrLib().then(() => { el.innerHTML = qrSvg(url); })
              .catch(() => { el.textContent = 'QR code needs an internet connection — share the link instead'; });
 }
-function liveShowBigQr() { openModal('live-qr-big'); liveFillQr('live-qr-big-svg'); }
-// Instagram handle per profile, printed on the QR poster ("Filmaci e taggaci"). Public anyway.
+// Instagram handle per profile, printed on the QR cards ("Filmaci e taggaci"). Public anyway.
 const LIVE_INSTAGRAM = { two_of_us: 'twoofus_7478' };
-// "⤢ Show big" -> a printable A4 QR poster for the audience, in Italian (like request.html):
-// the same two print paths as doPrint (PDF to the share sheet in the home-screen app, in-page
-// window.print() in a browser tab). Both libraries start loading when the QR card renders.
-function liveQrPoster() {
+// "⤢ Show big" -> the Audience QR popup: the QR, the link (editable per profile), how many
+// cards per A4 sheet (device-local, LIVE_QR_PER_KEY) and 🖨 Print.
+const LIVE_QR_PER = [1, 2, 4, 6, 8];
+const LIVE_QR_PER_KEY = 'rep_live_qr_per';
+function liveQrPer() {
+  let n = 6;
+  try { n = +localStorage.getItem(LIVE_QR_PER_KEY) || 6; } catch {}
+  return LIVE_QR_PER.includes(n) ? n : 6;
+}
+function liveQrOpen() {
+  openModal('live-qr-modal');
+  document.getElementById('qrm-link').value = liveShareUrl();
+  if (PRINT_STANDALONE) loadPdfLib().catch(() => {});
+  liveQrRender();
+}
+function liveQrRender() {
+  const url = liveShareUrl();
+  const def = LIVE_TINY_LINKS[LIVE_GIG] || '';
+  const saved = liveLinkSaved();
+  document.getElementById('qrm-url').textContent = url.replace(/^https?:\/\//, '');
+  document.getElementById('qrm-hint').textContent = (saved !== null && !saved.trim() ? 'Empty: using the real link. ' : '')
+    + (def ? `Default: ${def.replace(/^https?:\/\//, '')}` : 'Leave empty for the real link.');
+  document.getElementById('qrm-default').classList.toggle('hidden', saved === null);
+  liveFillQr('qrm-qr');
+  const n = liveQrPer(), [c, r] = liveQrGrid(n);
+  document.getElementById('qrm-seg').innerHTML = LIVE_QR_PER.map(k =>
+    `<button class="${k === n ? 'on' : ''}" onclick="liveQrSetPer(${k})">${k}</button>`).join('');
+  const th = document.getElementById('qrm-thumb');
+  th.style.gridTemplateColumns = `repeat(${c},1fr)`; th.style.gridTemplateRows = `repeat(${r},1fr)`;
+  th.innerHTML = '<i></i>'.repeat(n);
+  const ig = LIVE_INSTAGRAM[LIVE_GIG];
+  document.getElementById('qrm-per-hint').textContent = (n === 1 ? '1 poster per sheet.' : `${n} cards per sheet, cut along the dashed lines.`)
+    + (ig && n >= 8 ? ' No Instagram line at 8 (too small).' : '');
+}
+function liveQrSetPer(n) {
+  try { localStorage.setItem(LIVE_QR_PER_KEY, String(n)); } catch {}
+  liveQrRender();
+}
+function liveQrLinkSave() {
+  const el = document.getElementById('qrm-link');
+  let v = el.value.trim();
+  if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
+  if (v) { try { new URL(v); } catch { toast('That isn’t a valid link'); el.value = liveShareUrl(); return; } }
+  try { localStorage.setItem(LIVE_LINK_KEY, v); } catch {}
+  el.value = liveShareUrl();
+  liveQrRender();
+  renderLive();
+  toast(v ? 'Link saved' : 'Using the real link');
+}
+function liveQrLinkDefault() {
+  try { localStorage.removeItem(LIVE_LINK_KEY); } catch {}
+  document.getElementById('qrm-link').value = liveShareUrl();
+  liveQrRender();
+  renderLive();
+}
+function liveQrGrid(n) { return { 1: [1, 1], 2: [1, 2], 4: [2, 2], 6: [2, 3], 8: [2, 4] }[n] || [1, 1]; }
+// One audience card, as data shared by the PDF and the in-page print: sizes in pt (text) and
+// mm (gaps, QR) at scale s; Italian like request.html. The Instagram line is left out at 8 per sheet.
+function liveQrCardItems(n, url, name, ig) {
+  const s = { 1: 1.2, 2: 0.65, 4: 0.62, 6: 0.42, 8: 0.36 }[n] || 1;
+  const it = [];
+  if (name) it.push({ text: name, pt: 20 * s, gray: true, gap: 0 }, { gapAfter: 4 * s });
+  ['Richiedi una canzone', 'Guarda cosa suoniamo', 'Dicci se ti è piaciuta'].forEach(t => it.push({ text: t, pt: 34 * s, bold: true, lh: 1.25 }));
+  it.push({ gapAfter: 3 * s }, { text: 'Inquadra il QR code con la fotocamera del telefono', pt: 13 * s }, { gapAfter: 4 * s });
+  it.push({ qr: 100 * s }, { gapAfter: 2 * s }, { text: url.replace(/^https?:\/\//, ''), pt: 10 * s, gray: true });
+  if (ig && n < 8) it.push({ gapAfter: 8 * s }, { text: 'Filmaci e taggaci!', pt: 22 * s, bold: true },
+    { text: `Instagram @${ig}`, pt: 18 * s, link: `https://www.instagram.com/${ig}/` });
+  return it;
+}
+const PT_MM = 25.4 / 72;
+function liveQrItemH(i) { return i.gapAfter != null ? i.gapAfter : i.qr ? i.qr : i.pt * PT_MM * (i.lh || 1.2); }
+// Prints the cards: PDF to the share sheet in the home-screen app, window.print() in a browser tab.
+function liveQrPrint() {
   if (!window.qrcode) {
     toast('QR code still loading…');
     loadQrLib().catch(() => toast('QR code needs an internet connection'));
@@ -6756,56 +6871,66 @@ function liveQrPoster() {
   }
   const url = liveShareUrl();
   const ig = LIVE_INSTAGRAM[LIVE_GIG] || '';
-  const igUrl = ig ? `https://www.instagram.com/${ig}/` : '';
   const name = (getProfiles().find(p => p.id === PROFILE) || {}).name || '';
-  if (PRINT_STANDALONE) {
-    pdfShareFlow(() => buildQrPosterPdf(url, name, ig, igUrl), pdfFileName(`QR richieste ${name}`.trim()));
-    return;
-  }
-  const area = document.getElementById('print-area');
-  area.innerHTML = `<div class="qr-poster">
-    ${name ? `<div class="qp-band">${esc(name)}</div>` : ''}
-    <div class="qp-h">Richiedi una canzone!</div>
-    <div class="qp-sub">Inquadra il QR code con la fotocamera del telefono</div>
-    <div class="qp-qr">${qrSvg(url)}</div>
-    <div class="qp-url">${esc(url.replace(/^https?:\/\//, ''))}</div>
-    ${ig ? `<div class="qp-ig">Filmaci e taggaci!<br><a href="${esc(igUrl)}">Instagram @${esc(ig)}</a></div>` : ''}
-  </div>`;
+  const n = liveQrPer();
+  const file = `QR ${name || 'richieste'} - ${n} per A4`;
+  if (PRINT_STANDALONE) { pdfShareFlow(() => buildQrCardsPdf(n, url, name, ig), pdfFileName(file)); return; }
+  const [c, r] = liveQrGrid(n);
+  const card = liveQrCardItems(n, url, name, ig).map(i => {
+    if (i.gapAfter != null) return `<div style="height:${i.gapAfter.toFixed(2)}mm"></div>`;
+    if (i.qr) return `<div class="qp-qr" style="width:${i.qr}mm;height:${i.qr}mm">${qrSvg(url).replace('<svg', `<svg style="width:${i.qr}mm;height:${i.qr}mm"`)}</div>`;
+    const style = `font-size:${i.pt.toFixed(2)}pt;line-height:${i.lh || 1.2};${i.bold ? 'font-weight:700;' : ''}${i.gray ? 'color:#555;' : ''}white-space:nowrap`;
+    return i.link ? `<div style="${style}"><a href="${esc(i.link)}" style="color:#000;text-decoration:none">${esc(i.text)}</a></div>` : `<div style="${style}">${esc(i.text)}</div>`;
+  }).join('');
+  document.getElementById('print-area').innerHTML = `<div class="qr-sheet n${n}" style="grid-template-columns:repeat(${c},1fr);grid-template-rows:repeat(${r},1fr)">${
+    `<div class="qr-card">${card}</div>`.repeat(n)}</div>`;
   const prevTitle = document.title;
-  document.title = `QR richieste ${name}`.trim();
+  document.title = file;
   window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
   window.print();
 }
-function buildQrPosterPdf(url, name, ig, igUrl) {
+function buildQrCardsPdf(n, url, name, ig) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  const W = doc.internal.pageSize.getWidth();
-  const cx = W / 2;
-  let y = 90;
-  doc.setTextColor(0);
-  if (name) { doc.setFont('helvetica', 'normal'); doc.setFontSize(20); doc.setTextColor(90); doc.text(name, cx, y, { align: 'center' }); y += 50; doc.setTextColor(0); }
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(40);
-  doc.text('Richiedi una canzone!', cx, y, { align: 'center' }); y += 36;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(16);
-  doc.text('Inquadra il QR code con la fotocamera del telefono', cx, y, { align: 'center' }); y += 30;
-  // QR as filled squares (vector, sharp at any print size), with a quiet zone of 2 modules.
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, [cols, rows] = liveQrGrid(n), cw = W / cols, ch = H / rows;
   const q = qrcode(0, 'M'); q.addData(url); q.make();
-  const n = q.getModuleCount(), size = 320, cell = size / (n + 4), x0 = cx - size / 2;
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
-    if (q.isDark(r, c)) doc.rect(x0 + (c + 2) * cell, y + (r + 2) * cell, cell + 0.2, cell + 0.2, 'F');
-  y += size + 26;
-  doc.setFontSize(13); doc.setTextColor(90);
-  doc.text(url.replace(/^https?:\/\//, ''), cx, y, { align: 'center' }); doc.setTextColor(0);
-  if (ig) {
-    y += 70;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(28);
-    doc.text('Filmaci e taggaci!', cx, y, { align: 'center' }); y += 34;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(22);
-    const t = `Instagram @${ig}`;
-    doc.text(t, cx, y, { align: 'center' });
-    const tw = doc.getTextWidth(t);
-    doc.link(cx - tw / 2, y - 20, tw, 26, { url: igUrl });
+  const m = q.getModuleCount();
+  const items = liveQrCardItems(n, url, name, ig);
+  const total = items.reduce((t, i) => t + liveQrItemH(i), 0);
+  // Cut lines between cards (dashed, light grey); none for a single poster.
+  if (n > 1) {
+    doc.setDrawColor(170); doc.setLineWidth(0.2); doc.setLineDashPattern([2, 1.5], 0);
+    for (let k = 1; k < cols; k++) doc.line(k * cw, 0, k * cw, H);
+    for (let k = 1; k < rows; k++) doc.line(0, k * ch, W, k * ch);
+    doc.setLineDashPattern([], 0);
   }
+  for (let rr = 0; rr < rows; rr++) for (let cc = 0; cc < cols; cc++) {
+    const cx = cc * cw + cw / 2;
+    let y = rr * ch + (ch - total) / 2;
+    for (const i of items) {
+      const h = liveQrItemH(i);
+      if (i.qr) {
+        // QR as filled squares (vector, sharp at any size), with a quiet zone of 2 modules.
+        const cell = i.qr / (m + 4), x0 = cx - i.qr / 2;
+        doc.setFillColor(0);
+        for (let a = 0; a < m; a++) for (let b = 0; b < m; b++)
+          if (q.isDark(a, b)) doc.rect(x0 + (b + 2) * cell, y + (a + 2) * cell, cell + 0.05, cell + 0.05, 'F');
+      } else if (i.text) {
+        doc.setFont('helvetica', i.bold ? 'bold' : 'normal');
+        let pt = i.pt;
+        doc.setFontSize(pt);
+        const maxW = cw - 8;  // shrink a line that would not fit the card
+        const tw = doc.getTextWidth(i.text);
+        if (tw > maxW) { pt = pt * maxW / tw; doc.setFontSize(pt); }
+        doc.setTextColor(i.gray ? 90 : 0);
+        const base = y + h / 2 + pt * PT_MM * 0.35;
+        doc.text(i.text, cx, base, { align: 'center' });
+        if (i.link) { const w = doc.getTextWidth(i.text); doc.link(cx - w / 2, y, w, h, { url: i.link }); }
+      }
+      y += h;
+    }
+  }
+  doc.setTextColor(0);
   return doc;
 }
 function liveCopyLink() {
@@ -6941,7 +7066,7 @@ function renderLive() {
           <div class="live-qr-side">
             <div class="live-qr-title">Audience page — scan to request</div>
             <a class="live-qr-url" href="${esc(liveShareUrl())}" target="_blank" rel="noopener">${esc(liveShareUrl())}</a>
-            <button class="btn btn-secondary btn-sm" onclick="liveQrPoster()" title="Print a QR poster for the audience (in Italian)">⤢ Show big</button>
+            <button class="btn btn-secondary btn-sm" onclick="liveQrOpen()" title="QR popup: edit the link, print 1–8 cards per A4 (in Italian)">⤢ Show big</button>
             <button class="btn btn-secondary btn-sm" onclick="liveCopyLink()">Copy link</button>
           </div>
         </div>` : ''}
