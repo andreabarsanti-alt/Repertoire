@@ -1086,7 +1086,7 @@ select.fi { cursor: pointer; }
     <div class="fg"><label>Title *</label><input class="fi" id="f-title" type="text" placeholder="Song title"></div>
     <div class="fg"><label>Tags (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, rock, acoustic"></div>
     <div class="fg-row">
-      <div class="fg"><label>Key</label><input class="fi" id="f-key" type="text" placeholder="G"></div>
+      <div class="fg"><label title="The key the chord sheet is in (the shapes you play); the root key is worked out from it, the capo and the half-step tuning">Playing key</label><input class="fi" id="f-key" type="text" placeholder="G"></div>
       <div class="fg"><label id="lbl-f-capo">Capo</label><input class="fi" id="f-capo" type="text" placeholder="2"></div>
       <div class="fg"><label>Harp</label><input class="fi" id="f-harp" type="text" placeholder="C"></div>
     </div>
@@ -1376,7 +1376,7 @@ select.fi { cursor: pointer; }
       <input class="fi" id="ug-import-tags" type="text" placeholder="Neil Young" oninput="this.dataset.auto=''">
     </div>
     <div class="fg-row">
-      <div class="fg"><label>Key (root)</label><input class="fi" id="ug-import-key" type="text" placeholder="G"></div>
+      <div class="fg"><label title="The key the chord sheet is in (the shapes you play); the root key is worked out from it, the capo and the half-step tuning">Playing key</label><input class="fi" id="ug-import-key" type="text" placeholder="G"></div>
       <div class="fg"><label id="lbl-ug-capo">Capo</label><input class="fi" id="ug-import-capo" type="text" placeholder="2"></div>
     </div>
     <div class="fg">
@@ -2156,7 +2156,7 @@ function songEditRow(s) {
     <td>
       <input class="inline-fi" id="ie-title" value="${esc(s.title)}" placeholder="Title" ${k}>
       <div class="inline-kch-row">
-        <input class="inline-fi inline-sm" id="ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
+        <input class="inline-fi inline-sm" id="ie-key"  value="${esc(formPlayKey(s))}" placeholder="Play key" title="Playing key (the shapes); the root is worked out from it" ${k}>
         <input class="inline-fi inline-sm" id="ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
         <input class="inline-fi inline-sm" id="ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
       </div>
@@ -2206,8 +2206,8 @@ function saveInlineEdit(id) {
   if (!title) { toast('Title is required'); return; }
   s.title       = title;
   s.tags        = document.getElementById('ie-tags')?.value.trim()        || '';
-  s.key         = document.getElementById('ie-key')?.value.trim()         || '';
   s.capo        = document.getElementById('ie-capo')?.value.trim()        || '';
+  s.key         = rootFromPlayKey(document.getElementById('ie-key')?.value, s.capo, s.key);
   s.harp        = document.getElementById('ie-harp')?.value.trim()        || '';
   s.ugLink = normalizeUG(document.getElementById('ie-uglink')?.value || '');
   s.crd    = document.getElementById('ie-crd')?.value || '';
@@ -2250,7 +2250,7 @@ function saveSong() {
     id:          uid(),
     title,
     tags:        document.getElementById('f-tags').value.trim(),
-    key:         document.getElementById('f-key').value.trim(),
+    key:         rootFromPlayKey(document.getElementById('f-key').value, document.getElementById('f-capo').value),
     capo:        document.getElementById('f-capo').value.trim(),
     harp:        document.getElementById('f-harp').value.trim(),
     ugLink: normalizeUG(document.getElementById('f-uglink').value),
@@ -2709,6 +2709,24 @@ function playKeyFor(s, tuneUp) {
   return formatKeyName(sk.idx - (parseInt(s.capo, 10) || 0) + (tuneUp ? 1 : 0), sk.qual);
 }
 function deriveDefaultTKey(s) { return playKeyFor(s, db.tuneUp); }
+// The song forms (Add Song, UG import, both inline edits, full editor) take the Playing key — the
+// key the stored sheet is in — not the root. formPlayKey fills the field (an unparsed root is
+// shown as typed); rootFromPlayKey solves the rule above for the root on save. The old root is
+// kept byte for byte when its pitch and quality didn't change (G# stays G#, not Ab). Unparsed
+// text is stored as typed. Never touches the sheet.
+function formPlayKey(s) {
+  if (!parseKeyName(s.key)) return s.key || '';
+  const shift = (parseInt(s.capo, 10) || 0) - (db.tuneUp ? 1 : 0);
+  return (shift % 12 + 12) % 12 === 0 ? String(s.key).trim() : playKeyFor(s, db.tuneUp);
+}
+function rootFromPlayKey(tkeyStr, capo, oldRoot) {
+  const t = String(tkeyStr || '').trim(), tk = parseKeyName(t);
+  if (!tk) return t;
+  const idx = tk.idx + (parseInt(capo, 10) || 0) - (db.tuneUp ? 1 : 0);
+  const old = parseKeyName(oldRoot);
+  if (old && old.qual === tk.qual && ((old.idx - idx) % 12 + 12) % 12 === 0) return String(oldRoot).trim();
+  return formatKeyName(idx, tk.qual);
+}
 // Two capo values are the same position if they're a whole octave apart (−3 and 9).
 function sameCapo(a, b) { return (((parseInt(a, 10) || 0) - (parseInt(b, 10) || 0)) % 12 + 12) % 12 === 0; }
 
@@ -3006,7 +3024,7 @@ function crdEditSong() {
 
 // ── Full-page CRD editor (pops out whichever textarea it was opened from) ──
 let crdEditorTargetId = null;
-let crdEditorKeyId = null; // sibling Key field id, derived from targetId ("f-crd" -> "f-key", "ie-crd" -> "ie-key", "sl-ie-crd" -> "sl-ie-key")
+let crdEditorKeyId = null; // sibling Playing key field id, derived from targetId ("f-crd" -> "f-key", "ie-crd" -> "ie-key", "sl-ie-crd" -> "sl-ie-key")
 let crdEditorKey   = '';   // local Key field state, synced back to crdEditorKeyId on Done
 let crdEditorPreviewing = false; // false = editing the textarea, true = showing the rendered preview (toggleCrdEditorPreview)
 
@@ -3043,7 +3061,7 @@ function closeCrdEditor() {
 
 function renderCrdEditorMeta() {
   document.getElementById('crd-editor-meta').innerHTML = `<div class="kch-wrap">
-    <input class="kch kch-edit kch-key" id="crd-editor-key-input" type="text" placeholder="Key" autocomplete="off"
+    <input class="kch kch-edit kch-key" id="crd-editor-key-input" type="text" placeholder="Playing key" title="Playing key (the key the sheet is in)" autocomplete="off"
       value="${esc(crdEditorKey)}" oninput="crdEditorKeyEdited(this.value)">
   </div>`;
 }
@@ -3710,7 +3728,7 @@ function slEditRow(s, i, nested) {
       </div>
     </div>
     <div class="inline-kch-row">
-      <input class="inline-fi inline-sm" id="sl-ie-key"  value="${esc(s.key  ||'')}" placeholder="Key"  ${k}>
+      <input class="inline-fi inline-sm" id="sl-ie-key"  value="${esc(formPlayKey(s))}" placeholder="Play key" title="Playing key (the shapes); the root is worked out from it" ${k}>
       <input class="inline-fi inline-sm" id="sl-ie-capo" value="${esc(s.capo||'')}" placeholder="${capoWord()}" ${k}>
       <input class="inline-fi inline-sm" id="sl-ie-harp" value="${esc(s.harp||'')}" placeholder="Harp" ${k}>
     </div>
@@ -3747,8 +3765,8 @@ function saveSlEdit(id) {
   if (!title) { toast('Title is required'); return; }
   s.title  = title;
   s.tags   = document.getElementById('sl-ie-tags')?.value.trim()  || '';
-  s.key    = document.getElementById('sl-ie-key')?.value.trim()   || '';
   s.capo   = document.getElementById('sl-ie-capo')?.value.trim()  || '';
+  s.key    = rootFromPlayKey(document.getElementById('sl-ie-key')?.value, s.capo, s.key);
   s.harp   = document.getElementById('sl-ie-harp')?.value.trim()  || '';
   s.ugLink = normalizeUG(document.getElementById('sl-ie-uglink')?.value || '');
   s.crd    = document.getElementById('sl-ie-crd')?.value || '';
@@ -5138,7 +5156,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 10:50';
+const APP_BUILD = '2026-11-28 11:00';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5233,7 +5251,7 @@ function quickAddUGImport() {
   const tags = document.getElementById('ug-import-tags').value.trim() || parsed.artist || '';
   db.songs.push({
     id: uid(), title, tags,
-    key: document.getElementById('ug-import-key').value.trim(),
+    key: rootFromPlayKey(document.getElementById('ug-import-key').value, document.getElementById('ug-import-capo').value),
     capo: document.getElementById('ug-import-capo').value.trim(),
     harp: '',
     ugLink: normalizeUG(parsed.ugLink || url),
