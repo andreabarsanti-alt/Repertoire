@@ -5121,7 +5121,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 11:30';
+const APP_BUILD = '2026-11-28 11:45';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6363,7 +6363,17 @@ function livePgEnsure() {
 // place and image become a past gig. A gig's id is its date; a showcase's is '<date>-showcase', so
 // a gig and a showcase on the same day don't replace each other.
 function livePgUploadable(sl) { return sl?.type === 'live' && ['gig', 'showcase'].includes(liveKindOf(sl)); }
-function livePgIdFor(sl) { return liveKindOf(sl) === 'showcase' ? sl.date + '-showcase' : sl.date; }
+// A past gig is one item per night: a 📸 snapshot import and a later setlist upload of the same
+// date update the same entry (likes and comments live under its id, so they're never lost). A
+// showcase uses '<date>-showcase' only when that day also has a gig of its own; otherwise it takes
+// over an entry already made for that date (e.g. from a snapshot).
+function livePgIdFor(sl) {
+  if (liveKindOf(sl) !== 'showcase') return sl.date;
+  const sc = sl.date + '-showcase';
+  if (livePg?.[sc]) return sc;
+  const gigThatDay = db.setlists.some(x => x !== sl && x.type === 'live' && liveKindOf(x) === 'gig' && x.date === sl.date);
+  return livePg?.[sl.date] && !gigThatDay ? sl.date : sc;
+}
 let livePgUploadId = null, livePgUploadSnapPath = null;
 async function livePgUploadSet(id) {
   const sl = db.setlists.find(x => x.id === id);
@@ -6470,7 +6480,9 @@ function livePgSnapGig(path, d) {
   }).filter(Boolean);
   const reqs = {};
   (d.requests || []).forEach(r => { if (r.songId && db.songs.some(s => s.id === r.songId)) reqs[r.songId] = (reqs[r.songId] || 0) + 1; });
-  return { id: livePgYmd(dt), at: dt.getTime(), place: d.audience?.gig?.place || '', songs, likes, notes, reqs };
+  const day = livePgYmd(dt);
+  const id = livePg?.[day] || !livePg?.[day + '-showcase'] ? day : day + '-showcase';   // update that night's existing entry
+  return { id, at: dt.getTime(), place: d.audience?.gig?.place || '', songs, likes, notes, reqs };
 }
 async function livePgUploadSnap(path) {
   if (!liveSignedIn()) { toast('Sign in to Firebase in the Live tab first', 3500); return; }
