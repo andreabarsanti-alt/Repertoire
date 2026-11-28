@@ -1402,6 +1402,9 @@ select.fi { cursor: pointer; }
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem">
       <input type="checkbox" id="pg-upload-hide"> Hide songs <span style="color:var(--text-dim);font-size:.8rem">(only date, place and image — people can still leave a comment)</span>
     </label>
+    <label id="pg-upload-likes-row" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;margin-top:10px">
+      <input type="checkbox" id="pg-upload-likes"> <span id="pg-upload-likes-label"></span>
+    </label>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('pg-upload-modal')">Cancel</button>
       <button class="btn btn-primary" id="pg-upload-go" onclick="livePgUploadGo()">Upload</button>
@@ -2012,9 +2015,9 @@ function songsLikesEnsure(ask) {
   if (liveLikes === null && !songsLikesBusy) { songsLikesBusy = true; setTimeout(() => liveLoadLikes().finally(() => { songsLikesBusy = false; }), 0); }
 }
 let songsLikesBusy = false;
-// song id -> total likes: every past gig (phones + any `_night` counts from earlier versions,
-// livePgLikeCount) plus the current likes — unless tonight's past gig (Gig & venue date, else
-// today) already holds a `_night` copy of them.
+// song id -> total likes: every past gig (phones + its `_night` counts, livePgLikeCount) plus the
+// current likes — unless an upload already carried this like round onto a past gig (`likesRound`),
+// or (older uploads) tonight's past gig holds a `_night` copy.
 function songLikeTotals() {
   const byKey = {};
   const add = (k, n) => { if (n > 0) byKey[k] = (byKey[k] || 0) + n; };
@@ -2024,8 +2027,9 @@ function songLikeTotals() {
     keys.forEach(k => add(k, livePgLikeCount(likes, k)));
   });
   const gig = getLiveGig(), d = gig.when ? new Date(gig.when) : new Date();
-  const tonight = livePgYmd(isNaN(d) ? new Date() : d);
-  if (!livePgLikes?.[tonight]?._night) Object.entries(liveLikes || {}).forEach(([k, v]) => add(k, v && typeof v === 'object' ? Object.keys(v).length : 0));
+  const tonight = livePgYmd(isNaN(d) ? new Date() : d), round = liveLikeRound();
+  const carried = Object.values(livePg || {}).some(g => g && g.likesRound === round) || (!livePg?.[tonight]?.likesRound && livePgLikes?.[tonight]?._night);
+  if (!carried) Object.entries(liveLikes || {}).forEach(([k, v]) => add(k, v && typeof v === 'object' ? Object.keys(v).length : 0));
   const out = {};
   db.songs.forEach(s => { const n = byKey[fbKey(s.id)]; if (n) out[s.id] = n; });
   return out;
@@ -5096,7 +5100,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 10:35';
+const APP_BUILD = '2026-11-28 11:05';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -5331,6 +5335,7 @@ const LIVE_IMG_KEY = 'rep_live_img_' + PROFILE;     // gig image (JPEG data URL,
 const LIVE_ROUND_KEY = 'rep_live_round_' + PROFILE; // request round (ms), new on every Clear requests: published as info.reqRound
 const LIVE_PUB_KEY = 'rep_live_pub_' + PROFILE;      // JSON list of the published song ids, while published
 const LIVE_NOW_KEY = 'rep_live_now_' + PROFILE;      // { on, open, hist: [songId, …] } — Now playing on the audience page
+function liveLikeRound() { try { return +localStorage.getItem(LIVE_LIKE_ROUND_KEY) || 0; } catch { return 0; } }
 const LIVE_LIKE_ROUND_KEY = 'rep_live_like_round_' + PROFILE; // like round (ms), new on every likes reset: published as info.likeRound
 const LIVE_GIG     = PROFILE;
 const FB_SETUP_URL = 'https://github.com/andreabarsanti-alt/Repertoire/blob/main/FIREBASE_SETUP.md';
@@ -6249,6 +6254,7 @@ async function liveResetLikes() {
 // a private record with no link to the audience page (Andrea, 2026-11-28). pastLikes/<id>/_night
 // (the night's own like counts, written by earlier versions) is still counted but no longer written.
 const LIVE_PAST_IMG_MAX = 600, LIVE_PAST_IMG_BYTES = 120000, LIVE_PAST_MS = 120000;
+let livePgGeneral = null, livePgGeneralErr = '';   // gigs/<profile>/notes: comments sent while nothing is published
 let livePg = null, livePgLikes = null, livePgNotes = null, livePgErr = '', livePgAt = 0, livePgBusy = false;
 const livePgOpen = new Set();            // expanded gig rows (kept across re-renders)
 function livePgYmd(d) { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
@@ -6264,6 +6270,8 @@ async function livePgLoad() {
     try { livePgLikes = (await fbReq('GET', 'pastLikes')) || {}; livePgNotes = (await fbReq('GET', 'pastNotes')) || {}; }
     catch (e) { livePgErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   } catch (e) { livePgErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
+  try { livePgGeneral = (await fbReq('GET', 'notes')) || {}; livePgGeneralErr = ''; }
+  catch (e) { livePgGeneralErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   finally { livePgBusy = false; }
   renderLivePg();
   if (songsShowLikes) renderSongs();
@@ -6275,7 +6283,10 @@ function livePgLikeCount(likes, k) {
   return Object.keys(likes?.[k] || {}).length + (typeof n === 'number' ? n : 0);
 }
 // One gig to Firebase. songs: song objects in playing order. img: data URL (any size, shrunk here) or ''.
-async function livePgPut(id, { at, place, songs, img, src, kind, hideSongs }) {
+// nightLikes ({song id: count}, the Likes box's live likes) become pastLikes/<id>/_night, and the
+// entry remembers the like round they came from (likesRound) so the Songs tab doesn't count them
+// twice. Without nightLikes a re-upload keeps whatever the entry already carried.
+async function livePgPut(id, { at, place, songs, img, src, kind, hideSongs, nightLikes }) {
   const old = livePg?.[id] || null;
   let posterV = old?.posterV || null;
   if (img) {
@@ -6287,10 +6298,18 @@ async function livePgPut(id, { at, place, songs, img, src, kind, hideSongs }) {
   const entry = {
     at, place: (place || '').trim().slice(0, 120), band: prof?.name || PROFILE, src,
     ...(kind === 'showcase' ? { kind } : {}), ...(hideSongs ? { hideSongs: true } : {}),
+    ...(nightLikes ? { likesRound: liveLikeRound(), _nightAt: Date.now() }
+        : old?.likesRound !== undefined ? { likesRound: old.likesRound, ...(old._nightAt ? { _nightAt: old._nightAt } : {}) } : {}),
     songs: songs.map(s => ({ id: s.id, k: fbKey(s.id), t: s.title || '' })), posterV,
   };
   await fbReq('PUT', 'past/' + id, entry);
   livePg = { ...(livePg || {}), [id]: entry };
+  if (nightLikes) {
+    const night = {};
+    Object.entries(nightLikes).forEach(([sid, n]) => { if (n > 0) night[fbKey(sid)] = n; });
+    if (Object.keys(night).length) await fbReq('PUT', `pastLikes/${id}/_night`, night);
+    livePgLikes = { ...(livePgLikes || {}), [id]: { ...(livePgLikes?.[id] || {}), _night: night } };
+  }
 }
 // The Setlists tab needs the past-gig list to label Upload/Re-upload and show ✕ Remove: load it in
 // the background (at most every LIVE_PAST_MS) when a gig is shown before the Live tab has loaded it.
@@ -6314,6 +6333,12 @@ async function livePgUploadSet(id) {
   catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   const old = livePg[livePgIdFor(sl)], kind = liveKindLabel(sl).toLowerCase();
   const what = `"${sl.name}" (${kind}, ${formatSetDate(sl.date)}${sl.place ? ', ' + sl.place : ''}, ${songs.length} songs${sl.img ? ', with its image' : ''})`;
+  if (liveLikes === null) await liveLoadLikes();
+  const lk = liveLikeCounts(), lkTotal = Object.values(lk).reduce((a, n) => a + n, 0);
+  const recent = sl.date >= livePgYmd(new Date(Date.now() - 2 * 86400000));
+  document.getElementById('pg-upload-likes-row').style.display = lkTotal ? '' : 'none';
+  document.getElementById('pg-upload-likes-label').innerHTML = `Keep the live likes on it <span style="color:var(--text-dim);font-size:.8rem">(❤ ${lkTotal} in the Likes box now${old?._nightAt ? ' — replaces the ones carried before' : ''})</span>`;
+  document.getElementById('pg-upload-likes').checked = !!lkTotal && recent && old?.likesRound !== liveLikeRound();
   livePgUploadId = id;
   document.getElementById('pg-upload-title').textContent = old ? 'Re-upload to the audience page' : 'Upload to the audience page';
   document.getElementById('pg-upload-text').textContent = old
@@ -6326,13 +6351,14 @@ async function livePgUploadSet(id) {
 async function livePgUploadGo() {
   const sl = db.setlists.find(x => x.id === livePgUploadId);
   const hide = document.getElementById('pg-upload-hide').checked;
+  const keepLikes = document.getElementById('pg-upload-likes-row').style.display !== 'none' && document.getElementById('pg-upload-likes').checked;
   closeModal('pg-upload-modal');
   if (!sl) return;
   const songs = liveSetSongs(sl);
   if (!hide && !songs.length) { toast('This setlist has no songs — tick Hide songs to upload it without'); return; }
   try {
     await livePgPut(livePgIdFor(sl), { at: new Date(sl.date + 'T21:00').getTime(), place: sl.place || '', songs: hide ? [] : songs,
-      img: sl.img || '', src: 'setlist', kind: liveKindOf(sl), hideSongs: hide });
+      img: sl.img || '', src: 'setlist', kind: liveKindOf(sl), hideSongs: hide, nightLikes: keepLikes ? liveLikeCounts() : null });
   } catch (e) { toast('Upload failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   toast(hide ? 'Uploaded to past gigs (songs hidden)' : 'Uploaded to past gigs');
   renderLivePg(); renderSetDetail();
@@ -6348,6 +6374,13 @@ async function livePgDelete(id) {
   } catch (e) { toast('Remove failed: ' + e.message, 4500); return; }
   delete livePg[id]; if (livePgLikes) delete livePgLikes[id]; if (livePgNotes) delete livePgNotes[id];
   toast('Past gig removed'); renderLivePg(); renderSetDetail(); if (songsShowLikes) renderSongs();
+}
+async function livePgDeleteGeneral(nid) {
+  if (!confirm('Delete this comment for good?')) return;
+  try { await fbReq('DELETE', `notes/${nid}`); }
+  catch (e) { toast('Delete failed: ' + e.message, 4500); return; }
+  if (livePgGeneral) delete livePgGeneral[nid];
+  renderLivePg();
 }
 async function livePgDeleteNote(id, nid) {
   if (!confirm('Delete this comment for good?')) return;
@@ -6386,8 +6419,16 @@ function renderLivePg() {
   }
   const sumEl = document.getElementById('live-pg-sum');
   if (sumEl) sumEl.textContent = sum;
+  const gen = Object.entries(livePgGeneral || {}).filter(([, n]) => n && n.text).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+  const genHtml = livePgGeneralErr === 'rules' ? '<div class="live-like-row"><span>💬 General comments need the new Firebase rules — paste them again (setup guide, step 3)</span></div>'
+    : gen.length ? `<details class="live-pg-row" data-id="_general" ${livePgOpen.has('_general') ? 'open' : ''} ontoggle="livePgToggle(this)">
+      <summary><span class="live-pg-t"><b>💬 General comments</b> <small>${gen.length} · sent while nothing was published</small></span></summary>
+      ${gen.map(([nid, n]) => `<div class="live-like-row"><span>💬 ${esc(n.text)}<span class="live-req-time">${esc(n.name || 'Anonymous')}${n.at ? ' · ' + new Date(n.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span></span>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="livePgDeleteGeneral('${esc(nid)}')" title="Delete this comment">🗑</button></div>`).join('')}
+    </details>` : '';
+  if (sumEl && gen.length) sumEl.textContent = (sum ? sum + ' ' : '') + `· 💬 ${gen.length}`;
   el.innerHTML = `<div class="live-venue live-visits"><span>${head}</span><span class="live-visits-btns">
-    <button class="btn btn-secondary btn-sm btn-icon" onclick="livePgLoad()" title="Refresh">↻</button></span></div>${rows}`;
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="livePgLoad()" title="Refresh">↻</button></span></div>${genHtml}${rows}`;
 }
 
 // ── Audience link / QR ──
