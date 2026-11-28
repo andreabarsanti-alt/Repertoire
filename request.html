@@ -849,6 +849,11 @@ async function loadPastPoster(g) {
     document.querySelectorAll(`[data-poster="${CSS.escape(g.id)}"]`).forEach(el => { el.innerHTML = `<img src="${img}" alt="">`; el.classList.add('img'); });
   } catch { delete pastPosters[g.id]; }
 }
+// The small line under a past gig in the list: "Showcase", the song count, both, or nothing
+// (a gig uploaded with Hide songs).
+function pastSub(g) {
+  return [g.kind === 'showcase' && 'Showcase', !g.hideSongs && g.songs.length && `${g.songs.length} canzoni`].filter(Boolean).join(' · ');
+}
 function pastThumb(g) {
   const img = pastPosters[g.id]?.img;
   return `<span class="th${img ? ' img' : ''}" data-poster="${esc(g.id)}">${img ? `<img src="${img}" alt="">` : '🎤'}</span>`;
@@ -898,16 +903,17 @@ function renderPast() {
       + (list.length ? `
       <div class="sec-h">Serate passate</div>
       ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
-        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${x.songs.length} canzoni</small></span><span class="chev">›</span></button>`).join('')}` : '');
+        <span class="tx"><b>${esc(pastDate(x.at))}</b>${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${pastSub(x)}</small></span><span class="chev">›</span></button>`).join('')}` : '');
     list.forEach(loadPastPoster);
     return;
   }
-  document.getElementById('subtitle').textContent = 'Metti un ❤ alle canzoni che ti sono piaciute';
+  const showSongs = !g.hideSongs && g.songs.length;
+  document.getElementById('subtitle').textContent = showSongs ? 'Metti un ❤ alle canzoni che ti sono piaciute' : 'Com’è andata? Scrivici qualcosa';
   box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
-    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}<span class="dim">${g.songs.length} canzoni suonate</span></span></div>
+    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs || g.kind === 'showcase' ? `<span class="dim">${g.kind === 'showcase' ? 'Showcase' + (showSongs ? ' · ' : '') : ''}${showSongs ? g.songs.length + ' canzoni suonate' : ''}</span>` : ''}</span></div>
     <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
-    <p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>
-    ${g.songs.map((s, i) => { const on = pLiked(g.id, s.id);
+    ${showSongs ? '<p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>' : ''}
+    ${(showSongs ? g.songs : []).map((s, i) => { const on = pLiked(g.id, s.id);
       return `<button class="song" onclick="togglePastLike('${esc(g.id)}', '${esc(s.id)}')" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
   loadPastPoster(g);
 }
