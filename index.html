@@ -1403,10 +1403,10 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="pg-edit-modal">
   <div class="modal" style="max-width:480px">
     <h2 id="pge-title">New past gig</h2>
+    <div class="fg"><label>Setlist <span style="color:var(--text-dim);font-weight:400">(its songs, name and image)</span></label><select class="fi" id="pge-set" onchange="pgeSetChanged()"></select></div>
     <div class="fg"><label>Name <span style="color:var(--text-dim);font-weight:400">(shown on the audience page)</span></label><input class="fi" id="pge-name" maxlength="80" placeholder="Defaults to the setlist's name" oninput="this.dataset.auto=''"></div>
     <div class="fg"><label>Date</label><input class="fi" type="date" id="pge-date"></div>
     <div class="fg"><label>Place</label><input class="fi" id="pge-place" maxlength="120" placeholder="e.g. Bar Centrale, Lucca"></div>
-    <div class="fg"><label>Songs</label><select class="fi" id="pge-songs" onchange="pgeSongsChanged()"></select></div>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;margin-bottom:8px">
       <input type="checkbox" id="pge-hide"> Hide songs <span style="color:var(--text-dim);font-size:.8rem">(only date, place and image — people can still comment)</span></label>
     <label id="pge-img-row" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;margin-bottom:8px">
@@ -1420,7 +1420,7 @@ select.fi { cursor: pointer; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('pg-edit-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="livePgEditSave()">Save</button>
+      <button class="btn btn-primary" id="pge-save" onclick="livePgEditSave()">⬆ Upload</button>
     </div>
   </div>
 </div>
@@ -3561,7 +3561,6 @@ function renderSetDetail() {
           <option value="without" ${slCrdFilter==='without'?'selected':''}>No chords</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
-        ${livePgUploadable(sl) ? `${livePgEnsure()}<button class="btn btn-secondary btn-sm" onclick="livePgUploadSet('${sl.id}')" title="Put this ${liveKindLabel(sl).toLowerCase()} on the audience page's past gigs (opens the past gig editor)">${livePgEntryFor(sl) ? '↻ Re-upload' : '⬆ Upload'}</button>${livePgEntryFor(sl) ? `<button class="btn btn-danger btn-sm" onclick="livePgDelete('${livePgEntryFor(sl)}')" title="Take it off the audience page's past gigs">✕ Remove</button>` : ''}` : ''}
         ${hasSections ? `
         <button class="btn btn-secondary btn-sm" onclick="expandAllSections(true)">⤢ Expand all</button>
         <button class="btn btn-secondary btn-sm" onclick="expandAllSections(false)">⤡ Collapse all</button>` : ''}
@@ -5129,7 +5128,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 12:20';
+const APP_BUILD = '2026-11-28 10:25';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6316,38 +6315,22 @@ async function livePgLoad() {
   finally { livePgBusy = false; }
   renderLivePg();
   if (songsShowLikes) renderSongs();
-  if (activeSetId) renderSetDetail();   // a gig's ⬆ Upload / ↻ Re-upload / ✕ Remove depend on it
-}
+  }
 // Hearts per song key for a past gig: one per phone, plus the night's counts kept in _night.
 function livePgLikeCount(likes, k) {
   const n = likes?._night?.[k];
   return Object.keys(likes?.[k] || {}).length + (typeof n === 'number' ? n : 0);
 }
 // One gig to Firebase. songs: song objects in playing order. img: data URL (any size, shrunk here) or ''.
-// The Setlists tab needs the past-gig list to label Upload/Re-upload and show ✕ Remove: load it in
-// the background (at most every LIVE_PAST_MS) when a gig is shown before the Live tab has loaded it.
-function livePgEnsure() {
-  if (livePg === null && liveSignedIn() && !livePgBusy && Date.now() - livePgAt > LIVE_PAST_MS) setTimeout(livePgLoad, 0);
-  return '';
-}
-// ── Past gig editor (Andrea, 2026-11-28: "Create / edit a past gig" — you decide which gig gets
-// what). One form for a new or an existing past gig: date, place, its songs (keep / from a
-// setlist / from a 📸 snapshot's played list), Hide songs, the setlist's image, and — each at most
-// once per gig — likes, requests and comments added from a 📸 snapshot and/or the live Likes box and
-// requests right now. Likes and comments already on the gig are never touched; added counts are
-// summed into pastLikes/<id>/_night and _req. Entry fields: setlist (the setlist its songs came
-// from, for the Setlists tab's buttons), sources (['snap:<path>', 'live:<like round>:<req round>']),
-// likesRound/reqRound (the current rounds when they were added, so the Songs tab doesn't count
-// them twice). The gig id is chosen once (its date, '-2'… if taken) and never changes.
-function livePgUploadable(sl) { return sl?.type === 'live' && ['gig', 'showcase'].includes(liveKindOf(sl)); }
-// The past gig a setlist was uploaded to (older uploads: matched by date).
-function livePgEntryFor(sl) {
-  if (!livePg || !sl) return null;
-  const linked = Object.keys(livePg).find(id => livePg[id]?.setlist === sl.id);
-  if (linked) return linked;
-  const legacy = liveKindOf(sl) === 'showcase' ? [sl.date + '-showcase', sl.date] : [sl.date];
-  return legacy.find(id => livePg[id] && !livePg[id].setlist) || null;
-}
+// ── Past gig editor (Andrea, 2026-11-28: "Create / edit a past gig" — a gig is always attached to
+// a setlist). One form for a new or an existing past gig: its setlist (songs, name and image come
+// from it, re-read on every ↻ Re-upload; a name typed over sticks), date, place, Hide songs, and —
+// each at most once per gig — likes, requests and comments merged in from a 📸 snapshot and/or the
+// live Likes box and requests right now. Likes and comments already on the gig are never touched;
+// added counts are summed into pastLikes/<id>/_night and _req. Entry fields: setlist, nameAuto (the
+// name was inherited), sources (['snap:<path>', 'live:<like round>:<req round>']), likesRound/
+// reqRound (the current rounds when they were added, so the Songs tab doesn't count them twice).
+// The gig id is chosen once (its date, '-2'… if taken) and never changes.
 let pgeId = null, pgeOld = null;
 function pgeSnapOptions() {
   const local = liveArchiveQueue().map(it => it.file);
@@ -6361,8 +6344,7 @@ function pgeSetOptions() {
   const gen = db.setlists.filter(sl => sl.type !== 'live').sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   return [...live, ...gen];
 }
-// prefill: { songs: 'set:<id>' | 'snap:<path>', date, place, useImg }
-async function livePgEditOpen(id, prefill = {}) {
+async function livePgEditOpen(id) {
   if (!liveSignedIn()) { toast('Sign in to Firebase in the Live tab first', 3500); return; }
   try { if (!livePg) livePg = (await fbReq('GET', 'past')) || {}; }
   catch (e) { toast('Couldn\'t load past gigs: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
@@ -6370,14 +6352,17 @@ async function livePgEditOpen(id, prefill = {}) {
   pgeId = id && livePg[id] ? id : null; pgeOld = pgeId ? livePg[pgeId] : null;
   const g = pgeOld, $ = x => document.getElementById(x);
   $('pge-title').textContent = g ? `Edit past gig — ${livePgDateLabel(g.at)}` : 'New past gig';
-  $('pge-date').value = prefill.date || (g ? livePgYmd(new Date(g.at)) : '');
-  $('pge-name').value = g?.name || ''; $('pge-name').dataset.auto = g?.name ? '' : '1';   // auto: follows the chosen setlist
-  $('pge-place').value = prefill.place ?? (g?.place || '');
+  $('pge-save').textContent = g ? '↻ Re-upload' : '⬆ Upload';
   const sets = pgeSetOptions(), snaps = pgeSnapOptions();
-  $('pge-songs').innerHTML = (g ? `<option value="keep">Keep its ${g.hideSongs ? 'hidden ' : ''}songs (${(Array.isArray(g.songs) ? g.songs : Object.values(g.songs || {})).length})</option>` : '<option value="none">No songs</option>')
-    + `<optgroup label="From a setlist">${sets.map(sl => `<option value="set:${sl.id}">${esc(sl.date ? formatSetDate(sl.date) + ' · ' : '')}${esc(sl.type === 'live' ? liveKindLabel(sl) + ' · ' : '')}${esc(sl.name)}</option>`).join('')}</optgroup>`
-    + (snaps.length ? `<optgroup label="From a 📸 snapshot (songs played)">${snaps.map(s => `<option value="snap:${esc(s.p)}">${esc(s.label)}</option>`).join('')}</optgroup>` : '');
-  $('pge-songs').value = prefill.songs || (g ? 'keep' : 'none');
+  const att = g?.setlist && db.setlists.find(x => x.id === g.setlist);
+  $('pge-set').innerHTML = (att ? '' : '<option value="">Choose a setlist…</option>')
+    + sets.map(sl => `<option value="${sl.id}">${esc(sl.date ? formatSetDate(sl.date) + ' · ' : '')}${esc(sl.type === 'live' ? liveKindLabel(sl) + ' · ' : '')}${esc(sl.name)}</option>`).join('');
+  $('pge-set').value = att ? att.id : '';
+  // auto: the name follows the setlist — for a new gig, or one whose name was inherited
+  // (nameAuto, or still equal to its setlist's name) and not typed over.
+  $('pge-name').value = g?.name || ''; $('pge-name').dataset.auto = !g?.name || g.nameAuto || (att && g.name === att.name) ? '1' : '';
+  $('pge-date').value = g ? livePgYmd(new Date(g.at)) : '';
+  $('pge-place').value = g?.place || '';
   $('pge-hide').checked = !!g?.hideSongs;
   const used = new Set(g?.sources || []);
   $('pge-snap').innerHTML = snaps.length ? snaps.map(s => `<option value="${esc(s.p)}">${esc(s.label)}${used.has('snap:' + s.p) ? ' (already added)' : ''}</option>`).join('') : '<option value="">No snapshots</option>';
@@ -6386,39 +6371,30 @@ async function livePgEditOpen(id, prefill = {}) {
   const liveKey = `live:${liveLikeRound()}:${liveReqRound()}`;
   $('pge-live-label').textContent = used.has(liveKey) ? `Live likes and requests now (already added)` : `Live likes and requests now (❤ ${lk} · 🙋 ${rq})`;
   $('pge-add-live').checked = false; $('pge-add-live').disabled = (!lk && !rq) || used.has(liveKey);
-  $('pge-use-img').checked = prefill.useImg !== false;
-  pgeSongsChanged(!!g?.name);
+  $('pge-use-img').checked = true;
+  pgeSetChanged(true);
   openModal('pg-edit-modal');
   if (livePastFiles === null && !livePastFetching) { livePastFetching = true; livePastFetchList().finally(() => { livePastFetching = false; }); }
 }
-// Songs source changed: show "Use the setlist's image" when it has one, and fill an empty date/place.
-function pgeSongsChanged(init) {
-  const $ = x => document.getElementById(x), v = $('pge-songs').value;
-  const sl = v.startsWith('set:') ? db.setlists.find(x => x.id === v.slice(4)) : null;
+// Setlist changed: the name follows it (unless typed over), "Use the setlist's image" shows when it
+// has one, and — when picked by hand — its date and place fill the form.
+function pgeSetChanged(init) {
+  const $ = x => document.getElementById(x), sl = db.setlists.find(x => x.id === $('pge-set').value);
   $('pge-img-row').style.display = sl?.img ? '' : 'none';
   if (sl && $('pge-name').dataset.auto) $('pge-name').value = sl.name;
-  if (init) return;
-  if (sl) { if (!$('pge-date').value && sl.date) $('pge-date').value = sl.date; if (!$('pge-place').value && sl.place) $('pge-place').value = sl.place; }
-  if (v.startsWith('snap:')) {
-    const p = v.slice(5), d = livePastGet(p);
-    if (d) { const g = livePgSnapGig(p, d); if (!$('pge-date').value) $('pge-date').value = livePgYmd(new Date(g.at)); if (!$('pge-place').value) $('pge-place').value = g.place; }
-    $('pge-snap').value = p;
-  }
+  if (init || !sl) return;
+  if (sl.date) $('pge-date').value = sl.date;
+  if (sl.place) $('pge-place').value = sl.place;
 }
 async function livePgEditSave() {
   const $ = x => document.getElementById(x);
   const date = $('pge-date').value, place = $('pge-place').value.trim().slice(0, 120), name = $('pge-name').value.trim().slice(0, 80);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('Pick a date'); return; }
-  const v = $('pge-songs').value, hide = $('pge-hide').checked, old = pgeOld;
-  const sl = v.startsWith('set:') ? db.setlists.find(x => x.id === v.slice(4)) : null;
-  let songs;
-  if (v === 'keep') songs = (Array.isArray(old?.songs) ? old.songs : Object.values(old?.songs || {})).filter(Boolean);
-  else if (sl) songs = liveSetSongs(sl).map(s => ({ id: s.id, k: fbKey(s.id), t: s.title || '' }));
-  else if (v.startsWith('snap:')) { const p = v.slice(5); await livePastLoad(p); const d = livePastGet(p);
-    if (!d) { toast('Couldn\'t load that snapshot'); return; }
-    songs = livePgSnapGig(p, d).songs.map(s => ({ id: s.id, k: fbKey(s.id), t: s.title || '' })); }
-  else songs = [];
-  if (!hide && !songs.length && !confirm('This past gig has no songs. Save it anyway (only date, place and image show)?')) return;
+  const hide = $('pge-hide').checked, old = pgeOld;
+  const sl = db.setlists.find(x => x.id === $('pge-set').value);
+  if (!sl) { toast('Pick its setlist'); return; }
+  const songs = liveSetSongs(sl).map(s => ({ id: s.id, k: fbKey(s.id), t: s.title || '' }));
+  if (!hide && !songs.length && !confirm('That setlist has no songs. Save the past gig anyway (only date, place and image show)?')) return;
   const addSnap = $('pge-add-snap').checked && $('pge-snap').value, addLive = $('pge-add-live').checked;
   const sources = [...(old?.sources || [])];
   if (addSnap && sources.includes('snap:' + addSnap) && !confirm('That snapshot was already added to this gig. Add its likes, requests and comments again?')) return;
@@ -6429,7 +6405,7 @@ async function livePgEditSave() {
   const at = old && oldDate === date ? old.at : new Date(date + 'T21:00').getTime();
   try {
     let posterV = old?.posterV || null;
-    if (sl?.img && $('pge-use-img').checked) {
+    if (sl.img && $('pge-use-img').checked) {
       const small = await liveShrinkImage(sl.img, LIVE_PAST_IMG_MAX, LIVE_PAST_IMG_BYTES);
       posterV = Date.now();
       await fbReq('PUT', 'pastPoster/' + id, { img: small, at: posterV });
@@ -6454,12 +6430,11 @@ async function livePgEditSave() {
       sources.push(`live:${likesRound}:${reqRound}`);
     }
     const prof = getProfiles().find(p => p.id === PROFILE);
-    const setlist = sl ? sl.id : v === 'keep' ? old?.setlist : undefined;
     const entry = {
       at, place, band: prof?.name || PROFILE, songs, posterV, ...(name ? { name } : {}),
-      src: sl ? 'setlist' : v.startsWith('snap:') ? 'snapshot' : (old?.src || 'manual'),
-      ...(hide ? { hideSongs: true } : {}), ...(setlist ? { setlist } : {}),
-      ...((sl ? liveKindOf(sl) === 'showcase' && sl.type === 'live' : old?.kind === 'showcase') ? { kind: 'showcase' } : {}),
+      ...(name && $('pge-name').dataset.auto && name === sl.name ? { nameAuto: true } : {}),
+      setlist: sl.id, ...(hide ? { hideSongs: true } : {}),
+      ...(sl.type === 'live' && liveKindOf(sl) === 'showcase' ? { kind: 'showcase' } : {}),
       ...(sources.length ? { sources } : {}),
       ...(likesRound !== undefined ? { likesRound } : {}), ...(reqRound !== undefined ? { reqRound } : {}),
     };
@@ -6480,13 +6455,10 @@ async function livePgEditSave() {
   } catch (e) { toast('Save failed: ' + e.message + (/permission/i.test(e.message) ? ' — paste the new Firebase rules (setup guide, step 3)' : ''), 6000); return; }
   renderLivePg(); renderPgTab(); if (activeSetId) renderSetDetail(); if (songsShowLikes) renderSongs();
 }
-// ⬆ Upload / ↻ Re-upload on a gig or showcase setlist (Setlists tab): the editor, on the past gig
-// this setlist went to (or a new one), with its songs, date, place and image filled in.
-function livePgUploadSet(id) {
-  const sl = db.setlists.find(x => x.id === id);
-  if (!sl) return;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(sl.date || '')) { toast('Give the setlist a date first (✎)'); return; }
-  livePgEditOpen(livePgEntryFor(sl), { songs: 'set:' + sl.id, date: sl.date, place: sl.place || '' });
+// ↻ Re-upload on a past gig attached to a setlist: the editor with its songs taken again from it.
+function livePgReupload(id) {
+  const g = livePg?.[id];
+  if (g) livePgEditOpen(id);
 }
 async function livePgDelete(id) {
   const g = livePg?.[id];
@@ -6500,9 +6472,8 @@ async function livePgDelete(id) {
   delete livePg[id]; if (livePgLikes) delete livePgLikes[id]; if (livePgNotes) delete livePgNotes[id];
   toast('Past gig removed'); renderLivePg(); renderSetDetail(); if (songsShowLikes) renderSongs();
 }
-// ── 🗂 Past gigs tab (Andrea, 2026-11-28): upload a gig/showcase setlist, or import a 📸 snapshot
-// (its played songs, likes and comments) as a past gig — the only bridge from a snapshot to the
-// audience page — plus the list of past gigs with their likes and comments (renderLivePg). ──
+// ── 🗂 Past gigs tab (Andrea, 2026-11-28): + New past gig and the list of past gigs (renderLivePg)
+// with their likes and comments, ✎ / ↻ Re-upload into the editor above. ──
 function renderPgTab() {
   const root = document.getElementById('pastgigs-root');
   if (!root) return;
@@ -6511,7 +6482,7 @@ function renderPgTab() {
     return;
   }
   root.innerHTML = `<div class="live-bar pg-bar">
-      <button class="btn btn-primary btn-sm" onclick="livePgEditOpen(null)" title="Make a past gig: pick its date, place and songs (from a setlist or a 📸 snapshot), and add likes, requests and comments">+ New past gig</button>
+      <button class="btn btn-primary btn-sm" onclick="livePgEditOpen(null)" title="Make a past gig from a setlist (its songs, name and image), and add likes, requests and comments from a 📸 snapshot or the live">+ New past gig</button>
       <span class="live-status">✎ on a gig edits it — songs, place, image, or add likes, requests and comments from a snapshot or tonight</span>
     </div>
     <div class="pg-list"><div style="margin:4px 0 8px;font-weight:600">🗂 On the audience page <span class="live-box-sum" id="live-pg-sum"></span></div><div id="live-pg"></div></div>`;
@@ -6575,8 +6546,8 @@ function renderLivePg() {
       const nl = Object.entries(notes).filter(([, n]) => n && n.text).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
       return `<details class="live-pg-row" data-id="${esc(id)}" ${livePgOpen.has(id) ? 'open' : ''} ontoggle="livePgToggle(this)">
         <summary><span class="live-pg-t">${g.name ? `<b>${esc(g.name)}</b> · ` : ''}<b>${esc(livePgDateLabel(g.at))}</b>${g.place ? ' · ' + esc(g.place) : ''}
-          <small>${g.kind === 'showcase' ? 'Showcase · ' : ''}${g.hideSongs ? 'songs hidden' : songs.length + ' songs'}${total ? ` · ❤ ${total}` : ''}${rq ? ` · 🙋 ${rq}` : ''}${nl.length ? ` · 💬 ${nl.length}` : ''}${g.src === 'snapshot' ? ' · songs from a snapshot' : ''}</small></span>
-          <span style="display:flex;gap:4px"><button class="btn btn-secondary btn-sm btn-icon" onclick="event.preventDefault();livePgEditOpen('${esc(id)}')" title="Edit this past gig">✎</button>
+          <small>${(() => { const a = g.setlist && db.setlists.find(x => x.id === g.setlist); return a ? `🔗 ${esc(a.name)} · ` : '⚠ no setlist (✎ to attach one) · '; })()}${g.kind === 'showcase' ? 'Showcase · ' : ''}${g.hideSongs ? 'songs hidden' : songs.length + ' songs'}${total ? ` · ❤ ${total}` : ''}${rq ? ` · 🙋 ${rq}` : ''}${nl.length ? ` · 💬 ${nl.length}` : ''}</small></span>
+          <span style="display:flex;gap:4px">${g.setlist && db.setlists.some(x => x.id === g.setlist) ? `<button class="btn btn-secondary btn-sm" onclick="event.preventDefault();livePgReupload('${esc(id)}')" title="Take the songs again from its setlist">↻ Re-upload</button>` : ''}<button class="btn btn-secondary btn-sm btn-icon" onclick="event.preventDefault();livePgEditOpen('${esc(id)}')" title="Edit this past gig">✎</button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="event.preventDefault();livePgDelete('${esc(id)}')" title="Remove from the audience page">✕</button></span></summary>
         ${nl.map(([nid, n]) => `<div class="live-like-row"><span>💬 ${esc(n.text)}<span class="live-req-time">${esc(n.name || 'Anonymous')}${n.at ? ' · ' + new Date(n.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span></span>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="livePgDeleteNote('${esc(id)}', '${esc(nid)}')" title="Delete this comment">🗑</button></div>`).join('')}
