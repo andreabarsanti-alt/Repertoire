@@ -175,6 +175,9 @@ textarea.fi { resize: vertical; min-height: 70px; }
 .off { text-align: center; padding: 18px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; }
 .off .big { font-size: 1.8rem; }
 .off h2 { font-size: 1.05rem; margin: 4px 0 2px; }
+.off.end { margin-bottom: 12px; }
+.off.end .big { color: #e0245e; }
+.off.end h2 { font-size: 1.3rem; }
 .off p { color: var(--text-dim); font-size: 0.88rem; }
 .sec-h { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; margin: 18px 0 8px; }
 .pg { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font: inherit; cursor: pointer; }
@@ -200,6 +203,7 @@ textarea.fi { resize: vertical; min-height: 70px; }
     <h1 id="title">&nbsp;</h1>
     <p id="subtitle">Scegli un artista o un genere, oppure cerca una canzone</p>
   </header>
+  <div id="end" class="off end hidden"><div class="big">❤</div><h2>È tutto per stasera, grazie!</h2><p>Speriamo ti sia piaciuta la serata</p></div>
   <div id="gig" class="gig hidden">
     <img id="poster" class="poster hidden" alt="">
     <span class="gig-icon">🎤</span>
@@ -382,6 +386,7 @@ async function poll() {
     failCount = 0;
     if (!i) {
       info = null; songs = []; songsV = null;
+      document.getElementById('end').classList.add('hidden');
       loadPoster(); renderNow();
       document.getElementById('gig').classList.add('hidden');
       renderPast();         // "Nessuna serata in corso", a comment button and the past gigs
@@ -393,7 +398,10 @@ async function poll() {
         songsV = i.songsV;
       }
       info = i;
-      if (i.open !== true) loadPast();
+      // 🌙 Fine serata handed over to a past gig: make sure that gig is loaded (once forced).
+      const pid = i.end?.pastId;
+      if (pid && !pastList().some(x => x.id === pid) && pastForced !== pid) { pastForced = pid; loadPast(true); }
+      else if (pid || (i.open !== true && !i.end)) loadPast();
       loadPoster();
       checkMine();
       render();
@@ -516,6 +524,8 @@ function groups() {
 function render() {
   document.getElementById('state-msg').classList.add('hidden');
   setBandTitle(info.title);
+  if (info.end) { renderEnd(); return; }
+  document.getElementById('end').classList.add('hidden');
   const open = info.open === true;
   // Requests closed (Andrea): no setlist — gig card, Instagram, "Scrivici qualcosa", then the past gigs.
   if (!open) {
@@ -847,7 +857,7 @@ async function loadPast(force) {
   try { past = (await getJSON('past')) || {}; pastAt = Date.now(); }
   catch { if (!past) past = {}; }   // older rules refuse it: just no past gigs
   finally { pastBusy = false; }
-  if (!info) renderPast(); else if (info.open !== true) render();
+  if (!info) renderPast(); else if (info.open !== true || info.end) render();
 }
 function pastList() {
   return Object.entries(past || {}).filter(([, g]) => g && g.at)
@@ -903,10 +913,11 @@ async function togglePastLike(id, sid) {
 function renderPast() {
   const box = document.getElementById('past');
   const list = pastList();
-  const closed = !!info && info.open !== true;   // published, requests closed
-  if (info && !closed) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const off = !info || !!endHandedOver();          // nothing published, or Fine serata handed over to a past gig
+  const closed = !off && info.open !== true;      // published, requests closed
+  if (!off && !closed) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   document.getElementById('state-msg').classList.add('hidden');
-  if (!info) document.getElementById('main').classList.add('hidden');
+  if (off) document.getElementById('main').classList.add('hidden');
   box.classList.remove('hidden');
   if (!closed && list.length) {
     const band = list[0].band || '';
@@ -936,19 +947,61 @@ function renderPast() {
       return `<button class="song" onclick="togglePastLike('${esc(g.id)}', '${esc(s.id)}')" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
   loadPastPoster(g);
 }
+// ── 🌙 Fine serata (info.end = { at, songs: [{id, k, t}], pastId? }, set in the app after a gig) ──
+// "È tutto per stasera, grazie!" at the top, tonight's songs in the order played, each with a heart
+// (the live likes, like Now playing), and a comment box (sent as a free-text request). No requests,
+// no Now playing. Once the band uploads tonight's past gig (pastId), the page shows that past gig.
+const END_FORM = '__end';
+let pastForced = null, endHanded = null;
+function endHandedOver() {
+  const id = info?.end?.pastId;
+  return id && pastList().some(x => x.id === id) ? id : null;
+}
+function renderEnd() {
+  document.getElementById('main').classList.add('hidden');
+  document.getElementById('now').classList.add('hidden');
+  closeSheet('list-sheet');
+  const pid = endHandedOver();
+  if (pid) {
+    document.getElementById('end').classList.add('hidden');
+    if (endHanded !== pid) {
+      endHanded = pid;
+      // This phone's hearts from tonight show on the past gig too (the counts were carried over).
+      const all = pLikes();
+      if (!all[pid]) {
+        const g = pastList().find(x => x.id === pid), mine = likeState().ids.filter(sid => g.songs.some(s => s.id === sid));
+        if (mine.length) { all[pid] = mine; try { localStorage.setItem(PLIKES_KEY, JSON.stringify(all)); } catch {} }
+      }
+      if (!pastSel()) history.replaceState(null, '', location.pathname + location.search + '#serata=' + encodeURIComponent(pid));
+    }
+    if (pastSel()) document.getElementById('gig').classList.add('hidden'); else renderGig();
+    renderPast();
+    return;
+  }
+  document.getElementById('end').classList.remove('hidden');
+  renderGig();
+  const songs = (Array.isArray(info.end.songs) ? info.end.songs : Object.values(info.end.songs || {})).filter(s => s && s.id);
+  document.getElementById('subtitle').textContent = songs.length ? 'Metti un ❤ alle canzoni che ti sono piaciute' : 'Com’è andata? Scrivici qualcosa';
+  const box = document.getElementById('past');
+  box.classList.remove('hidden');
+  box.innerHTML = `<button class="btn btn-secondary btn-wide" id="end-note-btn" onclick="openPastForm(END_FORM)">✎ Com’è andata? Scrivici qualcosa</button>
+    ${songs.length ? `<p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p><div class="sec-h">Stasera abbiamo suonato</div>` : ''}
+    ${songs.map((s, i) => { const on = isLiked(s.id);
+      return `<button class="song" onclick="toggleLike('${esc(s.id)}', event)" aria-pressed="${on}"><span class="num">${i + 1}</span><span class="song-title">${esc(s.t)}</span><span class="heart mini${on ? ' on' : ''}" aria-hidden="true">${on ? '❤' : '♡'}</span></button>`; }).join('')}`;
+}
 addEventListener('hashchange', () => {
-  if (!info) renderPast(); else if (info.open !== true) render(); else return;
+  if (!info) renderPast(); else if (info.open !== true || info.end) render(); else return;
   scrollTo(0, 0);
 });
 let pastFormId = null;
 // id null = a general comment, sent while nothing is published (gigs/<gig>/notes).
 function openPastForm(id) {
-  const g = id ? pastList().find(x => x.id === id) : { at: 0 };
+  const g = id === END_FORM ? { at: 0 } : id ? pastList().find(x => x.id === id) : { at: 0 };
   if (!g) return;
   pastFormId = id;
   document.getElementById('form-body').innerHTML = `
     <div class="sheet-head"><h2>Scrivici qualcosa</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
-    ${id ? `<p class="hint" style="margin:-4px 0 12px">${esc(pastDate(g.at))}</p>` : ''}
+    ${id && id !== END_FORM ? `<p class="hint" style="margin:-4px 0 12px">${esc(pastDate(g.at))}</p>` : ''}
     <div class="fg"><label>Un commento, un saluto, una canzone per la prossima volta…</label><textarea class="fi" id="pn-text" maxlength="200" placeholder="es. Bellissima serata!"></textarea></div>
     <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="pn-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
     <div class="form-err" id="pn-err"></div>
@@ -968,9 +1021,15 @@ async function sendPastNote() {
   saveName(name);
   btn.disabled = true; err.textContent = ''; btn.textContent = 'Invio…';
   try {
-    const r = await fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/${pastFormId ? 'pastNotes/' + encodeURIComponent(pastFormId) : 'notes'}.json`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    // 🌙 Fine serata: a free-text request of tonight's gig, so it carries over with the live
+    // likes and requests when the past gig is uploaded.
+    const node = pastFormId === END_FORM ? 'requests' : pastFormId ? 'pastNotes/' + encodeURIComponent(pastFormId) : 'notes';
+    const post = b => fetch(`${DB_BASE}/gigs/${encodeURIComponent(GIG)}/${node}.json`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b),
     });
+    let r = await post(body);
+    // Rules from before 2026-11-27 cap a request's text at 100: first 100 chars, all of it in msg.
+    if (!r.ok && node === 'requests' && text.length > 100) r = await post({ ...body, text: text.slice(0, 100), msg: text });
     if (!r.ok) throw 0;
   } catch {
     err.textContent = 'Invio non riuscito — controlla la connessione e riprova';
@@ -979,7 +1038,7 @@ async function sendPastNote() {
   setLastSent();
   document.getElementById('form-body').innerHTML = `<div class="thanks"><div class="big">🙌</div><h2>Grazie!</h2>
     <p>La band lo leggerà presto.</p>
-    <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">${pastFormId ? 'Torna alla serata' : 'Chiudi'}</button></div>`;
+    <button class="btn btn-primary btn-wide" onclick="closeSheet('form-sheet')">${pastFormId && pastFormId !== END_FORM ? 'Torna alla serata' : 'Chiudi'}</button></div>`;
 }
 
 document.addEventListener('keydown', e => {

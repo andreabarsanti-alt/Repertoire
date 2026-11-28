@@ -4323,6 +4323,7 @@ function startLiveRec(kind) {
   // A new live starts a fresh Now playing list and history (the last one was saved on its Stop).
   const v = getLiveNow(); v.hist = []; v.log = []; v.open = false; saveLiveNow(v);
   liveNowLast = undefined; liveNowPush();
+  if (liveInfo?.end) liveSetEnd(false, true);   // a new live takes the audience page out of Fine serata
   renderLiveRec();
   liveCaptureVenue(false);   // where the live started = the venue, for the audience location check
   toast(`Live started (${LIVE_KINDS[liveRec.kind]}) — open songs in the chord reader to note them down`, 3500);
@@ -4367,6 +4368,10 @@ async function stopLiveRec() {
   liveRec = null; saveLiveRec(); liveNowStopped();
   renderSets(); renderSetDetail();
   toast(`Saved "${name}"`);
+  // Offer 🌙 Fine serata: the audience page thanks people and lists tonight's songs to heart.
+  if (liveSignedIn() && livePublished() && !liveInfo?.end
+      && confirm('Switch the audience page to 🌙 Fine serata? It says "È tutto per stasera, grazie!" and lists tonight\'s songs for people to heart and comment on. Requests and Now playing are hidden.'))
+    await liveSetEnd(true);
   // An automatic 📸 snapshot, so the night's likes, requests and comments are kept before any
   // Reset / Clear (queued; it goes up with the push below).
   let snap = null;
@@ -5258,7 +5263,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 15:38';
+const APP_BUILD = '2026-11-28 17:00';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6298,6 +6303,37 @@ function liveAutoPlayed(id) {
   liveSetPlayed(id, true).catch(() => {});
 }
 
+// ── 🌙 Fine serata (Andrea, 2026-11-28): info.end = { at, songs: [{id, k, t}], pastId? } ──
+// An end-of-the-night state of the audience page, between ■ Stop and Unpublish: request.html
+// thanks people, lists tonight's played songs (hearts go to the live likes) and takes comments
+// (sent as free-text requests). Requests and Now playing are hidden there. A pure toggle: turning
+// it on or off never clears anything. Uploading tonight's past gig sets pastId, and the page hands
+// over to that past gig.
+// Tonight's songs in first-played order: the Now playing history, else the played marks by time.
+function liveEndSongs() {
+  const seen = new Set(), out = [];
+  const add = id => { const s = db.songs.find(x => x.id === id); if (s && !seen.has(id)) { seen.add(id); out.push(s); } };
+  getLiveNow().log.forEach(e => add(e.id));
+  if (!out.length) {
+    const played = liveInfo?.played || {};
+    Object.entries(played).sort((a, b) => a[1] - b[1]).forEach(([k]) => { const s = db.songs.find(x => fbKey(x.id) === k); if (s) add(s.id); });
+  }
+  return out;
+}
+async function liveSetEnd(on, quiet) {
+  if (!liveSignedIn() || !livePublished()) { if (!quiet) toast('Publish the audience page first'); return; }
+  let end = null;
+  if (on) {
+    const songs = liveEndSongs();
+    end = { at: Date.now(), songs: songs.map(s => ({ id: s.id, k: fbKey(s.id), t: s.title || '' })) };
+  }
+  try { await fbReq('PUT', 'info/end', end); }
+  catch (e) { if (!quiet) toast('Failed: ' + e.message, 4500); return; }
+  if (liveInfo) { if (end) liveInfo.end = end; else delete liveInfo.end; }
+  renderLive();
+  if (!quiet) toast(on ? `🌙 Fine serata on — ${end.songs.length} song${end.songs.length === 1 ? '' : 's'} listed for hearts` : 'Fine serata off — the normal audience page is back');
+}
+
 // ── Now playing (info.now on the audience page) ──
 // The song open in the chord reader and the two before it, tracked only while a live is running
 // (hist = the last three distinct songs opened, newest first; open = the reader is open on
@@ -6508,8 +6544,9 @@ async function livePgEditOpen(id, prefill = {}) {
   $('pge-add-snap').checked = false; $('pge-add-snap').disabled = !snaps.length;
   const lk = Object.values(liveLikeCounts()).reduce((a, n) => a + n, 0), rq = Object.values(liveReqCounts()).reduce((a, n) => a + n, 0);
   const liveKey = `live:${liveLikeRound()}:${liveReqRound()}`;
-  $('pge-live-label').textContent = used.has(liveKey) ? `Live likes and requests now (already added)` : `Live likes and requests now (❤ ${lk} · 🙋 ${rq})`;
-  $('pge-add-live').checked = false; $('pge-add-live').disabled = (!lk && !rq) || used.has(liveKey);
+  const cm = liveReqList().filter(r => r.songId ? r.msg : r.text).length;
+  $('pge-live-label').textContent = used.has(liveKey) ? `Live likes, requests and comments now (already added)` : `Live likes, requests and comments now (❤ ${lk} · 🙋 ${rq}${cm ? ' · 💬 ' + cm : ''})`;
+  $('pge-add-live').checked = false; $('pge-add-live').disabled = (!lk && !rq && !cm) || used.has(liveKey);
   $('pge-use-img').checked = true;
   pgeSetChanged(true);
   if (!g && prefill.set && db.setlists.some(x => x.id === prefill.set)) { $('pge-set').value = prefill.set; pgeSetChanged(); }
@@ -6572,6 +6609,15 @@ async function livePgEditSave() {
     }
     if (addLive) {
       sum(addL, liveLikeCounts()); sum(addR, liveReqCounts());
+      // Comments sent tonight (free-text requests, incl. 🌙 Fine serata ones, and song requests'
+      // messages); one already taken from a snapshot ticked too isn't posted twice.
+      const have = new Set(notes.map(n => n.at + '|' + n.text));
+      liveReqList().forEach(r => {
+        const title = r.songId ? db.songs.find(x => x.id === r.songId)?.title || 'Song' : '';
+        const txt = (r.songId ? (r.msg ? `${title}: ${r.msg}` : '') : (r.text || '')).trim().slice(0, 200);
+        const at = +r.at || Date.now();
+        if (txt && !have.has(at + '|' + txt)) { have.add(at + '|' + txt); notes.push({ text: txt, ...(r.name ? { name: String(r.name).slice(0, 40) } : {}), at }); }
+      });
       likesRound = liveLikeRound(); reqRound = liveReqRound();
       sources.push(`live:${likesRound}:${reqRound}`);
     }
@@ -6586,6 +6632,12 @@ async function livePgEditSave() {
     };
     await fbReq('PUT', 'past/' + id, entry);
     livePg = { ...(livePg || {}), [id]: entry };
+    // 🌙 Fine serata on: tonight's past gig (it took the live likes, or is within a day and a half
+    // of it) takes over the audience page.
+    const end = liveInfo?.end;
+    if (end && livePublished() && (addLive || Math.abs(at - (+end.at || 0)) < 36 * 3600000)) {
+      try { await fbReq('PATCH', 'info/end', { pastId: id }); end.pastId = id; } catch {}
+    }
     const mergeInto = async (node, add) => {
       if (!Object.keys(add).length) return;
       const cur = (await fbReq('GET', `pastLikes/${id}/${node}`)) || {};
@@ -7047,6 +7099,7 @@ function renderLive() {
           <option value="titles" ${liveView() === 'titles' ? 'selected' : ''}>Show: all titles</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="livePublish()" ${setId ? '' : 'disabled'}>${pub ? '↻ Update' : '📣 Publish'}</button>
+        ${pub ? `<button class="btn btn-${liveInfo?.end ? 'primary' : 'secondary'} btn-sm" onclick="liveSetEnd(${!liveInfo?.end})" title="${liveInfo?.end ? 'Fine serata is on: the audience page thanks people and lists tonight\'s songs. Tap to show the normal page again' : 'End of the night: the audience page says È tutto per stasera, grazie! and lists tonight\'s played songs to heart and comment on (requests and Now playing hidden). Nothing is cleared'}">🌙 Fine serata${liveInfo?.end ? ': on' : ''}</button>` : ''}
         ${pub ? `<button class="btn btn-secondary btn-sm" onclick="liveUnpublish()">Unpublish</button>` : ''}
         <span class="live-status" id="live-status"></span></span>
       <span class="live-grp"><span class="live-grp-l">Archive</span>
