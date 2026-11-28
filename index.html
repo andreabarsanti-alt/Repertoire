@@ -1117,6 +1117,7 @@ select.fi { cursor: pointer; }
       <label>Type</label>
       <select class="fi" id="f-set-kind">
         <option value="gig">Gig</option>
+        <option value="showcase">Showcase</option>
         <option value="rehearsal">Rehearsal</option>
         <option value="soundcheck">Soundcheck</option>
       </select>
@@ -1145,6 +1146,7 @@ select.fi { cursor: pointer; }
     <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:14px">Every song you open in the chord reader is noted down, in order, until you tap Stop — then it's saved as a live setlist and pushed. It keeps recording even if you close the app.</p>
     <div class="live-kind-btns">
       <button class="btn btn-primary" onclick="startLiveRec('gig')">Gig</button>
+      <button class="btn btn-primary" onclick="startLiveRec('showcase')">Showcase</button>
       <button class="btn btn-primary" onclick="startLiveRec('rehearsal')">Rehearsal</button>
       <button class="btn btn-primary" onclick="startLiveRec('soundcheck')">Soundcheck</button>
     </div>
@@ -1493,7 +1495,7 @@ function deepCopy(x) { return JSON.parse(JSON.stringify(x)); }
 // What kind of live a 'live' setlist is (setlist.liveType). Missing/unknown reads as 'gig' —
 // every live setlist from before the field existed was a gig — rather than being backfilled,
 // so old data doesn't change (and doesn't trip the repo-sync banner) just by loading.
-const LIVE_KINDS = { gig: 'Gig', rehearsal: 'Rehearsal', soundcheck: 'Soundcheck' };
+const LIVE_KINDS = { gig: 'Gig', showcase: 'Showcase', rehearsal: 'Rehearsal', soundcheck: 'Soundcheck' };
 function liveKindOf(sl) { return LIVE_KINDS[sl?.liveType] ? sl.liveType : 'gig'; }
 function liveKindLabel(sl) { return LIVE_KINDS[liveKindOf(sl)]; }
 
@@ -3307,8 +3309,8 @@ function formatSetDate(dateStr) {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// Left-pane groups (Generic / Live / Rehearsal) and a gig's nested soundchecks are collapsible;
-// open/closed is remembered per device (not part of db). Keys: 'generic', 'live', 'rehearsal',
+// Left-pane groups (Generic / Live / Showcase / Rehearsal) and a gig's nested soundchecks are collapsible;
+// open/closed is remembered per device (not part of db). Keys: 'generic', 'live', 'showcase', 'rehearsal',
 // and 'gig:<setlist id>' for a gig's soundchecks. Everything starts open.
 const SETS_GROUPS_KEY = 'rep_sets_groups';
 function setsGroupState() { try { return JSON.parse(localStorage.getItem(SETS_GROUPS_KEY) || '{}') || {}; } catch { return {}; } }
@@ -3342,7 +3344,7 @@ function setItemRow(sl, opts = {}) {
   </div>`;
 }
 
-// Left pane, top to bottom: Generic (alphabetical — no dates), Live (gigs), Rehearsal — the dated
+// Left pane, top to bottom: Generic (alphabetical — no dates), Live (gigs), Showcase, Rehearsal — the dated
 // groups most recent first (no date last). A soundcheck has no link to its gig in the data, so it
 // nests under the gig on the same date (the first by name if there are several); one with no gig
 // that day is listed on its own in the Live group, by date.
@@ -3354,6 +3356,7 @@ function renderSets() {
   const generic = db.setlists.filter(sl => sl.type !== 'live')
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   const gigs = live.filter(sl => liveKindOf(sl) === 'gig').sort(byDateDesc);
+  const showcases = live.filter(sl => liveKindOf(sl) === 'showcase').sort(byDateDesc);
   const rehearsals = live.filter(sl => liveKindOf(sl) === 'rehearsal').sort(byDateDesc);
   const subs = {};            // gig id -> its soundchecks
   const loose = [];           // soundchecks with no gig on their date
@@ -3380,7 +3383,8 @@ function renderSets() {
 
   el.innerHTML =
       group('generic', 'Generic', generic, generic.map(sl => setItemRow(sl)), none)
-    + group('live', 'Live', live.filter(sl => liveKindOf(sl) !== 'rehearsal'), liveRows, none)
+    + group('live', 'Live', [...gigs, ...Object.values(subs).flat(), ...loose], liveRows, none)
+    + group('showcase', 'Showcase', showcases, showcases.map(sl => setItemRow(sl)), none)
     + group('rehearsal', 'Rehearsal', rehearsals, rehearsals.map(sl => setItemRow(sl)), none);
 }
 
@@ -3463,7 +3467,7 @@ function renderSetDetail() {
           <option value="without" ${slCrdFilter==='without'?'selected':''}>No chords</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="openPrintModal('setlist')" title="Print setlist">⎙ Print</button>
-        ${sl.type === 'live' && liveKindOf(sl) === 'gig' ? `<button class="btn btn-secondary btn-sm" onclick="livePgUploadSet('${sl.id}')" title="Put this gig on the audience page's past gigs (songs, date, place, image)">${livePg?.[sl.date] ? '↻ Re-upload' : '⬆ Upload'}</button>` : ''}
+        ${sl.type === 'live' && liveKindOf(sl) === 'gig' ? `${livePgEnsure()}<button class="btn btn-secondary btn-sm" onclick="livePgUploadSet('${sl.id}')" title="Put this gig on the audience page's past gigs (songs, date, place, image)">${livePg?.[sl.date] ? '↻ Re-upload' : '⬆ Upload'}</button>${livePg?.[sl.date] ? `<button class="btn btn-danger btn-sm" onclick="livePgDelete('${sl.date}')" title="Take this gig off the audience page's past gigs">✕ Remove</button>` : ''}` : ''}
         ${hasSections ? `
         <button class="btn btn-secondary btn-sm" onclick="expandAllSections(true)">⤢ Expand all</button>
         <button class="btn btn-secondary btn-sm" onclick="expandAllSections(false)">⤡ Collapse all</button>` : ''}
@@ -5029,7 +5033,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-27 22:35';
+const APP_BUILD = '2026-11-28 09:40';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6110,6 +6114,7 @@ async function livePgLoad() {
   } catch (e) { livePgErr = /permission/i.test(e.message) ? 'rules' : 'error'; }
   finally { livePgBusy = false; }
   renderLivePg();
+  if (activeSetId) renderSetDetail();   // a gig's ⬆ Upload / ↻ Re-upload / ✕ Remove depend on it
 }
 // The like counts of that night (Andrea): from the latest 📸 snapshot of the gig's date (or before
 // 6 AM the morning after), in the GitHub archive or still queued on the iPad. {song id: count} or null.
@@ -6164,6 +6169,12 @@ async function livePgPut(id, { at, place, songs, img, src, nightLikes }) {
     if (livePgLikes) livePgLikes[id] = { ...(livePgLikes[id] || {}), _night: Object.keys(night).length ? night : undefined };
   }
 }
+// The Setlists tab needs the past-gig list to label Upload/Re-upload and show ✕ Remove: load it in
+// the background (at most every LIVE_PAST_MS) when a gig is shown before the Live tab has loaded it.
+function livePgEnsure() {
+  if (livePg === null && liveSignedIn() && !livePgBusy && Date.now() - livePgAt > LIVE_PAST_MS) setTimeout(livePgLoad, 0);
+  return '';
+}
 // ⬆ Upload on a gig setlist (Setlists tab): its songs, date, place and image become a past gig.
 async function livePgUploadSet(id) {
   const sl = db.setlists.find(x => x.id === id);
@@ -6214,7 +6225,7 @@ async function livePgDelete(id) {
     await fbReq('DELETE', 'pastNotes/' + id).catch(() => {});
   } catch (e) { toast('Remove failed: ' + e.message, 4500); return; }
   delete livePg[id]; if (livePgLikes) delete livePgLikes[id]; if (livePgNotes) delete livePgNotes[id];
-  toast('Past gig removed'); renderLivePg();
+  toast('Past gig removed'); renderLivePg(); renderSetDetail();
 }
 async function livePgDeleteNote(id, nid) {
   if (!confirm('Delete this comment for good?')) return;
