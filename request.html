@@ -811,7 +811,7 @@ async function sendRequest() {
 }
 
 // ── Past gigs (Andrea, 2026-11-27): shown while nothing is published ──
-// gigs/<gig>/past/<id> = { at, place, band, songs: [{id, k, t}], posterV } (public), image in
+// gigs/<gig>/past/<id> = { at, name?, band, songs: [{id, k, t}], posterV } (public), image in
 // pastPoster/<id>. Tapping a gig (#serata=<id>, so the phone's Back works) shows its songs with a
 // heart each (pastLikes/<id>/<song key>/<phone id> = true) and a box for a comment
 // (pastNotes/<id>/<push id> = { text, name?, at }). Only the band can read the counts and comments;
@@ -901,14 +901,14 @@ function renderPast() {
       + (list.length ? `
       <div class="sec-h">Serate passate</div>
       ${list.map(x => `<button class="pg" onclick="location.hash='serata=${encodeURIComponent(x.id)}'">${pastThumb(x)}
-        <span class="tx">${x.name ? `<b>${esc(x.name)}</b><span>${esc(pastDate(x.at))}</span>` : `<b>${esc(pastDate(x.at))}</b>`}${x.place ? `<span>📍 ${esc(x.place)}</span>` : ''}<small>${pastSub(x)}</small></span><span class="chev">›</span></button>`).join('')}` : '');
+        <span class="tx">${x.name ? `<b>${esc(x.name)}</b><span>${esc(pastDate(x.at))}</span>` : `<b>${esc(pastDate(x.at))}</b>`}<small>${pastSub(x)}</small></span><span class="chev">›</span></button>`).join('')}` : '');
     list.forEach(loadPastPoster);
     return;
   }
   const showSongs = !g.hideSongs && g.songs.length;
   document.getElementById('subtitle').textContent = showSongs ? 'Metti un ❤ alle canzoni che ti sono piaciute' : 'Com’è andata? Scrivici qualcosa';
   box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
-    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text">${g.name ? `<b>${esc(g.name)}</b><span>${esc(pastDate(g.at))}</span>` : `<b>${esc(pastDate(g.at))}</b>`}${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs ? `<span class="dim">${g.songs.length} canzoni suonate</span>` : ''}</span></div>
+    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text">${g.name ? `<b>${esc(g.name)}</b><span>${esc(pastDate(g.at))}</span>` : `<b>${esc(pastDate(g.at))}</b>`}${showSongs ? `<span class="dim">${g.songs.length} canzoni suonate</span>` : ''}</span></div>
     <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
     ${showSongs ? '<p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>' : ''}
     ${(showSongs ? g.songs : []).map((s, i) => { const on = pLiked(g.id, s.id);
@@ -927,7 +927,7 @@ function openPastForm(id) {
   pastFormId = id;
   document.getElementById('form-body').innerHTML = `
     <div class="sheet-head"><h2>Scrivici qualcosa</h2><button class="x" onclick="closeSheet('form-sheet')" aria-label="Chiudi">×</button></div>
-    ${id ? `<p class="hint" style="margin:-4px 0 12px">${esc(pastDate(g.at))}${g.place ? ' · ' + esc(g.place) : ''}</p>` : ''}
+    ${id ? `<p class="hint" style="margin:-4px 0 12px">${esc(pastDate(g.at))}</p>` : ''}
     <div class="fg"><label>Un commento, un saluto, una canzone per la prossima volta…</label><textarea class="fi" id="pn-text" maxlength="200" placeholder="es. Bellissima serata!"></textarea></div>
     <div class="fg"><label>Il tuo nome (facoltativo)</label><input class="fi" id="pn-name" maxlength="40" autocomplete="given-name" value="${esc(savedName())}"></div>
     <div class="form-err" id="pn-err"></div>
