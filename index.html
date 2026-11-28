@@ -976,6 +976,7 @@ select.fi { cursor: pointer; }
 .qrm-thumbrow { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
 .qrm-thumb { flex: 0 0 auto; width: 56px; height: 79px; background: #fff; border-radius: 3px; padding: 3px; box-sizing: border-box; display: grid; gap: 2px; }
 #qrm-default.hidden { display: none; }
+.qrm-thumb.land { width: 79px; height: 56px; }
 .qrm-thumb i { background: #c9d3df; border-radius: 1px; }
 @media (max-width: 760px) {
   .live-cols { grid-template-columns: 1fr; }
@@ -5257,7 +5258,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 15:08';
+const APP_BUILD = '2026-11-28 15:38';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
@@ -6820,9 +6821,10 @@ function liveQrRender() {
     `<button class="${k === n ? 'on' : ''}" onclick="liveQrSetPer(${k})">${k}</button>`).join('');
   const th = document.getElementById('qrm-thumb');
   th.style.gridTemplateColumns = `repeat(${c},1fr)`; th.style.gridTemplateRows = `repeat(${r},1fr)`;
+  th.classList.toggle('land', liveQrLandscape(n));
   th.innerHTML = '<i></i>'.repeat(n);
   const ig = LIVE_INSTAGRAM[LIVE_GIG];
-  document.getElementById('qrm-per-hint').textContent = (n === 1 ? '1 poster per sheet.' : `${n} cards per sheet, cut along the dashed lines.`)
+  document.getElementById('qrm-per-hint').textContent = (n === 1 ? '1 poster per sheet.' : `${n} cards per sheet${liveQrLandscape(n) ? ' (landscape)' : ''}, cut along the dashed lines.`)
     + (ig && n >= 8 ? ' No Instagram line at 8 (too small).' : '');
 }
 function liveQrSetPer(n) {
@@ -6846,11 +6848,13 @@ function liveQrLinkDefault() {
   liveQrRender();
   renderLive();
 }
-function liveQrGrid(n) { return { 1: [1, 1], 2: [1, 2], 4: [2, 2], 6: [2, 3], 8: [2, 4] }[n] || [1, 1]; }
+// [columns, rows] per sheet; 2 per sheet prints landscape (two cards side by side, Andrea).
+function liveQrGrid(n) { return { 1: [1, 1], 2: [2, 1], 4: [2, 2], 6: [2, 3], 8: [2, 4] }[n] || [1, 1]; }
+function liveQrLandscape(n) { return n === 2; }
 // One audience card, as data shared by the PDF and the in-page print: sizes in pt (text) and
 // mm (gaps, QR) at scale s; Italian like request.html. The Instagram line is left out at 8 per sheet.
 function liveQrCardItems(n, url, name, ig) {
-  const s = { 1: 1.2, 2: 0.65, 4: 0.62, 6: 0.42, 8: 0.36 }[n] || 1;
+  const s = { 1: 1.2, 2: 0.85, 4: 0.62, 6: 0.42, 8: 0.36 }[n] || 1;
   const it = [];
   if (name) it.push({ text: name, pt: 20 * s, gray: true, gap: 0 }, { gapAfter: 4 * s });
   ['Richiedi una canzone', 'Guarda cosa suoniamo', 'Dicci se ti è piaciuta'].forEach(t => it.push({ text: t, pt: 34 * s, bold: true, lh: 1.25 }));
@@ -6886,13 +6890,21 @@ function liveQrPrint() {
     `<div class="qr-card">${card}</div>`.repeat(n)}</div>`;
   const prevTitle = document.title;
   document.title = file;
-  window.addEventListener('afterprint', () => { document.title = prevTitle; }, { once: true });
+  // Landscape page for 2 per sheet, only for this print.
+  let pageStyle = null;
+  if (liveQrLandscape(n)) {
+    pageStyle = document.createElement('style');
+    pageStyle.textContent = '@media print { @page { size: A4 landscape; } }';
+    document.head.appendChild(pageStyle);
+  }
+  window.addEventListener('afterprint', () => { document.title = prevTitle; pageStyle?.remove(); }, { once: true });
   window.print();
 }
 function buildQrCardsPdf(n, url, name, ig) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const W = 210, H = 297, [cols, rows] = liveQrGrid(n), cw = W / cols, ch = H / rows;
+  const land = liveQrLandscape(n);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: land ? 'landscape' : 'portrait' });
+  const W = land ? 297 : 210, H = land ? 210 : 297, [cols, rows] = liveQrGrid(n), cw = W / cols, ch = H / rows;
   const q = qrcode(0, 'M'); q.addData(url); q.make();
   const m = q.getModuleCount();
   const items = liveQrCardItems(n, url, name, ig);
