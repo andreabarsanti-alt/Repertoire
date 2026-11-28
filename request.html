@@ -849,10 +849,10 @@ async function loadPastPoster(g) {
     document.querySelectorAll(`[data-poster="${CSS.escape(g.id)}"]`).forEach(el => { el.innerHTML = `<img src="${img}" alt="">`; el.classList.add('img'); });
   } catch { delete pastPosters[g.id]; }
 }
-// The small line under a past gig in the list: "Showcase", the song count, both, or nothing
-// (a gig uploaded with Hide songs).
+// The small line under a past gig in the list: the song count, or nothing (Hide songs). Gigs and
+// showcases are listed together, newest first, with no label telling them apart (Andrea).
 function pastSub(g) {
-  return [g.kind === 'showcase' && 'Showcase', !g.hideSongs && g.songs.length && `${g.songs.length} canzoni`].filter(Boolean).join(' · ');
+  return !g.hideSongs && g.songs.length ? `${g.songs.length} canzoni` : '';
 }
 function pastThumb(g) {
   const img = pastPosters[g.id]?.img;
@@ -910,7 +910,7 @@ function renderPast() {
   const showSongs = !g.hideSongs && g.songs.length;
   document.getElementById('subtitle').textContent = showSongs ? 'Metti un ❤ alle canzoni che ti sono piaciute' : 'Com’è andata? Scrivici qualcosa';
   box.innerHTML = `<button class="back" onclick="location.hash=''">‹ Serate passate</button>
-    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs || g.kind === 'showcase' ? `<span class="dim">${g.kind === 'showcase' ? 'Showcase' + (showSongs ? ' · ' : '') : ''}${showSongs ? g.songs.length + ' canzoni suonate' : ''}</span>` : ''}</span></div>
+    <div class="gig past-gig">${pastThumb(g)}<span class="gig-text"><b>${esc(pastDate(g.at))}</b>${g.place ? `<span>📍 ${esc(g.place)}</span>` : ''}${showSongs ? `<span class="dim">${g.songs.length} canzoni suonate</span>` : ''}</span></div>
     <button class="btn btn-secondary btn-wide" id="past-note-btn" onclick="openPastForm('${esc(g.id)}')">✎ Com’è andata? Scrivici qualcosa</button>
     ${showSongs ? '<p class="or-pick">o metti un ❤ alle canzoni che ti sono piaciute</p>' : ''}
     ${(showSongs ? g.songs : []).map((s, i) => { const on = pLiked(g.id, s.id);
