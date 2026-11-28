@@ -1109,7 +1109,7 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="setlist-modal">
   <div class="modal">
     <h2 id="setlist-modal-title">New Setlist</h2>
-    <div class="fg"><label>Name *</label><input class="fi" id="f-set-name" type="text" placeholder="Setlist name"></div>
+    <div class="fg"><label>Name *</label><input class="fi" id="f-set-name" type="text" placeholder="Setlist name (live: leave empty to use the place)"></div>
     <div class="fg">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="f-set-live" onchange="toggleSetLiveField()"> Live (gig, rehearsal or soundcheck — has a date)
@@ -4147,12 +4147,13 @@ function openSetlistModal(id) {
 }
 
 function saveSetlist() {
-  const name = document.getElementById('f-set-name').value.trim();
-  if (!name) { toast('Name is required'); return; }
   const live = document.getElementById('f-set-live').checked;
   const date = document.getElementById('f-set-date').value;
   const kind = document.getElementById('f-set-kind').value;
   const place = document.getElementById('f-set-place').value.trim();
+  // The name is optional when a live setlist has a place: the place becomes its name (Andrea).
+  const name = document.getElementById('f-set-name').value.trim() || (live ? place : '');
+  if (!name) { toast(live ? 'Enter a name or a place' : 'Name is required'); return; }
   if (live && !date) { toast('Enter a date'); return; }
   const setExtras = sl => {
     if (live && place) sl.place = place; else delete sl.place;
@@ -5081,7 +5082,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 10:05';
+const APP_BUILD = '2026-11-28 10:15';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
