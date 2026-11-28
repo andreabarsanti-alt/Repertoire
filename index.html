@@ -522,6 +522,8 @@ a.crd-open:hover, a.crd-open:hover::after { color: var(--accent3); }
 .fi:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(61,158,140,.12); }
 .fg-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+/* Add Song / UG import: Cancel and Save sit at the top, under the title (Andrea) */
+.modal-footer-top { margin-top: 0; margin-bottom: 14px; }
 textarea.fi { resize: vertical; font-family: var(--fm); line-height: 1.5; }
 
 /* ══════════════════════════════════════════
@@ -1083,6 +1085,10 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="song-modal">
   <div class="modal">
     <h2 id="song-modal-title">Add Song</h2>
+    <div class="modal-footer modal-footer-top">
+      <button class="btn btn-secondary" onclick="closeModal('song-modal')">Cancel</button>
+      <button class="btn btn-primary"   onclick="saveSong()">Save</button>
+    </div>
     <div class="fg"><label>Title *</label><input class="fi" id="f-title" type="text" placeholder="Song title"></div>
     <div class="fg"><label>Tags (comma separated)</label><input class="fi" id="f-tags" type="text" placeholder="Neil Young, rock, acoustic"></div>
     <div class="fg-row">
@@ -1102,10 +1108,6 @@ select.fi { cursor: pointer; }
     <div class="fg">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">Chord Sheet (CRD) <span style="display:inline-flex;gap:6px"><button type="button" class="crd-expand-btn" onclick="pasteCrdInto('f-crd')" title="Paste chords copied from the UG app (or anywhere)">📋 Paste</button><button type="button" class="crd-expand-btn" onclick="openCrdEditor('f-crd')" title="Open full-page editor">⤢ Full editor</button></span></label>
       <textarea class="fi" id="f-crd" rows="8" placeholder="Paste or type a chord/lyric sheet — if filled in, the song opens this in-app instead of Ultimate Guitar"></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('song-modal')">Cancel</button>
-      <button class="btn btn-primary"   onclick="saveSong()">Save</button>
     </div>
   </div>
 </div>
@@ -1363,6 +1365,10 @@ select.fi { cursor: pointer; }
 <div class="overlay hidden" id="ug-import-modal">
   <div class="modal">
     <h2>Import from Ultimate Guitar</h2>
+    <div class="modal-footer modal-footer-top">
+      <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
+      <button class="btn btn-primary" id="ug-import-btn" onclick="quickAddUGImport()" disabled>Add Song</button>
+    </div>
     <div class="fg">
       <label>Paste UG Link</label>
       <input class="fi" id="ug-import-url" type="url" placeholder="https://tabs.ultimate-guitar.com/tab/…" oninput="onUGImportInput()">
@@ -1388,10 +1394,6 @@ select.fi { cursor: pointer; }
       <label>Chord Sheet (optional)</label>
       <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="pasteCrdInto('ug-import-crd')" title="Copy the chords in the UG app, then tap this">📋 Paste chords</button>
       <textarea class="fi" id="ug-import-crd" rows="6" placeholder="Paste the chords/lyrics copied from UG — saved as this song's chord sheet"></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('ug-import-modal')">Cancel</button>
-      <button class="btn btn-primary" id="ug-import-btn" onclick="quickAddUGImport()" disabled>Add Song</button>
     </div>
   </div>
 </div>
@@ -5210,7 +5212,7 @@ async function doPull(cfg) {
 // ─────────────────────────────────────────
 // App build stamp (Italian time), shown at the bottom of the header ⋯ menu so a reload can be
 // checked against the latest deploy. Bump it in every commit that changes the app.
-const APP_BUILD = '2026-11-28 11:05';
+const APP_BUILD = '2026-11-28 11:10';
 document.getElementById('app-build').textContent = 'Build ' + APP_BUILD;
 
 const UG_TYPES = ['ukulele-chords','bass-tabs','drum-tabs','power-tab','chords','tabs','tab','official','pro'];
